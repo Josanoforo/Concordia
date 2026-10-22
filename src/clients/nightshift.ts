@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { failure, jsonHttp, localUrl, readJson, required, ROOT, SafeError, trace, writeJson } from '../runtime.ts';
+import { budgetFilePath, readBudget, writeBudget } from '../budget.ts';
 
 export type Receipt = { receiptId: string; provider: string; model: string; inputTokens: number; outputTokens: number; totalTokens: number; latencyMs: number; fromCache: boolean; requestedMode?: string; routedMode?: string; modeCoerced?: boolean; boundMode?: string; predicted?: string | null; winner?: string | null; routingReason?: string | null; routingPolicy?: string | null };
 type Attempt = { id: string; utc: string; route: string; status: string; receipt?: Receipt; error?: object };
@@ -20,13 +21,14 @@ export function assertEffectiveModel(receipt: Receipt, policy: ModelPolicy) {
 }
 // Record dispatch before HTTP. The user removed all generation-count ceilings
 // and reserves on 2026-10-22; the continued ledger is telemetry, never a quota.
-export function reserveGeneration(route: string, budgetDir = path.join(ROOT, '.concordia')): Attempt {
-  fs.mkdirSync(budgetDir, { recursive: true });
-  const lockPath = path.join(budgetDir, 'budget.lock');
+export function reserveGeneration(route: string, budgetDir?: string): Attempt {
+  const file = budgetDir ? path.join(budgetDir, 'budget.json') : budgetFilePath();
+  const stateDir = path.dirname(file);
+  fs.mkdirSync(stateDir, { recursive: true });
+  const lockPath = file + '.lock';
   let lock: number;
   try { lock = fs.openSync(lockPath, 'wx'); } catch { throw new SafeError('BUDGET_LOCKED'); }
   try {
-    const file = path.join(budgetDir, 'budget.json');
     const state: Budget = fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : { limit: null, consumed: 0, attempts: [] };
     if (!Number.isInteger(state.consumed) || state.consumed < 0 || state.consumed !== state.attempts.length) throw new SafeError('INVALID_BUDGET_STATE');
     const attempt: Attempt = { id: randomUUID(), utc: new Date().toISOString(), route, status: 'RESERVED' };
@@ -36,11 +38,11 @@ export function reserveGeneration(route: string, budgetDir = path.join(ROOT, '.c
   } finally { fs.closeSync(lock); fs.unlinkSync(lockPath); }
 }
 function finishAttempt(attempt: Attempt) {
-  const state: Budget = readJson('.concordia/budget.json');
+  const state: Budget = readBudget();
   const index = state.attempts.findIndex(a => a.id === attempt.id);
   if (index < 0) throw new SafeError('BUDGET_ATTEMPT_MISSING');
   state.attempts[index] = attempt;
-  writeJson('.concordia/budget.json', state);
+  writeBudget(state);
   writeJson('evidence/generations.json', state);
 }
 export function normalizeBase(value: string): string {

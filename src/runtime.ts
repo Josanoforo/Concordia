@@ -5,14 +5,17 @@ import { fileURLToPath } from 'node:url';
 export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const stamp = () => new Date().toISOString().replace(/[-:.]/g, '');
 export class SafeError extends Error {
-  constructor(public code: string, public http?: number, public detail?: string) { super(code); }
+  constructor(public code: string, public http?: number, public detail?: string, public retryAfter?: string) { super(code); }
 }
 let loaded = false;
 export function loadLocalEnv() {
   if (loaded) return;
-  if (!fs.existsSync(path.join(ROOT, '.env'))) throw new SafeError('ENV_FILE_MISSING');
+  const localEnvFile = process.env.CONCORDIA_LOCAL_ENV_FILE
+    ? path.resolve(process.env.CONCORDIA_LOCAL_ENV_FILE)
+    : path.join(ROOT, '.env');
+  if (!fs.existsSync(localEnvFile)) throw new SafeError('ENV_FILE_MISSING');
   // Only the running application loads the local file; never log its contents.
-  try { process.loadEnvFile(path.join(ROOT, '.env')); } catch { throw new SafeError('ENV_LOAD_FAILED'); }
+  try { process.loadEnvFile(localEnvFile); } catch { throw new SafeError('ENV_LOAD_FAILED'); }
   loaded = true;
 }
 export function required(name: string): string {
@@ -29,8 +32,8 @@ export function sanitize(value: unknown): string {
   return text.replace(new RegExp('\\b(?:sk-' + 'ant|nv' + 'api-)[A-Za-z0-9_-]+', 'g'), '[REDACTED]')
     .replace(/eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g, '[REDACTED]');
 }
-export function failure(error: unknown): { code: string; http?: number; detail?: string } {
-  return error instanceof SafeError ? { code: error.code, http: error.http, ...(error.detail ? { detail: sanitize(error.detail) } : {}) } : { code: 'UNEXPECTED_ERROR' };
+export function failure(error: unknown): { code: string; http?: number; detail?: string; retryAfter?: string } {
+  return error instanceof SafeError ? { code: error.code, http: error.http, ...(error.detail ? { detail: sanitize(error.detail) } : {}), ...(error.retryAfter ? {retryAfter:error.retryAfter} : {}) } : { code: 'UNEXPECTED_ERROR' };
 }
 export function writeJson(relative: string, data: unknown) {
   const dest = path.join(ROOT, relative);
@@ -74,10 +77,10 @@ export async function jsonHttp(url: string, init: RequestInit, timeout = 60_000,
   let body: any;
   try { body = JSON.parse(raw); }
   catch { throw new SafeError(response.ok ? 'INVALID_JSON_RESPONSE' : 'HTTP_ERROR', response.status,
-    !response.ok && includeErrorDetail ? sanitize(raw.slice(0, 2000)) : undefined); }
+    !response.ok && includeErrorDetail ? sanitize(raw.slice(0, 2000)) : undefined, !response.ok ? response.headers.get('retry-after')??undefined : undefined); }
   if (!response.ok) {
     const detail = typeof body?.error === 'string' ? body.error : body?.error?.message ?? body?.message ?? body?.detail ?? body?.errorMessage ?? body?.msg ?? raw;
-    throw new SafeError('HTTP_ERROR', response.status, typeof detail === 'string' ? sanitize(detail.slice(0, 2000)) : undefined);
+    throw new SafeError('HTTP_ERROR', response.status, typeof detail === 'string' ? sanitize(detail.slice(0, 2000)) : undefined, response.headers.get('retry-after')??undefined);
   }
   return { http: response.status, body };
 }

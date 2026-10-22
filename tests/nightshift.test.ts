@@ -46,6 +46,27 @@ test('generation accounting rejects a corrupt ledger without erasing history',()
   assert.equal(fs.existsSync(path.join(temp,'budget.lock')),false);
 });
 
+test('external budget reference appends to the original ledger and fails closed if it is missing',()=>{
+  const temp=fs.mkdtempSync(path.join(ROOT,'.concordia','test-external-budget-'));
+  const file=path.join(temp,'original-budget.json');
+  const attempts=[{id:'prior-attempt',route:'meterless/cheap',status:'PASS',receipt:{receiptId:'prior-receipt'}}];
+  fs.writeFileSync(file,JSON.stringify({limit:null,consumed:1,attempts}));
+  const previous=process.env.CONCORDIA_BUDGET_FILE;
+  try {
+    process.env.CONCORDIA_BUDGET_FILE=file;
+    const next=reserveGeneration('meterless/cheap');
+    const state=JSON.parse(fs.readFileSync(file,'utf8'));
+    assert.equal(state.consumed,2);assert.deepEqual(state.attempts[0],attempts[0]);assert.equal(state.attempts[1].id,next.id);
+    assert.equal(fs.existsSync(path.join(ROOT,'.concordia','budget.json')),false);
+    process.env.CONCORDIA_BUDGET_FILE=path.join(temp,'missing-budget.json');
+    assert.throws(()=>reserveGeneration('meterless/cheap'),/BUDGET_STATE_MISSING/);
+    assert.equal(fs.existsSync(path.join(temp,'missing-budget.json')),false);
+  } finally {
+    if(previous===undefined)delete process.env.CONCORDIA_BUDGET_FILE;else process.env.CONCORDIA_BUDGET_FILE=previous;
+    fs.rmSync(temp,{recursive:true,force:true});
+  }
+});
+
 test('disallowed construction route blocks HTTP and does not consume a generation', async () => {
   const budgetFile = path.join(ROOT, '.concordia/budget.json');
   const snapshot = () => fs.existsSync(budgetFile) ? fs.readFileSync(budgetFile, 'utf8') : null;

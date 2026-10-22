@@ -6,6 +6,7 @@ import { probe } from './probe/index.ts';
 import { verdicts, writeRelations } from './probe/verdicts.ts';
 import { evaluate } from './eval.ts';
 import { failure, readJson, ROOT, SafeError, writeJson } from './runtime.ts';
+import { readBudget } from './budget.ts';
 import { universe, type Universe } from './universe.ts';
 
 export function parseModelJson(text: string): any {
@@ -65,7 +66,7 @@ export async function completeLlm() {
   let state: Completion;
   if (fs.existsSync(path.join(ROOT, statePath))) state = readJson<Completion>(statePath);
   else {
-    state = { authorization: 'Jonas ratifies Anthropic Haiku/Sonnet, rejects Opus/Fable; generation count unlimited by explicit instruction 2026-10-22', startingConsumed: readJson('.concordia/budget.json').consumed, status: 'IN_PROGRESS' };
+    state = { authorization: 'Jonas ratifies Anthropic Haiku/Sonnet, rejects Opus/Fable; generation count unlimited by explicit instruction 2026-10-22', startingConsumed: readBudget().consumed, status: 'IN_PROGRESS' };
     saveState(state);
   }
   if (state.status === 'PASS') { console.log('PASS completion already recorded; no generations sent'); return state; }
@@ -128,7 +129,7 @@ export async function completeLlm() {
   const evalResult = evaluate();
   state.status = state.discovery.status === 'PASS' && state.explanations?.status === 'PASS' && evalResult.status === 'PASS' ? 'PASS' : 'PARTIAL';
   saveState(state);
-  console.log('Completion', state.status, 'generations recorded', readJson('.concordia/budget.json').consumed, '(no count ceiling)');
+  console.log('Completion', state.status, 'generations recorded', readBudget().consumed, '(no count ceiling)');
   if (state.status !== 'PASS') process.exitCode = 1;
   return state;
 }

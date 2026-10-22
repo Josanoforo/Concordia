@@ -1,5 +1,6 @@
 import { Nightshift } from './clients/nightshift.ts';
 import { failure, readJson, stamp, writeJson } from './runtime.ts';
+import { readBudget } from './budget.ts';
 
 export function receiptSnapshot(body: any) {
   const rows = Array.isArray(body) ? body : body.data ?? body.receipts ?? [];
@@ -32,7 +33,7 @@ export function racedAcceptedConstruction(preview: any): boolean {
 }
 export async function routePreviews() {
   const n = new Nightshift();
-  const consumedBefore = readJson('.concordia/budget.json').consumed;
+  const consumedBefore = readBudget().consumed;
   const before = receiptSnapshot(await n.receipts(5));
   const expectedLatest = 'chatcmpl-bf7af0f4-d5b2-4a32-a5ac-cb5f6eb1ea00';
   const previews: any[] = [];
@@ -61,7 +62,7 @@ export async function routePreviews() {
   const after = receiptSnapshot(await n.receipts(5));
   const unchanged = JSON.stringify(before) === JSON.stringify(after);
   const expectedLastReceipt = after[0]?.request_id === expectedLatest && after[0]?.status === 'failed';
-  const consumedAfter = readJson('.concordia/budget.json').consumed;
+  const consumedAfter = readBudget().consumed;
   const selected = !endpointMissing && unchanged && expectedLastReceipt && consumedBefore === consumedAfter ? previews.find(eligiblePreview) : null;
   const summary = { utc: new Date().toISOString(), endpointMissing, previews, receiptsBefore: before, receiptsAfter: after,
     noNewReceipts: unchanged, lastStillExpectedFailure: expectedLastReceipt, consumedBefore, consumedAfter,

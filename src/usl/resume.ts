@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { Zetaris } from '../clients/zetaris.ts';
 import { failure, readJson, ROOT, SafeError, setTraceRun, stamp, writeJson } from '../runtime.ts';
+import { readBudget } from '../budget.ts';
 
 export const remainingU1Tables = ['taxi_trips','trips','zones','weather_data','surge_pricing'];
 const travelTables = new Set(['taxi_trips','trips','fhv','for_hire_vehicles','green_taxi']);
@@ -16,7 +17,7 @@ export async function resumeU1() {
   const checkpoint='.concordia/03b-U1-continuation.json';
   if(fs.existsSync(path.join(ROOT,checkpoint)))throw new SafeError('CONTINUATION_ALREADY_STARTED_INSPECT_CHECKPOINT_NO_BLIND_REPLAY');
   const runId='03b-U1-'+stamp(),dir='evidence/runs/'+runId,tracePath=path.join(ROOT,'evidence/trace.jsonl');
-  const offset=fs.readFileSync(tracePath,'utf8').length,budget=readJson('.concordia/budget.json');
+  const offset=fs.readFileSync(tracePath,'utf8').length,budget=readBudget();
   const result:any={runId,utc:new Date().toISOString(),status:'IN_PROGRESS',authority:'ENCARGO_03b_CONCORDIA_D2_CONTINUACION.md',oldQueryCheck:'evidence/03b-old-hvv-ui-check.json',budgetBefore:budget.consumed,steps:[],tables:prior.plans.map((p:any)=>({name:p.name,compiled:true,activated:prior.steps.some((s:any)=>s.stage==='activate_'+p.name),verified:prior.steps.some((s:any)=>s.stage==='verify_'+p.name),verificationLimit:prior.steps.some((s:any)=>s.stage==='verify_'+p.name)?3:null,excluded:p.name==='hvv',exclusionReason:p.name==='hvv'?'Leader decision: exclude hvv from accepted U1 USL by size/cost; leave compiled/activated model unchanged':null}))};
   writeJson(checkpoint,result);setTraceRun(runId);const z=new Zetaris();
   const save=()=>{writeJson(checkpoint,result);writeJson('out/U1/usl-continuation-03b.json',result);};
@@ -59,7 +60,7 @@ export async function resumeU1() {
     result.status='PASS_WITH_AUTHORIZED_COST_EXCLUSIONS';
   }catch(error){result.status='BLOCKED';result.error=failure(error);process.exitCode=1;}
   finally {
-    result.budgetAfter=readJson('.concordia/budget.json').consumed;result.generations=0;save();
+    result.budgetAfter=readBudget().consumed;result.generations=0;save();
     writeJson(dir+'/continuation.json',result);writeJson(dir+'/receipts.json',[]);
     fs.writeFileSync(path.join(ROOT,dir,'trace.jsonl'),fs.readFileSync(tracePath,'utf8').slice(offset));setTraceRun();
     if(result.status==='BLOCKED')fs.appendFileSync(path.join(ROOT,'docs/reportes/REPORTE_D2.md'),'\n## Bloqueo de continuación 03b U1\n\n'+JSON.stringify(result.error)+'\nEvidencia: out/U1/usl-continuation-03b.json. Sin reenvío completo ni reintentos automáticos.\n');
