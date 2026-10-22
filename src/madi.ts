@@ -1,21 +1,76 @@
 // Config-driven schema correspondence; gold is opened only by evaluateMadi.
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { Zetaris, identifier } from './clients/zetaris.ts';
 import { ROOT, readJson, writeJson, SafeError } from './runtime.ts';
 import { universeConfig } from './universe-pipeline.ts';
 import { quotedValues } from './universe.ts';
-export function predictColumn(column:string,description:string,patterns:Record<string,string>,targets:string[]) {
+export type MetadataAliasRule={
+  sourceDataset:string; sourceColumn:string; decision:'approved'|'abstain'; targetColumn?:string;
+  sourceDescriptionPattern?:string; sourceType?:string; targetType?:string; reason:string;
+  provenance:{sourceMetadata:string;targetSchema:string;vocabulary?:string;term?:string;review:string};
+};
+export type MetadataAliasContext={dataset?:string;sourceType?:string;targetTypes?:Record<string,string>;targetDescriptions?:Record<string,string>;aliasRules?:MetadataAliasRule[];aliasVersion?:string};
+export type ColumnPrediction={target:string|null;matches:string[];rule:string;reason:string;aliasProvenance:Record<string,unknown>};
+export function predictColumn(column:string,description:string,patterns:Record<string,string>,targets:string[],context:MetadataAliasContext={}):ColumnPrediction {
+  const scoped=(context.aliasRules??[]).filter(rule=>rule.sourceColumn===column&&(!context.dataset||rule.sourceDataset===context.dataset));
+  if(scoped.length>1)return {target:null,matches:[],rule:'ambiguous_alias_registry',reason:'multiple reviewed alias rules apply',aliasProvenance:{version:context.aliasVersion??null,rules:scoped}};
+  const reviewed=scoped[0];
+  if(reviewed){
+    const provenance={version:context.aliasVersion??null,...reviewed.provenance,decision:reviewed.decision,reason:reviewed.reason};
+    if(reviewed.decision==='abstain')return {target:null,matches:[],rule:'reviewed_metadata_abstention',reason:reviewed.reason,aliasProvenance:provenance};
+    const descriptionMatches=Boolean(reviewed.sourceDescriptionPattern&&new RegExp(reviewed.sourceDescriptionPattern,'i').test(description));
+    if(!descriptionMatches)return {target:null,matches:[],rule:'alias_description_mismatch',reason:'source metadata does not satisfy the reviewed description condition',aliasProvenance:provenance};
+    if(reviewed.sourceType&&context.sourceType!==reviewed.sourceType)return {target:null,matches:[],rule:'alias_source_type_mismatch',reason:'source type differs from the reviewed alias contract',aliasProvenance:provenance};
+    if(reviewed.targetType&&context.targetTypes?.[reviewed.targetColumn??'']!==reviewed.targetType)return {target:null,matches:[],rule:'alias_target_type_mismatch',reason:'target type differs from the reviewed alias contract',aliasProvenance:provenance};
+    if(!reviewed.targetColumn||!targets.includes(reviewed.targetColumn))return {target:null,matches:[],rule:'alias_target_unavailable',reason:'reviewed target is absent from target schema',aliasProvenance:provenance};
+    return {target:reviewed.targetColumn,matches:[reviewed.targetColumn],rule:'approved_metadata_alias',reason:reviewed.reason,aliasProvenance:provenance};
+  }
   const text=(column.replaceAll('_',' ')+' '+description).toLowerCase();
   const matches=targets.filter(target=>patterns[target]&&new RegExp(patterns[target],'i').test(text));
-  return {target:matches.length===1?matches[0]:null,matches,rule:matches.length===1?'unique_metadata_concept':'ambiguous_or_unknown_metadata'};
+  const provenance={version:context.aliasVersion??null,source:'universes/U3_madi_companies.json#conceptPatterns',decision:'unreviewed_pattern'};
+  if(matches.length!==1)return {target:null,matches,rule:'ambiguous_or_unknown_metadata',reason:'no unique configured concept pattern',aliasProvenance:provenance};
+  const matched=matches[0],targetType=context.targetTypes?.[matched];
+  if(context.sourceType&&targetType&&context.sourceType!==targetType)return {target:null,matches,rule:'metadata_type_mismatch',reason:'source and target schema types differ; no value-based cast is allowed',aliasProvenance:provenance};
+  const targetDescription=context.targetDescriptions?.[matched]??'';
+  const unitRequired=/\b(?:usd|u\.s\.\s*dollars?)\b|US\$/i.test(targetDescription);
+  const requiredPeriods=[...targetDescription.matchAll(/\b(?:19|20)\d{2}\b/g)].map(match=>match[0]);
+  if(unitRequired||requiredPeriods.length){
+    const unitKnown=/\b(?:usd|u\.s\.\s*dollars?)\b|US\$/i.test(description);
+    const periodKnown=requiredPeriods.every(period=>new RegExp(`\\b${period}\\b`).test(description));
+    if((unitRequired&&!unitKnown)||!periodKnown)return {target:null,matches,rule:'metadata_unit_or_period_missing',reason:'source metadata does not declare the target-required unit and temporal scope',aliasProvenance:provenance};
+  }
+  return {target:matched,matches,rule:'unique_metadata_concept',reason:'unique configured concept pattern with compatible declared type and required measure metadata',aliasProvenance:provenance};
+}
+export function auditMadiAliases(){
+  const cfg=universeConfig('U3'),target=readJson(cfg.localInput+'/'+cfg.targetSchema),catalog=readJson<any>('config/madi-aliases.json');
+  const catalogSha256=createHash('sha256').update(fs.readFileSync(path.join(ROOT,'config/madi-aliases.json'))).digest('hex');
+  const targetTypes=Object.fromEntries(Object.entries<any>(target.properties).map(([name,value])=>[name,value.type]));
+  const targetDescriptions=Object.fromEntries(Object.entries<any>(target.properties).map(([name,value])=>[name,value.description??'']));
+  const sourceMetadataHashes:any={},decisions:any[]=[];
+  for(const [table,spec] of Object.entries<any>(cfg.tables)){
+    if(!spec.columns.length)continue;
+    const metadataPath=cfg.localInput+'/'+spec.metadata,metadata=readJson(metadataPath);
+    sourceMetadataHashes[metadataPath]=createHash('sha256').update(fs.readFileSync(path.join(ROOT,metadataPath))).digest('hex');
+    for(const column of spec.columns){
+      const description=metadata.variableMeasured.find((x:any)=>x.name===column.name)?.description??'';
+      const prediction=predictColumn(column.name,description,cfg.conceptPatterns,Object.keys(target.properties),{dataset:table,sourceType:column.type,targetTypes,targetDescriptions,aliasRules:catalog.rules,aliasVersion:catalog.version});
+      decisions.push({source:{dataset:table,column:column.name},target:prediction.target,decision:prediction.target?'candidate':'abstain',rule:prediction.rule,reason:prediction.reason,aliasProvenance:prediction.aliasProvenance});
+    }
+  }
+  const result={status:'FROZEN_BEFORE_EVALUATION',utc:new Date().toISOString(),universe:'U3',usesGold:false,usesSourceValues:false,usesNetwork:false,registry:{version:catalog.version,sha256:catalogSha256,source:'config/madi-aliases.json',frozenBeforeEvaluation:catalog.frozenBeforeEvaluation},targetSchemaSha256:createHash('sha256').update(fs.readFileSync(path.join(ROOT,cfg.localInput,cfg.targetSchema))).digest('hex'),sourceMetadataHashes,summary:{candidates:decisions.filter(d=>d.decision==='candidate').length,abstentions:decisions.filter(d=>d.decision==='abstain').length},decisions};
+  writeJson('out/U3/alias-audit.json',result);return result;
 }
 export async function discoverMappings(id='U3') {
   const cfg=universeConfig(id),z=new Zetaris(),target=readJson(cfg.localInput+'/'+cfg.targetSchema);
+  const aliasCatalog=readJson<any>('config/madi-aliases.json'),aliasSha256=createHash('sha256').update(fs.readFileSync(path.join(ROOT,'config/madi-aliases.json'))).digest('hex');
   const registrationFile=`.concordia/${id}/registration.json`;
   if(!fs.existsSync(path.join(ROOT,registrationFile)))throw new SafeError('MADI_NOT_REGISTERED_RUN_REGISTER');
   const registration=readJson(registrationFile),excluded=registration.excluded??[];
-  const result:any={utc:new Date().toISOString(),live:true,universe:id,kind:cfg.kind,tables:{},candidates:[],errors:[],excluded,privacyExcluded:cfg.privacyExcluded,usesGold:false};
+  const result:any={utc:new Date().toISOString(),live:true,universe:id,kind:cfg.kind,tables:{},candidates:[],errors:[],excluded,privacyExcluded:cfg.privacyExcluded,usesGold:false,metadataAliasRegistry:{version:aliasCatalog.version,sha256:aliasSha256,frozenBeforeEvaluation:aliasCatalog.frozenBeforeEvaluation,usesSourceValues:false}};
+  const targetTypes=Object.fromEntries(Object.entries<any>(target.properties).map(([name,value])=>[name,value.type]));
+  const targetDescriptions=Object.fromEntries(Object.entries<any>(target.properties).map(([name,value])=>[name,value.description??'']));
   for(const [table,spec] of Object.entries<any>(cfg.tables)) {
     if(excluded.includes(table))continue;
     const metadata=await z.describe(cfg.database,table);
@@ -26,7 +81,7 @@ export async function discoverMappings(id='U3') {
     const sourceMeta=readJson(cfg.localInput+'/'+spec.metadata);
     for(const column of spec.columns){
       const m=sourceMeta.variableMeasured.find((x:any)=>x.name===column.name);
-      const prediction=predictColumn(column.name,m?.description??'',cfg.conceptPatterns,Object.keys(target.properties));
+      const prediction=predictColumn(column.name,m?.description??'',cfg.conceptPatterns,Object.keys(target.properties),{dataset:table,sourceType:column.type,targetTypes,targetDescriptions,aliasRules:aliasCatalog.rules,aliasVersion:aliasCatalog.version});
       result.candidates.push({id:`${table}.${column.name}__${cfg.targetDataset}.${prediction.target??'unknown'}`,from:{db:cfg.database,table,column:column.name},to:{db:'target_schema',table:cfg.targetDataset,column:prediction.target??'unknown'},...prediction,proposedBy:'metadata-heuristic',targetType:target.properties[prediction.target??'']?.type??null});
     }
     console.log('PASS discover',id,table,sample.rows.length,'rows;',columns.length,'allowlisted columns');

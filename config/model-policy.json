@@ -1,13 +1,13 @@
 {
   "route": "meterless/cheap",
-  "requiredProvider": "anthropic",
-  "allowedModelFamilies": [
+  "preferredProvider": "anthropic",
+  "preferredModelFamilies": [
     "haiku",
     "sonnet"
   ],
-  "forbiddenModelFamilies": [
+  "watchModelFamilies": [
     "opus",
     "fable"
   ],
-  "generationBlocked": true
+  "modelPolicy": "observe_and_continue"
 }

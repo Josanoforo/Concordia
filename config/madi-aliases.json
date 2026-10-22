@@ -1,0 +1,219 @@
+{
+  "version": "a3-madi-org-2026-10-22-v1",
+  "frozenAt": "2026-10-22T17:02:00-06:00",
+  "frozenBeforeEvaluation": true,
+  "scope": "Metadata-only schema correspondence candidates for the new A3 review; not a retroactive change to the earlier D3 metrics.",
+  "sources": {
+    "sourceMetadata": [
+      "data/dbpedia_metadata.json",
+      "data/forbes_metadata.json"
+    ],
+    "targetSchema": "schemamatching/target_schema.json",
+    "approvedVocabulary": "https://schema.org/Organization",
+    "vocabularyTerms": [
+      "https://schema.org/identifier",
+      "https://schema.org/name",
+      "https://schema.org/foundingDate",
+      "https://schema.org/location"
+    ],
+    "reviewMethod": "Exact source-column allowlist, source and target descriptions, declared types, and explicit semantic/unit exclusions. No source values, entity lookups, gold, or LLM."
+  },
+  "rules": [
+    {
+      "sourceDataset": "dbpedia",
+      "sourceColumn": "entity_uri",
+      "decision": "approved",
+      "targetColumn": "id",
+      "sourceDescriptionPattern": "URI identifying the company",
+      "sourceType": "string",
+      "targetType": "string",
+      "reason": "The pinned source metadata explicitly describes an identifying company URI; the target schema defines id as a company identifier. Candidate only; no identifier values or uniqueness are checked.",
+      "provenance": {
+        "sourceMetadata": "data/dbpedia_metadata.json#entity_uri",
+        "targetSchema": "schemamatching/target_schema.json#/properties/id",
+        "vocabulary": "https://schema.org/Organization",
+        "term": "https://schema.org/identifier",
+        "review": "2026-10-22; reviewed metadata-only"
+      }
+    },
+    {
+      "sourceDataset": "dbpedia",
+      "sourceColumn": "org_name",
+      "decision": "approved",
+      "targetColumn": "name",
+      "sourceDescriptionPattern": "official or common name of the company",
+      "sourceType": "string",
+      "targetType": "string",
+      "reason": "Source and target metadata both describe the organization's name; candidate only, with no entity resolution.",
+      "provenance": {
+        "sourceMetadata": "data/dbpedia_metadata.json#org_name",
+        "targetSchema": "schemamatching/target_schema.json#/properties/name",
+        "vocabulary": "https://schema.org/Organization",
+        "term": "https://schema.org/name",
+        "review": "2026-10-22; reviewed metadata-only"
+      }
+    },
+    {
+      "sourceDataset": "dbpedia",
+      "sourceColumn": "established",
+      "decision": "approved",
+      "targetColumn": "founded",
+      "sourceDescriptionPattern": "date or year in which the company was founded",
+      "sourceType": "string",
+      "targetType": "string",
+      "reason": "The source and target definitions refer to the organization's founding date; a year/date precision conversion is not performed and remains outside this candidate decision.",
+      "provenance": {
+        "sourceMetadata": "data/dbpedia_metadata.json#established",
+        "targetSchema": "schemamatching/target_schema.json#/properties/founded",
+        "vocabulary": "https://schema.org/Organization",
+        "term": "https://schema.org/foundingDate",
+        "review": "2026-10-22; reviewed metadata-only"
+      }
+    },
+    {
+      "sourceDataset": "dbpedia",
+      "sourceColumn": "sector",
+      "decision": "approved",
+      "targetColumn": "industry",
+      "sourceDescriptionPattern": "industry or business sector",
+      "sourceType": "string",
+      "targetType": "string",
+      "reason": "The pinned source definition explicitly describes industry/business sector and the target is primary industry; candidate only, not a controlled-vocabulary equivalence.",
+      "provenance": {
+        "sourceMetadata": "data/dbpedia_metadata.json#sector",
+        "targetSchema": "schemamatching/target_schema.json#/properties/industry",
+        "review": "2026-10-22; reviewed metadata-only"
+      }
+    },
+    {
+      "sourceDataset": "forbes",
+      "sourceColumn": "forbes_url",
+      "decision": "approved",
+      "targetColumn": "id",
+      "sourceDescriptionPattern": "Forbes URL identifying the company entry",
+      "sourceType": "string",
+      "targetType": "string",
+      "reason": "The pinned source metadata describes this URL as identifying the company entry; candidate only. No URL values or uniqueness are checked.",
+      "provenance": {
+        "sourceMetadata": "data/forbes_metadata.json#forbes_url",
+        "targetSchema": "schemamatching/target_schema.json#/properties/id",
+        "vocabulary": "https://schema.org/Organization",
+        "term": "https://schema.org/identifier",
+        "review": "2026-10-22; reviewed metadata-only"
+      }
+    },
+    {
+      "sourceDataset": "forbes",
+      "sourceColumn": "company",
+      "decision": "approved",
+      "targetColumn": "name",
+      "sourceDescriptionPattern": "company name as listed by Forbes",
+      "sourceType": "string",
+      "targetType": "string",
+      "reason": "The pinned source metadata identifies this as a company name and the target schema defines an organization name; candidate only.",
+      "provenance": {
+        "sourceMetadata": "data/forbes_metadata.json#company",
+        "targetSchema": "schemamatching/target_schema.json#/properties/name",
+        "vocabulary": "https://schema.org/Organization",
+        "term": "https://schema.org/name",
+        "review": "2026-10-22; reviewed metadata-only"
+      }
+    },
+    {
+      "sourceDataset": "dbpedia",
+      "sourceColumn": "nation",
+      "decision": "abstain",
+      "targetColumn": "country",
+      "reason": "Country associated with a company does not establish the target's headquarters-country meaning.",
+      "provenance": {
+        "sourceMetadata": "data/dbpedia_metadata.json#nation",
+        "targetSchema": "schemamatching/target_schema.json#/properties/country",
+        "review": "2026-10-22; semantic scope mismatch"
+      }
+    },
+    {
+      "sourceDataset": "forbes",
+      "sourceColumn": "region",
+      "decision": "abstain",
+      "targetColumn": "country",
+      "reason": "Region may be broader or narrower than country; the source metadata does not establish the target's headquarters-country contract.",
+      "provenance": {
+        "sourceMetadata": "data/forbes_metadata.json#region",
+        "targetSchema": "schemamatching/target_schema.json#/properties/country",
+        "review": "2026-10-22; ambiguous geography"
+      }
+    },
+    {
+      "sourceDataset": "forbes",
+      "sourceColumn": "business_segment",
+      "decision": "abstain",
+      "targetColumn": "industry",
+      "reason": "A business segment is not guaranteed to equal an organization's primary industry.",
+      "provenance": {
+        "sourceMetadata": "data/forbes_metadata.json#business_segment",
+        "targetSchema": "schemamatching/target_schema.json#/properties/industry",
+        "review": "2026-10-22; semantic ambiguity"
+      }
+    },
+    {
+      "sourceDataset": "forbes",
+      "sourceColumn": "url",
+      "decision": "abstain",
+      "targetColumn": "id",
+      "reason": "A website or related URL is not necessarily an identifier for the company.",
+      "provenance": {
+        "sourceMetadata": "data/forbes_metadata.json#url",
+        "targetSchema": "schemamatching/target_schema.json#/properties/id",
+        "review": "2026-10-22; semantic ambiguity"
+      }
+    },
+    {
+      "sourceDataset": "dbpedia",
+      "sourceColumn": "total_assets_val",
+      "decision": "abstain",
+      "targetColumn": "assets",
+      "reason": "The source metadata omits the target's required US-dollar unit and 2016 temporal target; no value-based inference or conversion is allowed.",
+      "provenance": {
+        "sourceMetadata": "data/dbpedia_metadata.json#total_assets_val",
+        "targetSchema": "schemamatching/target_schema.json#/properties/assets",
+        "review": "2026-10-22; missing unit and period"
+      }
+    },
+    {
+      "sourceDataset": "forbes",
+      "sourceColumn": "asset_value",
+      "decision": "abstain",
+      "targetColumn": "assets",
+      "reason": "The source metadata omits the target's required US-dollar unit and 2016 temporal target; no value-based inference or conversion is allowed.",
+      "provenance": {
+        "sourceMetadata": "data/forbes_metadata.json#asset_value",
+        "targetSchema": "schemamatching/target_schema.json#/properties/assets",
+        "review": "2026-10-22; missing unit and period"
+      }
+    },
+    {
+      "sourceDataset": "dbpedia",
+      "sourceColumn": "annual_income",
+      "decision": "abstain",
+      "targetColumn": "revenue",
+      "reason": "Income is not automatically revenue; no authorized accounting definition is present.",
+      "provenance": {
+        "sourceMetadata": "data/dbpedia_metadata.json#annual_income",
+        "targetSchema": "schemamatching/target_schema.json#/properties/revenue",
+        "review": "2026-10-22; semantic equivalence not authorized"
+      }
+    },
+    {
+      "sourceDataset": "forbes",
+      "sourceColumn": "sales_figure",
+      "decision": "abstain",
+      "targetColumn": "revenue",
+      "reason": "Annual sales does not establish the target's 2016 total-revenue-in-US-dollars contract.",
+      "provenance": {
+        "sourceMetadata": "data/forbes_metadata.json#sales_figure",
+        "targetSchema": "schemamatching/target_schema.json#/properties/revenue",
+        "review": "2026-10-22; missing unit/period and semantic scope"
+      }
+    }
+  ]
+}

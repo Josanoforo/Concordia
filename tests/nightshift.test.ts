@@ -9,22 +9,21 @@ test('base URL normalization avoids duplicate v1', () => {
   for (const suffix of ['', '/v1', '/v1/models', '/v1/chat/completions', '/healthz']) assert.equal(normalizeBase('127.0.0.1:8088' + suffix), 'http://127.0.0.1:8088/v1');
   assert.throws(() => normalizeBase('https://remote.example/v1'));
 });
-test('construction accepts Anthropic Haiku/Sonnet and rejects Opus/Fable regardless of predicted model', () => {
-  const policy = { route: 'meterless/cheap', requiredProvider: 'anthropic', allowedModelFamilies: ['haiku','sonnet'], forbiddenModelFamilies: ['opus','fable'], generationBlocked: false };
+test('cheap stays fixed while model/provider differences produce warnings instead of blocking', () => {
+  const policy = { route: 'meterless/cheap', preferredProvider: 'anthropic', preferredModelFamilies: ['haiku','sonnet'], watchModelFamilies: ['opus','fable'], modelPolicy: 'observe_and_continue' as const };
   const receipt = { receiptId: 'fixture', provider: 'anthropic', model: 'claude-haiku-fixture', inputTokens: 1, outputTokens: 1, totalTokens: 2, latencyMs: 1, fromCache: false, requestedMode: 'cheap', routedMode: 'cheap', modeCoerced: false };
   assert.doesNotThrow(() => assertGenerationAllowed('meterless/cheap', policy));
-  assert.doesNotThrow(() => assertEffectiveModel(receipt, policy));
+  assert.deepEqual(assertEffectiveModel(receipt, policy), []);
   assert.throws(() => assertGenerationAllowed('meterless/auto', policy));
-  assert.throws(() => assertEffectiveModel({ ...receipt, model: 'claude-opus-fixture' }, policy));
-  assert.doesNotThrow(() => assertEffectiveModel({ ...receipt, model: 'claude-sonnet-fixture', predicted: 'claude-haiku-fixture', winner: 'claude-sonnet-fixture', routingReason: 'cold-explore' }, policy));
-  assert.throws(() => assertEffectiveModel({ ...receipt, model: 'claude-fable-fixture' }, policy));
-  assert.throws(() => assertEffectiveModel({ ...receipt, model: 'claude-haiku-opus-fixture' }, policy));
-  assert.throws(() => assertEffectiveModel({ ...receipt, provider: 'other' }, policy));
-  assert.throws(() => assertEffectiveModel({ ...receipt, model: 'unknown-model', predicted: 'claude-haiku-fixture' }, policy));
-  assert.throws(() => assertGenerationAllowed('meterless/cheap', { ...policy, generationBlocked: true }));
-  assert.throws(() => assertEffectiveModel({ ...receipt, routedMode: 'auto', modeCoerced: true }, policy));
-  assert.throws(() => assertEffectiveModel({ ...receipt, requestedMode: 'auto', routedMode: 'auto', modeCoerced: false }, policy));
-  assert.throws(() => assertEffectiveModel({ ...receipt, modeCoerced: undefined }, policy));
+  assert.deepEqual(assertEffectiveModel({ ...receipt, model: 'claude-opus-fixture' }, policy), ['WATCHED_MODEL_FAMILY:opus','MODEL_NOT_PREFERRED']);
+  assert.deepEqual(assertEffectiveModel({ ...receipt, model: 'claude-sonnet-fixture', predicted: 'claude-haiku-fixture', winner: 'claude-sonnet-fixture' }, policy), []);
+  assert.deepEqual(assertEffectiveModel({ ...receipt, model: 'claude-fable-fixture' }, policy), ['WATCHED_MODEL_FAMILY:fable','MODEL_NOT_PREFERRED']);
+  assert.deepEqual(assertEffectiveModel({ ...receipt, model: 'claude-haiku-opus-fixture' }, policy), ['WATCHED_MODEL_FAMILY:opus']);
+  assert.deepEqual(assertEffectiveModel({ ...receipt, provider: 'other' }, policy), ['PROVIDER_NOT_PREFERRED']);
+  assert.deepEqual(assertEffectiveModel({ ...receipt, model: 'unknown-model' }, policy), ['MODEL_NOT_PREFERRED']);
+  assert.deepEqual(assertEffectiveModel({ ...receipt, routedMode: 'auto', modeCoerced: true }, policy), ['ROUTING_POLICY_DRIFT']);
+  assert.deepEqual(assertEffectiveModel({ ...receipt, requestedMode: 'auto', routedMode: 'auto', modeCoerced: false }, policy), ['ROUTING_POLICY_DRIFT']);
+  assert.deepEqual(assertEffectiveModel({ ...receipt, modeCoerced: undefined }, policy), ['ROUTING_POLICY_DRIFT']);
 });
 test('generation accounting continues above old ceilings without resetting receipts', () => {
   const temp=fs.mkdtempSync(path.join(ROOT,'.concordia','test-accounting-'));
@@ -90,8 +89,9 @@ test('accounting records every dispatch beyond twenty without a reserve or count
 });
 
 test('receipt resolution requires exact id and measured metadata', () => {
-  const row = { receipt_id: 'fixture-1', winning_route: { provider: 'anthropic', model: 'fixture-model' }, usage: { prompt_tokens: 12, completion_tokens: 3 }, latency_ms: 60 };
+  const row = { receipt_id: 'fixture-1', winning_route: { provider: 'anthropic', model: 'fixture-model' }, usage: { prompt_tokens: 12, completion_tokens: 3, cost_usd: 0.012 }, latency_ms: 60 };
   assert.equal(resolveReceipt({ receipts: [row] }, 'fixture-1').totalTokens, 15);
+  assert.equal(resolveReceipt({ receipts: [row] }, 'fixture-1').costUsd, 0.012);
   assert.throws(() => resolveReceipt({ receipts: [row] }, 'unrelated'));
   const signed = { data: [{ body: { receipt: { ...row, usage: { input_tokens: 12, output_tokens: 3, latency_ms: 61 } } } }] };
   assert.equal(resolveReceipt(signed, 'fixture-1').latencyMs, 61);

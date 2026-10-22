@@ -4,20 +4,25 @@ import { randomUUID } from 'node:crypto';
 import { failure, jsonHttp, localUrl, readJson, required, ROOT, SafeError, trace, writeJson } from '../runtime.ts';
 import { budgetFilePath, readBudget, writeBudget } from '../budget.ts';
 
-export type Receipt = { receiptId: string; provider: string; model: string; inputTokens: number; outputTokens: number; totalTokens: number; latencyMs: number; fromCache: boolean; requestedMode?: string; routedMode?: string; modeCoerced?: boolean; boundMode?: string; predicted?: string | null; winner?: string | null; routingReason?: string | null; routingPolicy?: string | null };
-type Attempt = { id: string; utc: string; route: string; status: string; receipt?: Receipt; error?: object };
+export type Receipt = { receiptId: string; provider: string; model: string; inputTokens: number; outputTokens: number; totalTokens: number; latencyMs: number; fromCache: boolean; requestedMode?: string; routedMode?: string; modeCoerced?: boolean; boundMode?: string; predicted?: string | null; winner?: string | null; routingReason?: string | null; routingPolicy?: string | null; costUsd?: number };
+type Attempt = { id: string; utc: string; route: string; status: string; receipt?: Receipt; policyAlerts?: string[]; error?: object };
 type Budget = { limit: null; consumed: number; attempts: Attempt[] };
-export type ModelPolicy = { route: string; requiredProvider: string; allowedModelFamilies: string[]; forbiddenModelFamilies: string[]; generationBlocked: boolean };
+export type ModelPolicy = { route: string; preferredProvider: string; preferredModelFamilies: string[]; watchModelFamilies: string[]; modelPolicy: 'observe_and_continue' };
 export function assertGenerationAllowed(route: string, policy: ModelPolicy) {
   if (route !== policy.route) throw new SafeError('CONSTRUCTION_REQUIRES_CHEAP_ROUTE');
-  if (policy.generationBlocked) throw new SafeError('NIGHTSHIFT_CONSTRUCTION_ROUTE_BLOCKED');
 }
-export function assertEffectiveModel(receipt: Receipt, policy: ModelPolicy) {
+export function assertEffectiveModel(receipt: Receipt, policy: ModelPolicy): string[] {
   const model = receipt.model.toLowerCase();
-  if (policy.forbiddenModelFamilies.some(family => model.includes(family.toLowerCase()))) throw new SafeError('FORBIDDEN_EFFECTIVE_MODEL');
-  if (receipt.provider !== policy.requiredProvider || !policy.allowedModelFamilies.some(family => model.includes(family.toLowerCase()))) throw new SafeError('CONSTRUCTION_MODEL_NOT_ALLOWED');
+  const alerts = policy.watchModelFamilies.filter(family => model.includes(family.toLowerCase())).map(family => `WATCHED_MODEL_FAMILY:${family.toLowerCase()}`);
+  if (receipt.provider !== policy.preferredProvider) alerts.push('PROVIDER_NOT_PREFERRED');
+  if (!policy.preferredModelFamilies.some(family => model.includes(family.toLowerCase()))) alerts.push('MODEL_NOT_PREFERRED');
   const requiredMode = policy.route.replace(/^meterless\//, '');
-  if (receipt.requestedMode !== requiredMode || receipt.routedMode !== requiredMode || receipt.modeCoerced !== false) throw new SafeError('ROUTE_POLICY_COERCED_OR_UNCONFIRMED');
+  if (receipt.requestedMode !== requiredMode || receipt.routedMode !== requiredMode || receipt.modeCoerced !== false) alerts.push('ROUTING_POLICY_DRIFT');
+  return [...new Set(alerts)];
+}
+function receiptSummary(receipt: Receipt): Omit<Receipt, 'receiptId'> {
+  const { receiptId: _receiptId, ...summary } = receipt;
+  return summary;
 }
 // Record dispatch before HTTP. The user removed all generation-count ceilings
 // and reserves on 2026-10-22; the continued ledger is telemetry, never a quota.
@@ -43,7 +48,7 @@ function finishAttempt(attempt: Attempt) {
   if (index < 0) throw new SafeError('BUDGET_ATTEMPT_MISSING');
   state.attempts[index] = attempt;
   writeBudget(state);
-  writeJson('evidence/generations.json', state);
+  writeJson('evidence/generations.json', { ...state, attempts: state.attempts.map(({ receipt, ...saved }) => ({ ...saved, ...(receipt ? { receipt: receiptSummary(receipt) } : {}) })) });
 }
 export function normalizeBase(value: string): string {
   const url = localUrl(value.includes('://') ? value : 'http://' + value);
@@ -62,6 +67,7 @@ export function resolveReceipt(body: any, receiptId: string): Receipt {
   const usage = receipt.usage ?? row.usage;
   const provider = route?.provider ?? receipt.provider;
   const model = route?.model ?? receipt.model;
+  const costUsd = [usage?.cost_usd, receipt.cost_usd].find(value => typeof value === 'number' && Number.isFinite(value) && value >= 0);
   const inputTokens = usage?.prompt_tokens ?? usage?.input_tokens ?? receipt.input_tokens;
   const outputTokens = usage?.completion_tokens ?? usage?.output_tokens ?? receipt.output_tokens;
   const latencyMs = usage?.latency_ms ?? receipt.latency_ms ?? receipt.duration_ms ?? row.latency_ms;
@@ -71,7 +77,7 @@ export function resolveReceipt(body: any, receiptId: string): Receipt {
   return { receiptId, provider, model, inputTokens, outputTokens, totalTokens: usage?.total_tokens ?? inputTokens + outputTokens, latencyMs, fromCache,
     requestedMode: receipt.app_policy?.requested_mode, routedMode: receipt.app_policy?.routed_mode, modeCoerced: receipt.app_policy?.mode_coerced, boundMode: receipt.app_policy?.bound_mode,
     predicted: receipt.routing?.predicted ?? null, winner: receipt.routing?.winner ?? null,
-    routingReason: receipt.routing?.reason ?? null, routingPolicy: receipt.routing?.policy ?? null };
+    routingReason: receipt.routing?.reason ?? null, routingPolicy: receipt.routing?.policy ?? null, ...(costUsd !== undefined ? { costUsd } : {}) };
 }
 export class Nightshift {
   readonly route: string; private base: string; private token: string;
@@ -108,14 +114,14 @@ export class Nightshift {
         bound_mode: null, routed_mode: null, mode_coerced: null, floor: null, raced: null, candidates: [] };
     }
   }
-  async chat(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], options: { maxTokens: number; route?: string }): Promise<{ text: string; receipt: Receipt }> {
+  async chat(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], options: { maxTokens: number; route?: string }): Promise<{ text: string; receipt: Receipt; policyAlerts: string[] }> {
     const config = readJson('config/budget.json');
     if (!Number.isInteger(options.maxTokens) || options.maxTokens < 1 || options.maxTokens > Math.min(2000, config.maxTokensPerGeneration)) throw new SafeError('INVALID_MAX_TOKENS');
     const route = options.route ?? this.route;
     if (!route.startsWith('meterless/') || /(?:^|[/.])(?:local|fusion)(?:$|[/.])/.test(route)) throw new SafeError('FORBIDDEN_METERLESS_ROUTE');
     const policy = readJson<ModelPolicy>('config/model-policy.json');
-    // Fail before reserving budget or making HTTP calls. A route name cannot
-    // prevent an upstream override; leave dispatch blocked until human adjustment.
+    // Keep cheap as the requested route. Model/provider differences are telemetry,
+    // not a dispatch or post-receipt gate.
     assertGenerationAllowed(route, policy);
     const attempt = reserveGeneration(route);
     let receivedText: string | undefined;
@@ -126,22 +132,20 @@ export class Nightshift {
       receivedText = text;
       const receiptId = response.meterless?.receipt_id;
       if (typeof receiptId !== 'string') throw new SafeError('RECEIPT_ID_MISSING');
-      writeJson(`evidence/generation-${attempt.id}.json`, { utc: attempt.utc, attemptId: attempt.id, route, text, receiptId, status: 'TEXT_RECEIVED_RECEIPT_PENDING' });
+      writeJson(`evidence/generation-${attempt.id}.json`, { utc: attempt.utc, attemptId: attempt.id, route, status: 'TEXT_RECEIVED_RECEIPT_PENDING', responsePresent: true, receiptObserved: true });
       const receipt = resolveReceipt(await this.receipts(), receiptId);
       attempt.receipt = receipt;
       if (response.meterless?.from_cache || receipt.fromCache) throw new SafeError('CACHED_GENERATION_NOT_LIVE');
-      assertEffectiveModel(receipt, policy);
-      attempt.status = 'PASS'; attempt.receipt = receipt;
-      writeJson(`evidence/generation-${attempt.id}.json`, { utc: attempt.utc, attemptId: attempt.id, route, text, receiptId, receipt, status: 'PASS' });
-      finishAttempt(attempt); trace({ kind: 'nightshift', attemptId: attempt.id, status: 'PASS', route, ...receipt });
-      return { text, receipt };
+      const policyAlerts = assertEffectiveModel(receipt, policy);
+      attempt.policyAlerts = policyAlerts;
+      attempt.status = policyAlerts.length ? 'PASS_WITH_POLICY_ALERT' : 'PASS';
+      writeJson(`evidence/generation-${attempt.id}.json`, { utc: attempt.utc, attemptId: attempt.id, route, responsePresent: true, receiptObserved: true, receipt: receiptSummary(receipt), policyAlerts, status: attempt.status });
+      finishAttempt(attempt); trace({ kind: 'nightshift', attemptId: attempt.id, status: attempt.status, route, ...receiptSummary(receipt), policyAlerts });
+      return { text, receipt, policyAlerts };
     } catch (error) {
       attempt.status = 'FAIL'; attempt.error = failure(error); finishAttempt(attempt);
       if (receivedText) writeJson(`evidence/generation-${attempt.id}.json`, { utc: attempt.utc, attemptId: attempt.id, route,
-        text: receivedText, receipt: attempt.receipt, status: 'FAIL', error: attempt.error });
-      const updatedPolicy = readJson('config/model-policy.json');
-      updatedPolicy.generationBlocked = true; updatedPolicy.blockReason = failure(error).code;
-      writeJson('config/model-policy.json', updatedPolicy);
+        responsePresent: true, receiptObserved: Boolean(attempt.receipt), ...(attempt.receipt ? { receipt: receiptSummary(attempt.receipt) } : {}), status: 'FAIL', error: attempt.error });
       trace({ kind: 'nightshift', attemptId: attempt.id, status: 'FAIL', route, ...failure(error) });
       throw error;
     }
