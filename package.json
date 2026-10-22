@@ -1,0 +1,40 @@
+{
+  "name": "concordia",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "smoke": "node scripts/run-tsx.mjs src/cli.ts smoke",
+    "test-connection": "node scripts/run-tsx.mjs src/cli.ts test-connection",
+    "route-preview": "node scripts/run-tsx.mjs src/cli.ts route-preview",
+    "complete-llm": "node scripts/run-tsx.mjs src/cli.ts complete-llm",
+    "discover": "node scripts/run-tsx.mjs src/cli.ts discover",
+    "probe": "node scripts/run-tsx.mjs src/cli.ts probe",
+    "critic": "node scripts/run-tsx.mjs src/cli.ts critic",
+    "eval-critic": "node scripts/run-tsx.mjs src/cli.ts eval-critic",
+    "publish-decisions": "node scripts/run-tsx.mjs src/cli.ts publish-decisions",
+    "verdict": "node scripts/run-tsx.mjs src/cli.ts verdict",
+    "eval": "node scripts/run-tsx.mjs src/cli.ts eval",
+    "usl": "node scripts/run-tsx.mjs src/cli.ts usl",
+    "conformance": "node scripts/run-tsx.mjs scripts/conformance.ts",
+    "hmem-smoke": "node scripts/run-tsx.mjs src/cli.ts hmem-smoke",
+    "demo": "node scripts/run-tsx.mjs src/cli.ts demo",
+    "reconcile": "node scripts/run-tsx.mjs src/cli.ts reconcile",
+    "review": "node scripts/run-tsx.mjs src/cli.ts review",
+    "register": "node scripts/run-tsx.mjs src/cli.ts register",
+    "typecheck": "tsc --noEmit",
+    "test": "node scripts/run-tsx.mjs --test tests/*.test.ts",
+    "check-secrets": "node scripts/check-secrets.mjs",
+    "fetch-madi": "node scripts/fetch-madi.mjs",
+    "usl-dossier": "node scripts/run-tsx.mjs src/cli.ts usl-dossier"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}

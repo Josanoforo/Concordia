@@ -1,0 +1,8 @@
+{
+  "universe": "U2",
+  "cases": [
+    {"id":"zero_padded_cik_literal_trap","relationId":"cik_text_trap","expected":"not_counterprobed_when_non_sustained"},
+    {"id":"canonical_integer_cik","relationId":"cik_normalized","expected":"counterprobe_when_sustained"},
+    {"id":"company_sic_exists","relationId":"company_sic_reference","expected":"counterprobe_when_sustained"}
+  ]
+}

@@ -1,0 +1,250 @@
+[
+  {
+    "id": "EC01",
+    "descripción": "Coerción numérica de 1, 1.0 y 01 sin truncar 1.25 ni imponer equivalencia a códigos textuales.",
+    "cómo se construye con nuestros universos o sintético": "Fixture offline con claves string 1, 1.0, 01, 001.00, 1.25 y códigos de producto 01/1. Contrato numérico separado del textual; mismos atributos semánticos y al menos tres claves distintas para U1.",
+    "veredicto esperado": "SOSTENIDA solo bajo contrato numérico explícito y demás gates satisfechos; 1.25 permanece distinto. En dominio textual, 01/1 no se fusionan sin evidencia autorizada.",
+    "estado actual": "cubierto",
+    "evidencia actual": "tests/edge-cases.test.ts EC01 y tests/universe-pipeline.test.ts cubren el modo numérico explícito, decimal genuino y control textual; no prueban cast remoto.",
+    "destino": "ENCARGO_07; sin cast remoto",
+    "criterio de aceptación": "Preservar canonización numérica verificada y distinguir el control textual; registrar normalización aplicada, sin nueva consulta.",
+    "ejecutado en este encargo": true
+  },
+  {
+    "id": "EC02",
+    "descripción": "CIK con zero-padding: 320193 frente a 0000320193.",
+    "cómo se construye con nuestros universos o sintético": "Reutilizar estructura de U2 con hechos/submissions sintéticos de Apple; construir dos aristas independientes, igualdad textual y normalización entera exacta.",
+    "veredicto esperado": "Literal INDETERMINADA; normalizada SOSTENIDA bajo contrato CIK y mínimo U2=1 ya documentado. La prohibición literal no bloquea la arista normalizada.",
+    "estado actual": "cubierto",
+    "evidencia actual": "tests/edge-cases.test.ts EC02 y tests/universe-pipeline.test.ts comparan igualdad literal y CIK normalizado por separado; el caso es sintético y offline.",
+    "destino": "ENCARGO_07; aristas de evaluación real conservadas",
+    "criterio de aceptación": "Conservar Negative USL por operación y no atribuir a otra empresa el vínculo perdido por formato.",
+    "ejecutado en este encargo": true
+  },
+  {
+    "id": "EC03",
+    "descripción": "Mayúsculas, espacios y Unicode NFC/NFD en claves textuales.",
+    "cómo se construye con nuestros universos o sintético": "Claves sintéticas ACME/acme, espacios exteriores e interiores, café precompuesto/descompuesto y dos identificadores donde case sí sea significativo.",
+    "veredicto esperado": "INDETERMINADA sin contrato de normalización del dominio; solo equivalencias autorizadas pueden sostenerse. No eliminar tildes ni aplicar lowercase universal.",
+    "estado actual": "no cubierto",
+    "evidencia actual": "canonicalKey hace trim; la normalización de etiquetas no constituye contrato Unicode/case de claves.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC04",
+    "descripción": "Nulos masivos: 19/20 nulos, 20/20 nulos y tres claves válidas entre muchos nulos.",
+    "cómo se construye con nuestros universos o sintético": "Respuestas offline tipo U1 con 20 filas y distintos grados de null/vacío; incluir control de U2 con mínimo específico=1 sin heredar ese mínimo a U1.",
+    "veredicto esperado": "INDETERMINADA si no alcanza el mínimo distinto no nulo; cero semillas nunca produce 100 % ni SOSTENIDA. Con suficientes claves, informar nullRate y alcance sin garantizar integridad global.",
+    "estado actual": "cubierto",
+    "evidencia actual": "tests/edge-cases.test.ts EC04 verifica 19/20 nulos, valores vacíos, denominador explícito y cero claves con ratio nulo; fixture offline.",
+    "destino": "ENCARGO_07",
+    "criterio de aceptación": "Denominador explícito, ratio nulo cuando no hay claves y separación de vacío, ausencia de observación y contradicción.",
+    "ejecutado en este encargo": true
+  },
+  {
+    "id": "EC05",
+    "descripción": "Clave compuesta tenant_id más local_id; cada columna aislada colisiona.",
+    "cómo se construye con nuestros universos o sintético": "Dos tenants sintéticos reutilizan IDs 1–3 con etiquetas distintas; solo la tupla identifica la entidad.",
+    "veredicto esperado": "INDETERMINADA para FK simple; documentar que hace falta clave compuesta. No concatenar sin codificación inequívoca y contrato explícito.",
+    "estado actual": "no cubierto",
+    "evidencia actual": "Endpoint de discovery contiene una columna; no hay evidencia de soporte general de tuplas.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC06",
+    "descripción": "Many-to-many accidental con overlap perfecto y multiplicación de filas.",
+    "cómo se construye con nuestros universos o sintético": "Dos tablas offline con tres claves; cada clave tiene dos filas de origen y tres de destino, etiquetas compatibles. Contrafactual local da seis pares por clave.",
+    "veredicto esperado": "INDETERMINADA para pretensión de FK simple; informar multiplicidad observada y bloquear publicación de esa FK hasta revisar cardinalidad. No ENGAÑOSA solo por multiplicidad.",
+    "estado actual": "cubierto",
+    "evidencia actual": "tests/edge-cases.test.ts EC06 verifica 2×3 filas por clave, 18 pares compartidos y bloqueo INDETERMINADA; probe informa multiplicidad observada y marca el límite acotado.",
+    "destino": "ENCARGO_07; no prueba cardinalidad global",
+    "criterio de aceptación": "No producir SOSTENIDA como garantía de lado uno por overlap=1; mostrar diferencia entre claves distintas y filas emparejadas.",
+    "ejecutado en este encargo": true
+  },
+  {
+    "id": "EC07",
+    "descripción": "Duplicados observables en el lado uno, con etiquetas iguales o contradictorias.",
+    "cómo se construye con nuestros universos o sintético": "Copiar estructura de catálogo U1 en fixture; duplicar clave 1 dos veces y mantener claves 2/3. Variante con duplicado fuera del fragmento limitado.",
+    "veredicto esperado": "Duplicado observado: INDETERMINADA para FK; etiquetas contradictorias pueden satisfacer por separado la regla ENGAÑOSA. No observar duplicados no prueba unicidad global.",
+    "estado actual": "cubierto",
+    "evidencia actual": "tests/edge-cases.test.ts EC07 prueba duplicado observado como INDETERMINADA y contradicción de etiquetas como ENGAÑOSA; la respuesta truncada no acredita unicidad.",
+    "destino": "ENCARGO_07; duplicados fuera del fragmento siguen siendo límite",
+    "criterio de aceptación": "Conservar la evidencia del duplicado y degradar sin borrar la historia; rotular límites de respuesta.",
+    "ejecutado en este encargo": true
+  },
+  {
+    "id": "EC08",
+    "descripción": "Claves sustitutas reutilizadas en zonas 1–3, con significado diferente.",
+    "cómo se construye con nuestros universos o sintético": "Fixture U1 con IDs 1–3 en ambos catálogos, nombres/borough sintéticos incompatibles; incluir control con etiquetas equivalentes.",
+    "veredicto esperado": "ENGAÑOSA cuando hay coincidencia de claves y desacuerdo de etiquetas bajo umbral; el control compatible puede sostenerse con los gates existentes. Preservar corrección humana para zona 1 sin extenderla a borough.",
+    "estado actual": "cubierto",
+    "evidencia actual": "tests/edge-cases.test.ts EC08 prueba tres IDs sintéticos con etiquetas contradictorias y control compatible; preserva el alcance de muestra.",
+    "destino": "ENCARGO_07; la corrección humana no se propaga a borough",
+    "criterio de aceptación": "No confundir IDs coincidentes con identidad; Negative USL conserva motivo y evidencia, impacto solo sobre filas de catálogo muestreadas.",
+    "ejecutado en este encargo": true
+  },
+  {
+    "id": "EC09",
+    "descripción": "IDs o códigos que cambian de semántica por versión: company_dns V3/V4.",
+    "cómo se construye con nuestros universos o sintético": "Dos fixtures versionados con igual código SIC y distinta descripción; segundo control donde solo cambia formato. No afirmar que las fuentes reales cambiaron así sin comprobarlo.",
+    "veredicto esperado": "INDETERMINADA hasta comparar contratos/versiones; ENGAÑOSA si se demuestra contradicción de etiquetas; evidencia previa queda histórica, sin mezclar versiones.",
+    "estado actual": "desconocido",
+    "evidencia actual": "REPORTE_D2.md documenta uso V4 frente a referencia V3; no prueba detección general de cambio semántico entre versiones.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC10",
+    "descripción": "Fechas ambiguas, formatos diferentes y zonas horarias.",
+    "cómo se construye con nuestros universos o sintético": "Fechas 01/02/2026 bajo dos locales; timestamps del mismo instante con offsets distintos; fecha sin hora y hora local sin offset.",
+    "veredicto esperado": "INDETERMINADA sin locale/zona/granularidad; equivalencia solo tras contrato explícito. Fecha de calendario no equivale automáticamente a instante UTC.",
+    "estado actual": "no cubierto",
+    "evidencia actual": "No se identificó contrato general de normalización temporal en las rutas inspeccionadas.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC11",
+    "descripción": "created_at de ingesta frente a fecha del evento o periodo financiero.",
+    "cómo se construye con nuestros universos o sintético": "Dos claims sintéticos: ingesta reciente de un dato antiguo e ingesta antigua de un dato del periodo correcto.",
+    "veredicto esperado": "Conflicto en cola/INDETERMINADA sin política temporal del atributo; no elegir automáticamente por created_at.",
+    "estado actual": "no cubierto",
+    "evidencia actual": "La fecha de observación y recencia de memoria no prueban la vigencia temporal del valor.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC12",
+    "descripción": "Mismo nombre de columna, distinto significado: status de pago frente a status de empresa.",
+    "cómo se construye con nuestros universos o sintético": "Tablas sintéticas con campo status y valores 1–3, pero descripciones de dominio incompatibles.",
+    "veredicto esperado": "INDETERMINADA por metadatos incompatibles; ENGAÑOSA solo si hay evidencia semántica comparable que satisface la regla. No proponer FK por nombre/tipo solamente.",
+    "estado actual": "desconocido",
+    "evidencia actual": "U1 cubre un ejemplo de IDs compartidos; no demuestra resolución semántica general de homónimos.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC13",
+    "descripción": "Nombres distintos potencialmente relacionados: income/revenue y sales/revenue.",
+    "cómo se construye con nuestros universos o sintético": "Metadatos sintéticos U3 para annual_income, revenue y sales; variante con definición contable autorizada y variante ambigua, sin valores reales.",
+    "veredicto esperado": "income/revenue INDETERMINADA sin definición; alias sales/revenue solo con metadatos aprobados, tipo/unidad/periodo compatibles y predictor congelado.",
+    "estado actual": "cubierto",
+    "evidencia actual": "tests/d3.test.ts verifica abstención de annual_income; REPORTE_D3.md registra el FN. Cubierto como abstención, no como recuperación del mapping.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC14",
+    "descripción": "Primeras 20 filas no representativas y crítico que reutiliza las mismas claves.",
+    "cómo se construye con nuestros universos o sintético": "Fixture de 100 claves: primeras 20 compatibles, restantes incompatibles; entregar por separado una franja posterior controlada.",
+    "veredicto esperado": "Primera muestra solo permite SOSTENIDA acotada; contradicción posterior obliga a revisión/degradación. Repetir las mismas claves no se etiqueta muestra independiente.",
+    "estado actual": "no cubierto",
+    "evidencia actual": "Discovery usa LIMIT 20; crítico inspeccionado reutiliza sampleKeys. No hay demostración de muestreo representativo.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC15",
+    "descripción": "Tablas vacías en un lado o ambos lados.",
+    "cómo se construye con nuestros universos o sintético": "Respuestas offline vacías frente a catálogo de tres claves y variante ambos vacíos.",
+    "veredicto esperado": "INDETERMINADA por falta de evidencia; ratio no definido, sin vacuidad interpretada como SOSTENIDA ni ENGAÑOSA.",
+    "estado actual": "desconocido",
+    "evidencia actual": "Existen gates de semillas/métricas vacías, pero no se acreditó todo el recorrido discovery→dossier.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC16",
+    "descripción": "Tabla enorme o fuente lenta con timeout pese a LIMIT.",
+    "cómo se construye con nuestros universos o sintético": "Respuesta de timeout inyectada en fixture; conservar referencia documental a hvv excluida. No consultar ni reactivar hvv.",
+    "veredicto esperado": "INDETERMINADA o fallo operativo explícito según etapa, nunca ENGAÑOSA por timeout. Preservar exclusión por coste y evidencia histórica fechada.",
+    "estado actual": "cubierto",
+    "evidencia actual": "REPORTE_D3.md documenta exclusión hvv; cobertura referida a política concreta, no a todos los backends ni límites oficiales de ACTIVATE.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC17",
+    "descripción": "Drift entre corrida fría y caliente: cambio de etiquetas, esquema o versión de fuente.",
+    "cómo se construye con nuestros universos o sintético": "Tres estados offline: fría correcta, caliente sin cambios y caliente con copia sintética alterada de zones. Mantener versión y dependencias de evidencia sin escribir en Zetaris.",
+    "veredicto esperado": "Sin cambios: reutilización fechada. Contradicción nueva: estado de vigilancia DEGRADADA y veredicto INDETERMINADA para revisión, claim histórico preservado y FK marcada. Fallo de transporte no equivale a contradicción.",
+    "estado actual": "cubierto como contrato",
+    "evidencia actual": "tests/edge-cases.test.ts EC17 fija reutilización fechada y degradación por versión/schema distinto; el watcher P4 y su experimento siguen asignados a Fase 2.",
+    "destino": "Contrato ENCARGO_07; completar vigilancia P4 en Fase 2",
+    "criterio de aceptación": "No servir como fresca evidencia de otra versión; medir preservación/invalidez de decisiones y sondas por separado; ninguna actualización USL automática.",
+    "ejecutado en este encargo": true
+  },
+  {
+    "id": "EC18",
+    "descripción": "REST con rate limit 429 después de una respuesta parcial.",
+    "cómo se construye con nuestros universos o sintético": "Fixture U2: primer fragmento exitoso y segundo 429, con Retry-After; variante donde no se conoce si la operación terminó. Sin llamadas reales ni esperas automáticas.",
+    "veredicto esperado": "Evidencia incompleta/INDETERMINADA para la corrida o fallo operativo explícito; no computar overlap=100 % sobre el fragmento como confirmación. Histórico conserva fecha y estado.",
+    "estado actual": "cubierto como contrato",
+    "evidencia actual": "tests/edge-cases.test.ts EC18 verifica fragmento y requestId preservados, 429 como evidencia incompleta/INDETERMINADA y sin retry; no prueba paginación de un backend real.",
+    "destino": "Contrato ENCARGO_07; integrar transporte parcial con P4 en Fase 2",
+    "criterio de aceptación": "Registrar fragmento/requestId y fallo sin credenciales; reintento solo bajo política posterior de presupuesto, sin bucle ilimitado ni nueva generación.",
+    "ejecutado en este encargo": true
+  },
+  {
+    "id": "EC19",
+    "descripción": "LIMIT oculta claves y duplicados; una sola clave ocupa toda la respuesta.",
+    "cómo se construye con nuestros universos o sintético": "Fixture destino con 50 filas de clave 1 y claves 2/3 posteriores; respuesta limitada devuelve solo clave 1 aunque todas existan.",
+    "veredicto esperado": "INDETERMINADA por evidencia acotada/incompleta; reportar duplicados observados. Clave no devuelta no se declara inexistente globalmente.",
+    "estado actual": "no cubierto",
+    "evidencia actual": "Sondas con WHERE IN y LIMIT no establecen completitud ni ausencia global.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC20",
+    "descripción": "Campo opaco FullContact y restricción de privacidad.",
+    "cómo se construye con nuestros universos o sintético": "Solo metadatos sintéticos Attribute_1 y descripción no informativa, sin valores; control con diccionario semántico autorizado creado independientemente del gold.",
+    "veredicto esperado": "INDETERMINADA sin diccionario; no leer valores ni inferir mapping del gold. Mantener FN en denominador completo y documentar límite de identificabilidad.",
+    "estado actual": "cubierto",
+    "evidencia actual": "REPORTE_D3.md y tests/d3.test.ts; cobertura como abstención/privacidad, no como recuperación de campos opacos.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC21",
+    "descripción": "Fuentes copiadas y reinyección que aparenta múltiples apoyos independientes.",
+    "cómo se construye con nuestros universos o sintético": "Tres claims sintéticos: A original, B copia con mismo origen y C independiente contradictorio; reinyectar A en corrida caliente.",
+    "veredicto esperado": "Conflicto en cola si no hay evidencia comparable suficiente; copia/reinyección no aumenta confianza como voto independiente. Preservar lineage y alternativas.",
+    "estado actual": "desconocido",
+    "evidencia actual": "Ledger y claims existen, pero no se acreditó modelado de dependencia estadística entre fuentes.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC22",
+    "descripción": "Enteros fuera del rango exacto de Number y pérdida anterior a BigInt.",
+    "cómo se construye con nuestros universos o sintético": "Claves string 9007199254740992 y 9007199254740993; variante donde el transporte ya las convirtió a número.",
+    "veredicto esperado": "Strings permanecen distintas; transporte numérico potencialmente redondeado requiere INDETERMINADA o rechazo de normalización, nunca reconstrucción inventada.",
+    "estado actual": "cubierto",
+    "evidencia actual": "canonicalKey usa BigInt de strings; tests/universe-pipeline.test.ts cubre precisión local. No certifica transporte previamente redondeado.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC23",
+    "descripción": "Claves coincidentes sin etiquetas comparables.",
+    "cómo se construye con nuestros universos o sintético": "Dos tablas de tres claves compatibles, labels vacías; tercer control con etiquetas conocidas contradictorias.",
+    "veredicto esperado": "La regla actual puede emitir SOSTENIDA acotada sin etiquetas; informe debe indicar semántica no verificada. El control contradictorio puede ser ENGAÑOSA; no asignar acuerdo=100 % a etiquetas ausentes.",
+    "estado actual": "cubierto",
+    "evidencia actual": "src/probe/verdicts.ts admite labelAgreement ausente y lo explica; esto no demuestra identidad semántica.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  },
+  {
+    "id": "EC24",
+    "descripción": "Mismo atributo con moneda, escala o periodo diferentes.",
+    "cómo se construye con nuestros universos o sintético": "Claims sintéticos revenue en USD/unidades/año frente a EUR/millones/trimestre y control con unidad/periodo equivalentes.",
+    "veredicto esperado": "INDETERMINADA/conflicto pendiente hasta contrato de conversión y periodo; no promediar ni elegir por magnitud. Control compatible conserva provenance de cualquier transformación autorizada.",
+    "estado actual": "no cubierto",
+    "evidencia actual": "Abstención income/revenue no implica soporte de unidades, moneda o periodos financieros.",
+    "destino": "límite documentado",
+    "ejecutado en este encargo": false
+  }
+]

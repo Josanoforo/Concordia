@@ -1,0 +1,10 @@
+{
+  "universe": "U1",
+  "cases": [
+    {"id":"conflicting_zone_catalogs","from":"zones.zone_id","to":"taxi_zones.LocationID","symmetric":true,"expected":"not_counterprobed_when_non_sustained"},
+    {"id":"yellow_pickup_location","from":"yellow_taxi.PULocationID","to":"taxi_zones.LocationID","expected":"counterprobe_when_sustained"},
+    {"id":"operational_pickup_zone","from":"trips.pickup_zone_id","to":"zones.zone_id","expected":"counterprobe_when_sustained"},
+    {"id":"green_schema_alert","from":"green_taxi.PULocationID","to":"taxi_zones.LocationID","expected":"not_counterprobed_when_non_sustained"},
+    {"id":"fhv_missing_pickup","from":"for_hire_vehicles.PUlocationID","to":"taxi_zones.LocationID","expected":"counterprobe_when_sustained"}
+  ]
+}

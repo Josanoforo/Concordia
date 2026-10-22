@@ -1,0 +1,14 @@
+{
+  "sustainedOverlap": 0.8,
+  "sustainedLabelAgreement": 0.8,
+  "misleadingLabelAgreement": 0.5,
+  "minDistinctKeys": 3,
+  "sampleLimit": 20,
+  "probeLimit": 50,
+  "maxProbesPerRelation": 3,
+  "criticOverlapFloor": 0.8,
+  "criticLabelAgreementFloor": 0.8,
+  "criticSampleLimit": 20,
+  "criticProbeLimit": 50,
+  "criticMaxProbesPerRelation": 3
+}

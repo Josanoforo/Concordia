@@ -1,0 +1,8 @@
+{
+  "synthetic": true,
+  "notice": "Ejemplo propio de contrato, no tabla MaDI ni gold.",
+  "source": "SYNTH_COMPANY",
+  "columns": [{"name":"company_title","description":"Company name","type":"string"}],
+  "rows": [["Synthetic Organization A"],["Synthetic Organization B"],["Synthetic Organization C"]],
+  "targetConcept": "name"
+}

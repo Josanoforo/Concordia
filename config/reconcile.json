@@ -1,0 +1,11 @@
+{
+  "attributeBase": 0.55,
+  "sampleQualityWeight": 0.15,
+  "relationBase": 0.50,
+  "relationOverlapWeight": 0.25,
+  "compatibleTypeWeight": 0.10,
+  "autoMinimumWinner": 0.70,
+  "autoMinimumMargin": 0.20,
+  "userCorrectionConfidence": 0.99,
+  "description": "Evidence scores, not calibrated probabilities. Attribute score = .55 + .15*(1-nullRate); relation score = .50 + .25*overlap + .10*typeCompat. Auto only if winner >= .70 and margin >= .20; otherwise queue. No source-specific preference."
+}

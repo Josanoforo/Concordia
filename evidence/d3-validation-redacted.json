@@ -1,0 +1,24 @@
+{
+  "artifactType": "redacted-derivative",
+  "sourceArtifact": "evidence/d3-checks.json",
+  "redactions": [
+    "utc",
+    "transcript path"
+  ],
+  "status": "PASS",
+  "typecheck": {
+    "exitCode": 0
+  },
+  "tests": {
+    "exitCode": 0,
+    "total": 37,
+    "passed": 37,
+    "failed": 0,
+    "skipped": 0
+  },
+  "conformance": {
+    "status": "PASS",
+    "exitCode": 0,
+    "observedChecks": "13/13"
+  }
+}

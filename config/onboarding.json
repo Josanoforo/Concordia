@@ -1,0 +1,11 @@
+{
+  "userAgent": "Concordia/0.2 contact@example.invalid",
+  "contactAuthorization": "Replace with an operator-controlled contact and enable registration before using sources that require one.",
+  "registrationEnabled": false,
+  "sources": [
+    {"id":"pokeapi","optionalCanary":true},
+    {"id":"company_dns"},
+    {"id":"edgar_facts"},
+    {"id":"edgar_profiles"}
+  ]
+}

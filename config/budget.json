@@ -1,0 +1,6 @@
+{
+  "phase": "default",
+  "generationCountPolicy": "unlimited",
+  "maxTokensPerGeneration": 2000,
+  "automaticRetries": 0
+}

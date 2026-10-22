@@ -1,0 +1,13 @@
+{
+  "route": "meterless/cheap",
+  "requiredProvider": "anthropic",
+  "allowedModelFamilies": [
+    "haiku",
+    "sonnet"
+  ],
+  "forbiddenModelFamilies": [
+    "opus",
+    "fable"
+  ],
+  "generationBlocked": true
+}

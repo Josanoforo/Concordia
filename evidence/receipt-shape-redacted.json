@@ -1,0 +1,42 @@
+{
+  "artifactType": "redacted-schema-extract",
+  "sourceArtifact": "evidence/receipt-schema.json",
+  "redactions": [
+    "request and receipt identifiers",
+    "signatures and public keys",
+    "provider response metadata",
+    "usage values"
+  ],
+  "shape": {
+    "object": "string",
+    "data": {
+      "length": 5,
+      "first": {
+        "body": {
+          "llama_cpp_ref": "string",
+          "manifest_hash": "string",
+          "receipt": {
+            "app": "string",
+            "cost": {
+              "amount": "number",
+              "currency": "string"
+            },
+            "error": "string",
+            "mode": "string",
+            "request_id": "string",
+            "schema": "string",
+            "status": "string",
+            "usage": {
+              "input_tokens": "number",
+              "output_tokens": "number"
+            }
+          },
+          "signer": "string",
+          "ts_ms": "number"
+        },
+        "pubkey_b64": "string",
+        "sig_b64": "string"
+      }
+    }
+  }
+}

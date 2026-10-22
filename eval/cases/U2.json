@@ -1,0 +1,8 @@
+{
+  "minCorrect":3,
+  "cases":[
+    {"id":"zero_padded_cik_literal_trap","relationId":"cik_text_trap","expected":["INDETERMINADA","ENGAÑOSA"]},
+    {"id":"canonical_integer_cik","relationId":"cik_normalized","expected":["SOSTENIDA"]},
+    {"id":"company_sic_exists","relationId":"company_sic_reference","expected":["SOSTENIDA"]}
+  ]
+}

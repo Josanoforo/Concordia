@@ -1,0 +1,21 @@
+{
+  "artifactType": "redacted-derivative",
+  "sourceArtifact": "evidence/madi-license.json",
+  "redactions": [
+    "audit timestamp",
+    "local paths"
+  ],
+  "revision": "062058d09c8abd97026e6d4e9908b433753f58d3",
+  "rootLicensePaths": [],
+  "paper": {
+    "url": "https://arxiv.org/abs/2606.30371v2",
+    "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+    "scope": "article only; checked 2026-10-22"
+  },
+  "sourceMetadataLicenses": {
+    "dbpedia_metadata.json": "https://creativecommons.org/licenses/by-sa/3.0/",
+    "forbes_metadata.json": "https://creativecommons.org/licenses/by/4.0/",
+    "fullcontact_metadata.json": null
+  },
+  "redistributionNote": "No source datasets or gold files are included."
+}

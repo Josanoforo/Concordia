@@ -1,0 +1,4 @@
+{
+  "U1": ["hvv"],
+  "reason": "Leader-authorized 03b cost exclusion: one original 60s timeout, one authorized 120s retry exhausted. D3 must not query hvv again; prior bounded source/probe evidence remains explicitly CACHED."
+}

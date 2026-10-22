@@ -1,0 +1,385 @@
+{
+  "id": "U1",
+  "database": "NY_TAXI",
+  "normalizationContract": {
+    "defaultMode": "integer",
+    "modes": {
+      "integer": {"meaning": "Numeric zone identifiers; outer whitespace and a zero-only decimal suffix such as .0 are formatting. Leading zeroes are numeric padding only for these ID columns.", "caseSensitive": true, "suffixes": {".0": "insignificant"}},
+      "text": {"meaning": "Exact text identifiers; case, whitespace, leading zeroes, punctuation and Unicode code points remain significant.", "caseSensitive": true, "outerWhitespace": "significant", "unicode": "exact"}
+    },
+    "scope": "This contract applies to configured U1 location/zone identifier columns and does not assert global uniqueness or extend to other datasets."
+  },
+  "derivedFrom": "../report/exploracion_datos_zetaris/INVENTARIO_TABLAS.csv",
+  "excludedTables": [
+    "drivers",
+    "customers",
+    "vehicles",
+    "driver_shifts",
+    "trip_payments"
+  ],
+  "sampleLimit": 20,
+  "tables": {
+    "taxi_zones": {
+      "columns": [
+        {
+          "name": "LocationID",
+          "type": "string"
+        },
+        {
+          "name": "zone",
+          "type": "string"
+        },
+        {
+          "name": "borough",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "LocationID"
+      ],
+      "labels": [
+        "zone",
+        "borough"
+      ],
+      "role": "dimension"
+    },
+    "zones": {
+      "columns": [
+        {
+          "name": "zone_id",
+          "type": "string"
+        },
+        {
+          "name": "zone_name",
+          "type": "string"
+        },
+        {
+          "name": "borough",
+          "type": "string"
+        },
+        {
+          "name": "area_type",
+          "type": "string"
+        },
+        {
+          "name": "avg_demand_score",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "zone_id"
+      ],
+      "labels": [
+        "zone_name",
+        "borough"
+      ],
+      "role": "dimension"
+    },
+    "yellow_taxi": {
+      "columns": [
+        {
+          "name": "PULocationID",
+          "type": "string"
+        },
+        {
+          "name": "DOLocationID",
+          "type": "string"
+        },
+        {
+          "name": "tpep_pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "tpep_dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "passenger_count",
+          "type": "string"
+        },
+        {
+          "name": "trip_distance",
+          "type": "string"
+        },
+        {
+          "name": "RatecodeID",
+          "type": "string"
+        },
+        {
+          "name": "fare_amount",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "PULocationID",
+        "DOLocationID"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "green_taxi": {
+      "columns": [
+        {
+          "name": "PULocationID",
+          "type": "string"
+        },
+        {
+          "name": "DOLocationID",
+          "type": "string"
+        },
+        {
+          "name": "lpep_pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "lpep_dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "passenger_count",
+          "type": "string"
+        },
+        {
+          "name": "trip_distance",
+          "type": "string"
+        },
+        {
+          "name": "fare_amount",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "PULocationID",
+        "DOLocationID"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "for_hire_vehicles": {
+      "columns": [
+        {
+          "name": "PUlocationID",
+          "type": "string"
+        },
+        {
+          "name": "DOlocationID",
+          "type": "string"
+        },
+        {
+          "name": "pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "dropOff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "SR_Flag",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "PUlocationID",
+        "DOlocationID"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "hvv": {
+      "columns": [
+        {
+          "name": "PULocationID",
+          "type": "string"
+        },
+        {
+          "name": "DOLocationID",
+          "type": "string"
+        },
+        {
+          "name": "pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "trip_miles",
+          "type": "string"
+        },
+        {
+          "name": "trip_time",
+          "type": "string"
+        },
+        {
+          "name": "base_passenger_fare",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "PULocationID",
+        "DOLocationID"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "taxi_trips": {
+      "columns": [
+        {
+          "name": "trip_id",
+          "type": "string"
+        },
+        {
+          "name": "pickup_location_id",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_location_id",
+          "type": "string"
+        },
+        {
+          "name": "pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "passenger_count",
+          "type": "string"
+        },
+        {
+          "name": "trip_distance",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "pickup_location_id",
+        "dropoff_location_id"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "trips": {
+      "columns": [
+        {
+          "name": "trip_id",
+          "type": "string"
+        },
+        {
+          "name": "pickup_zone_id",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_zone_id",
+          "type": "string"
+        },
+        {
+          "name": "pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "pickup_zone_id",
+        "dropoff_zone_id"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "weather_data": {
+      "columns": [
+        {
+          "name": "zone_id",
+          "type": "string"
+        },
+        {
+          "name": "datetime",
+          "type": "string"
+        },
+        {
+          "name": "temperature",
+          "type": "string"
+        },
+        {
+          "name": "precipitation",
+          "type": "string"
+        },
+        {
+          "name": "wind_speed",
+          "type": "string"
+        },
+        {
+          "name": "visibility",
+          "type": "string"
+        },
+        {
+          "name": "weather_condition",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "zone_id"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "surge_pricing": {
+      "columns": [
+        {
+          "name": "zone_id",
+          "type": "string"
+        },
+        {
+          "name": "surge_multiplier",
+          "type": "string"
+        },
+        {
+          "name": "start_time",
+          "type": "string"
+        },
+        {
+          "name": "end_time",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        },
+        {
+          "name": "active",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "zone_id"
+      ],
+      "labels": [],
+      "role": "fact"
+    }
+  }
+}

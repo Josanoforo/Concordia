@@ -1,0 +1,34 @@
+{
+  "id":"U3",
+  "kind":"schema-matching",
+  "normalizationContract": {
+    "defaultMode": "text",
+    "modes": {"text": {"meaning": "Opaque identifiers are exact text. Case, whitespace, leading zeroes, suffixes, punctuation and Unicode code points remain significant.", "caseSensitive": true, "outerWhitespace": "significant", "unicode": "exact"}},
+    "scope": "Metadata-only schema matching; this does not authorize reading source values or infer entity identity."
+  },
+  "database":"MADI_COMPANIES",
+  "localInput":".concordia/data/madi",
+  "targetDataset":"target_schema",
+  "targetSchema":"schemamatching/target_schema.json",
+  "gold":"schemamatching/sm_mapping_gold.json",
+  "localEvaluationOnly":true,
+  "sampleLimit":20,
+  "privacyExcluded":{"dbpedia":["headquarters","keypeople_name"],"fullcontact":["Attribute_1","Attribute_2","Attribute_3","Attribute_4","Attribute_5","Attribute_6"]},
+  "privacyReason":"No projecting addresses, people or unidentified contact fields. FullContact metadata is opaque and explicitly warns of postal addresses, phones and key persons. Register it, verify with SELECT 1, retain all gold correspondences in recall denominator.",
+  "conceptPatterns":{
+    "id":"\\b(identifier|identifying)\\b",
+    "name":"\\bname\\b",
+    "founded":"\\b(found(ed|ing)?|established)\\b",
+    "country":"\\b(country|nation)\\b",
+    "industry":"\\b(industry|sector|business segment)\\b",
+    "assets":"\\bassets?\\b",
+    "revenue":"\\b(revenue|sales)\\b",
+    "city":"\\bcity\\b"
+  },
+  "tables":{
+    "dbpedia":{"db":"MADI_COMPANIES","physicalTable":"dbpedia","file":"data/dbpedia.csv","metadata":"data/dbpedia_metadata.json","keyColumns":["entity_uri"],"labels":["org_name"],"role":"source","columns":[{"name":"entity_uri","type":"string"},{"name":"org_name","type":"string"},{"name":"established","type":"string"},{"name":"nation","type":"string"},{"name":"sector","type":"string"},{"name":"total_assets_val","type":"string"},{"name":"annual_income","type":"string"}]},
+    "forbes":{"db":"MADI_COMPANIES","physicalTable":"forbes","file":"data/forbes.csv","metadata":"data/forbes_metadata.json","keyColumns":["forbes_url"],"labels":["company"],"role":"source","columns":[{"name":"forbes_url","type":"string"},{"name":"company","type":"string"},{"name":"url","type":"string"},{"name":"region","type":"string"},{"name":"business_segment","type":"string"},{"name":"asset_value","type":"string"},{"name":"sales_figure","type":"string"}]},
+    "fullcontact":{"db":"MADI_COMPANIES","physicalTable":"fullcontact","file":"data/fullcontact.csv","metadata":"data/fullcontact_metadata.json","keyColumns":[],"labels":[],"role":"source","columns":[]}
+  },
+  "relations":[]
+}
