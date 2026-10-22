@@ -32,3 +32,17 @@ The sample demo uses a clearly labelled synthetic fixture. It runs offline witho
 | `PUBLIC_MANIFEST.md` | Positive allowlist for the published source tree |
 
 No source rows, raw benchmark datasets, gold files, API credentials, or live request identifiers are included. See [the public manifest](PUBLIC_MANIFEST.md) and [the evidence notes](evidence/README.md) for scope and redaction details.
+
+## MaDI schema-matching evaluation
+
+The five MaDI schema-matching domains were evaluated against the pinned [`MaDI-Bench` revision](https://github.com/wbsg-uni-mannheim/MaDI-Bench/tree/062058d09c8abd97026e6d4e9908b433753f58d3) gold files. The heuristic uses source metadata and target-schema descriptions only. The author baseline uses the benchmark's published LLM-pipeline mapping files. Target dataset labels were normalized to the common benchmark target `target_schema` before scoring. These are column-correspondence P/R metrics; they do not measure entity matching or fusion. Raw data, gold, author mappings, and per-field predictions remain local under ignored paths. Regenerate the private aggregate and domain reports with `node scripts/evaluate-madi-domains.mjs`.
+
+| MaDI domain | Sources | Metadata heuristic P/R | Author LLM baseline P/R |
+|---|---:|---:|---:|
+| Games | 3 | 0.833 / 0.769 | 0.885 / 0.885 |
+| Companies | 3 | 1.000 / 0.095 | 0.800 / 0.762 |
+| Music | 3 | 0.842 / 0.762 | 0.857 / 0.857 |
+| Products | 4 | 0.887 / 0.550 | 1.000 / 1.000 |
+| Papers | 3 | 0.857 / 0.706 | 1.000 / 1.000 |
+
+The per-domain static reports are generated under ignored `out/madi/<domain>/report.html`. Attribution and license review remain in `evidence/madi-license-review-redacted.json`; the article license does not establish a license for the MaDI datasets or gold.

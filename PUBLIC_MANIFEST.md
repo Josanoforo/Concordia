@@ -47,13 +47,16 @@ Synthetic fixtures and redacted evidence are identified in their own READMEs. Th
 - `README.md`
 - `scripts/check-actions-versions.mjs`
 - `scripts/check-secrets.mjs`
+- `scripts/evaluate-madi-domains.mjs`
 - `scripts/ci-no-services.cjs`
 - `scripts/conformance.ts`
 - `scripts/fetch-madi.mjs`
+- `scripts/p4-live-freshness.ts`
 - `scripts/run-tsx.mjs`
 - `src/cli.ts`
 - `src/clients/nightshift.ts`
 - `src/clients/zetaris.ts`
+- `src/budget.ts`
 - `src/connection.ts`
 - `src/critic/adversarial.ts`
 - `src/critic/eval.ts`
@@ -81,6 +84,7 @@ Synthetic fixtures and redacted evidence are identified in their own READMEs. Th
 - `src/probe/verdicts.ts`
 - `src/reconcile/index.ts`
 - `src/register-madi.ts`
+- `src/register-madi-domains.ts`
 - `src/register.ts`
 - `src/report/index.ts`
 - `src/review.ts`

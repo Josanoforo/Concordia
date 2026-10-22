@@ -15,6 +15,7 @@ import { assertRegistrationContact, register } from './register.ts';
 import { discoverUniverse, probeUniverse, evaluateUniverse, universeConfig } from './universe-pipeline.ts';
 import { completeUsl } from './usl/complete.ts';
 import { registerMadi } from './register-madi.ts';
+import { registerMadiDomains } from './register-madi-domains.ts';
 import { discoverMappings, probeMappings, evaluateMadi } from './madi.ts';
 import { uslDossier } from './usl/dossier.ts';
 import { criticize } from './critic/adversarial.ts';
@@ -26,10 +27,11 @@ try {
   const universeId=option('universe')??'U1';
   if (!/^U[123]$/.test(universeId)) throw new SafeError('INVALID_UNIVERSE');
   if(command==='register'&&universeId==='U2')assertRegistrationContact();
-  if (['smoke','test-connection','route-preview','discover','probe','critic','usl','demo','complete-llm','register'].includes(command) && !(command==='demo'&&process.env.SAMPLE_MODE==='true') && !(command==='register'&&universeId==='U3')) loadLocalEnv();
+  if (['smoke','test-connection','route-preview','discover','probe','critic','usl','demo','complete-llm','register','register-madi-p5'].includes(command) && !(command==='demo'&&process.env.SAMPLE_MODE==='true') && !(command==='register'&&universeId==='U3')) loadLocalEnv();
   if (command === 'smoke' || command === 'test-connection') await connection(command === 'smoke');
   else if (command === 'route-preview') await routePreviews();
   else if (command === 'register') {if(universeId==='U3')await registerMadi();else await register(universeId);}
+  else if(command==='register-madi-p5'){const result=await registerMadiDomains();console.log('MaDI P5',result.status,Object.keys(result.domains).length,'domains; files not selected');}
   else if (command === 'discover') { if(universeId==='U1')await discover(); else if(universeConfig(universeId).kind==='schema-matching')await discoverMappings(universeId);else await discoverUniverse(universeId); }
   else if (command === 'probe') { if(universeId==='U1'){await probe(); verdicts();}else if(universeConfig(universeId).kind==='schema-matching')await probeMappings(universeId);else await probeUniverse(universeId); }
   else if (command === 'critic') { const rid=option('relationId'); const c=await criticize(universeId,{includeExcluded:process.argv.includes('--include-cost-excluded'),relationIds:rid?[rid]:undefined,force:process.argv.includes('--force')}); console.log('Crítica',universeId,JSON.stringify({confirmed:c.confirmed,degraded:c.degraded,insufficient:c.insufficient,skipped:c.skipped})); }
