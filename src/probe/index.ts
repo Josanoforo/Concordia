@@ -1,7 +1,12 @@
 import { Zetaris, type SqlResult } from '../clients/zetaris.ts';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
 import type { Candidate, Discovery, Endpoint, LiveTable } from '../discovery/index.ts';
-import { failure, readJson, writeJson } from '../runtime.ts';
+import { failure, readJson, writeJson, ROOT } from '../runtime.ts';
 import { normalizeKey, projection, quotedValues, type NormalizationMode } from '../universe.ts';
+import { assessFreshness, assessPartialTransport } from './evidence-contract.ts';
+import { classify } from './verdicts.ts';
 export type Probe = {
   relation: Candidate; utc: string; status: string; queries: SqlResult[]; error?: object;
   overlap: { matched: number; probed: number; ratio: number | null; sampleKeys: string[] };
@@ -9,7 +14,7 @@ export type Probe = {
   labelAgreement?: { agree: number; compared: number; ratio: number; examples: { key: string; fromLabel: string[]; toLabel: string[]; agrees: boolean }[] };
   typeCompat: { from: string; to: string; castable: boolean; normalization: string };
   nullRate: { from: number | null; to: number | null; denominatorFrom: number; denominatorTo: number };
-  alerts: string[]; durationMs: number;
+  alerts: string[]; durationMs: number; freshness?: any;
 };
 export type RowMultiplicity = { rows: number; nonNullRows: number; nullRows: number; emptyRows: number; distinctKeys: number; duplicateKeys: { key: string; rows: number }[] };
 function keyValues(t: LiveTable, e: Endpoint) { return t.sample.rows.map(row => row[t.columns.indexOf(e.column)]); }
@@ -71,7 +76,7 @@ export function compareLabels(fromRows: any[][], toRows: any[][], fromCols: stri
   const agree = examples.filter(e => e.agrees).length;
   return { agree, compared: examples.length, ratio: agree / examples.length, examples: examples.slice(0, 20) };
 }
-export async function probe(options?: { candidateIds: string[]; append: true }) {
+export async function probe(options?: { candidateIds: string[]; append?: boolean }) {
   const inventory = readJson<Discovery>('out/U1/discovery.json'), z = new Zetaris();
   const config = readJson('config/thresholds.json'), universeConfig = readJson<any>('universes/U1_ny_taxi.json');
   const mode: NormalizationMode = universeConfig.normalizationContract.defaultMode;
@@ -86,6 +91,7 @@ export async function probe(options?: { candidateIds: string[]; append: true }) 
       overlap: { matched: 0, probed: seeds.length, ratio: seeds.length ? 0 : null, sampleKeys: seeds },
       typeCompat: { from: a.schema.find(c => c.name === relation.from.column)?.type ?? 'unknown', to: b.schema.find(c => c.name === relation.to.column)?.type ?? 'unknown', castable: false, normalization: mode },
       nullRate: { from: nullRate(a, relation.from, mode), to: nullRate(b, relation.to, mode), denominatorFrom: a.sample.rows.length, denominatorTo: b.sample.rows.length }, alerts: semanticAlerts(a), durationMs: 0 };
+    let transportFailure:any;
     try {
       if (seeds.length) {
         for (const [endpoint, table] of [[relation.from, a], [relation.to, b]] as const) {
@@ -111,10 +117,26 @@ export async function probe(options?: { candidateIds: string[]; append: true }) 
         const numericDomain = both.every(v => /^-?\d+(?:\.0+)?$/.test(String(v).trim()));
         result.typeCompat.castable = numericDomain || result.typeCompat.from === result.typeCompat.to;
       } else result.alerts.push('NO_NON_NULL_SOURCE_KEYS_IN_SAMPLE');
-    } catch (error) { result.status = 'FAIL'; result.error = failure(error); }
+    } catch (error) { transportFailure=error; result.status = 'FAIL'; result.error = failure(error); }
+    const stamp=new Date().toISOString(),digest=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
+    const previousPath=path.join(ROOT,'.concordia','freshness','U1',relation.id+'.json');
+    const previous=fs.existsSync(previousPath)?JSON.parse(fs.readFileSync(previousPath,'utf8')):null;
+    // Fingerprint the bounded rows returned by this live probe, never the cached
+    // discovery sample. Schema identity is limited to the allowlisted projection.
+    const sourceVersion=digest(result.queries.map(q=>q.rows)),schemaVersion=digest([a.schema,b.schema]);
+    const complete=result.status==='PASS';
+    const freshness=assessFreshness(previous,{sourceVersion,schemaVersion,normalization:mode,observedAt:stamp,verdict:complete?classify(result,config).verdict:'INDETERMINADA',complete});
+    result.freshness={...freshness,sourceVersion,schemaVersion,normalization:mode,observedAt:stamp};
+    if(!complete){const transport=failure(transportFailure);result.error={...result.error,...assessPartialTransport({fragments:result.queries.map(q=>({requestId:q.requestId,rows:q.rows.length})),error:{status:errorStatus(transport),retryAfter:transport.retryAfter}})};}
+    else {
+      const next={sourceVersion,schemaVersion,normalization:mode,observedAt:stamp,verdict:classify(result,config).verdict,state:freshness.state,requestIds:result.queries.map(q=>q.requestId),rule:classify(result,config).rule};
+      fs.mkdirSync(path.dirname(previousPath),{recursive:true});fs.appendFileSync(previousPath.replace(/\.json$/,'')+'.history.jsonl',JSON.stringify(next)+'\n');
+      fs.writeFileSync(previousPath+'.tmp',JSON.stringify(next,null,2)+'\n');fs.renameSync(previousPath+'.tmp',previousPath);
+    }
     result.durationMs = Math.round(performance.now() - start); probes.push(result);
     writeJson('out/U1/probes.json', { utc: new Date().toISOString(), live: true, llmApplicable: false, sampleWarning: 'Bounded nonrandom samples; no global coverage/uniqueness established', probes });
     console.log(result.status, relation.id, 'overlap', result.overlap.ratio, 'labels', result.labelAgreement?.ratio ?? 'absent', 'alerts', result.alerts.length);
   }
   return probes;
 }
+function errorStatus(error:any){return typeof error?.http==='number'?error.http:0;}

@@ -24,6 +24,12 @@ test('Zetaris HTTP diagnostics preserve the schema error and redact a credential
     if (originalKey === undefined) delete process.env.ZETARIS_API_KEY; else process.env.ZETARIS_API_KEY = originalKey;
   }
 });
+test('429 transport diagnostics preserve Retry-After without response values', async () => {
+  const originalFetch=globalThis.fetch;
+  globalThis.fetch=async()=>new Response(JSON.stringify({error:'rate limited'}),{status:429,headers:{'Retry-After':'37','Content-Type':'application/json'}});
+  try{await assert.rejects(jsonRequest('http://localhost/sql',{},1000,true),(error:unknown)=>{assert.ok(error instanceof SafeError);assert.equal(error.http,429);assert.equal(error.retryAfter,'37');assert.equal(error.detail,'rate limited');return true;});}
+  finally{globalThis.fetch=originalFetch;}
+});
 test('identifiers cannot inject SQL', () => {
   assert.equal(identifier('PULocationID'), 'PULocationID');
   assert.throws(() => identifier('x;DROP TABLE x'));

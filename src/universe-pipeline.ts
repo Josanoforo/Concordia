@@ -2,10 +2,12 @@
 // its JSON contract; normalization and SQL policy are common engine behavior.
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { Zetaris, identifier } from './clients/zetaris.ts';
 import { classify } from './probe/verdicts.ts';
 import { normalizeKey as normalizeByMode, quotedValues, type NormalizationMode } from './universe.ts';
 import { readJson, writeJson, ROOT, failure, SafeError } from './runtime.ts';
+import { assessFreshness, assessPartialTransport } from './probe/evidence-contract.ts';
 
 export function universeConfig(id:string) { if(!/^U[123]$/.test(id))throw new SafeError('INVALID_UNIVERSE'); return readJson(`universes/${id==='U1'?'U1_ny_taxi':id==='U3'?'U3_madi_companies':'U2_companies'}.json`); }
 export function normalizeKey(value:unknown,mode:NormalizationMode,contract:any) {
@@ -45,22 +47,45 @@ export async function probeUniverse(id:string) {
     const values=a.sample.rows.map((row:any[])=>row[a.columns.indexOf(relation.from.column)]).filter((v:any)=>v!=null);
     const seeds=[...new Set(values.map((v:any)=>normalizeKey(v,mode,cfg.normalizationContract)))].filter(v=>v!==null);
     const variants=mode==='integer-pad10'?[...values,...seeds,...seeds.map(v=>String(v).padStart(10,'0'))]:values;
-    const queries:any[]=[];
+    const queries:any[]=[]; let transportError:any;
     for(const endpoint of [relation.from,relation.to]) {
       const spec=cfg.tables[endpoint.table];
       if(!spec.columns.some((c:any)=>c.name===endpoint.column))throw new SafeError('PROBE_KEY_OUTSIDE_ALLOWLIST');
-      queries.push(await z.runSql(`SELECT ${identifier(endpoint.column)} FROM ${sourceQuery(spec)} WHERE ${identifier(endpoint.column)} IN (${quotedValues([...new Set(variants)].slice(0,50))}) LIMIT 50`,50));
+      try { queries.push(await z.runSql(`SELECT ${identifier(endpoint.column)} FROM ${sourceQuery(spec)} WHERE ${identifier(endpoint.column)} IN (${quotedValues([...new Set(variants)].slice(0,50))}) LIMIT 50`,50)); }
+      catch(error) { transportError=error; break; }
+    }
+    const currentAt=new Date().toISOString();
+    const previousPath=path.join(ROOT,'.concordia','freshness',id,relation.id+'.json');
+    const previous=fs.existsSync(previousPath)?JSON.parse(fs.readFileSync(previousPath,'utf8')):null;
+    const hash=(v:unknown)=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
+    const sourceVersion=hash(queries.map(q=>q.rows));
+    const schemaVersion=hash([a.schema,b.schema]);
+    const normalization=mode;
+    if(transportError) {
+      const partial=assessPartialTransport({fragments:queries.map(q=>({requestId:q.requestId,rows:q.rows.length})),error:{status:transportError instanceof SafeError?transportError.http??0:0}});
+      const freshness=assessFreshness(previous,{sourceVersion,schemaVersion,normalization,observedAt:currentAt,verdict:'INDETERMINADA',complete:false});
+      const probe:any={relation,utc:currentAt,status:'INCOMPLETE',queries,normalization,overlap:{matched:0,probed:seeds.length,ratio:null,sampleKeys:[]},typeCompat:{from:'unknown',to:'unknown',castable:false,normalization:mode},nullRate:{from:null,to:null},alerts:['transport_incomplete'],error:{...failure(transportError),...partial},freshness};
+      result.probes.push(probe); writeJson(`out/${id}/probes.json`,result); continue;
     }
     const targets=new Set(queries[1].rows.map((row:any[])=>normalizeKey(row[0],mode,cfg.normalizationContract)));
     const matched=seeds.filter(k=>targets.has(k)).length;
     const probe:any={relation,utc:new Date().toISOString(),status:'PASS',queries,normalization:mode,overlap:{matched,probed:seeds.length,ratio:seeds.length?matched/seeds.length:null,sampleKeys:seeds},
       typeCompat:{from:a.schema.find((c:any)=>c.name===relation.from.column).type,to:b.schema.find((c:any)=>c.name===relation.to.column).type,castable:true,normalization:mode},
       nullRate:{from:a.sample.rows.filter((row:any[])=>row[a.columns.indexOf(relation.from.column)]==null).length/a.sample.rows.length,to:b.sample.rows.filter((row:any[])=>row[b.columns.indexOf(relation.to.column)]==null).length/b.sample.rows.length},alerts:[]};
+    const decision=classify(probe,{...thresholds,minDistinctKeys:relation.minDistinctKeys??thresholds.minDistinctKeys});
+    const freshness=assessFreshness(previous,{sourceVersion,schemaVersion,normalization,observedAt:currentAt,verdict:decision.verdict,complete:true});
+    probe.freshness={...freshness,sourceVersion,schemaVersion,observedAt:currentAt};
+    const next={sourceVersion,schemaVersion,normalization,observedAt:currentAt,verdict:decision.verdict,state:freshness.state,requestIds:queries.map(q=>q.requestId),rule:decision.rule};
+    fs.mkdirSync(path.dirname(previousPath),{recursive:true});
+    fs.appendFileSync(previousPath.replace(/\.json$/,'')+'.history.jsonl',JSON.stringify(next)+'\n');
+    fs.writeFileSync(previousPath+'.tmp',JSON.stringify(next,null,2)+'\n');fs.renameSync(previousPath+'.tmp',previousPath);
     result.probes.push(probe); writeJson(`out/${id}/probes.json`,result);
   }
   const output:any={utc:new Date().toISOString(),pending_llm:false,explanationSource:'deterministic-template',relations:result.probes.map((p:any)=>{
     const decision=classify(p,{...thresholds,minDistinctKeys:p.relation.minDistinctKeys??thresholds.minDistinctKeys});
-    return {relationId:p.relation.id,from:p.relation.from,to:p.relation.to,...decision,evidence:p,normalization:p.normalization,explanation:`${decision.verdict}: ${p.overlap.matched}/${p.overlap.probed} claves de la muestra; comparación ${p.normalization}. Sin prueba de cobertura global.`,proposedBy:'heuristic-configured'};
+    const freshness=p.freshness;
+    const effective=freshness?.state==='DEGRADADA'?{verdict:'INDETERMINADA',rule:'freshness_changed_requires_review'}:freshness?.state==='INCOMPLETA'?{verdict:'INDETERMINADA',rule:'transport_incomplete'}:decision;
+    return {relationId:p.relation.id,from:p.relation.from,to:p.relation.to,...effective,evidence:p,normalization:p.normalization,freshness,explanation:`${effective.verdict}: ${p.overlap.matched}/${p.overlap.probed} claves de la muestra; comparación ${p.normalization}. Frescura ${freshness?.state??'no evaluada'}; sin prueba de cobertura global.`,proposedBy:'heuristic-configured'};
   })};
   writeJson(`out/${id}/relaciones.json`,output);
   fs.writeFileSync(path.join(ROOT,`out/${id}/relaciones.md`),['# Relaciones '+id,'','Sin generación. Comparaciones de muestras acotadas, no uniones remotas.','',...output.relations.map((r:any)=>`- ${r.relationId}: ${r.explanation}`)].join('\n')+'\n');

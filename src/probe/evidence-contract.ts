@@ -1,9 +1,15 @@
-/** Offline policy contracts for freshness and partial transport. P4 will wire these to its watcher. */
-export function assessFreshness(previous: { sourceVersion: string; schemaVersion: string; normalization: string; observedAt: string; verdict: string }, current: { sourceVersion: string; schemaVersion: string; normalization: string }) {
+/** A fresh probe is required before a stored relation can be described as current. */
+export function assessFreshness(previous: { sourceVersion: string; schemaVersion: string; normalization: string; observedAt: string; verdict: string } | null,
+  current: { sourceVersion: string; schemaVersion: string; normalization: string; observedAt: string; verdict: string; complete?: boolean }) {
+  if (current.complete === false) return { state: 'INCOMPLETA' as const, verdict: 'INDETERMINADA' as const, requiresReview: true,
+    preserveHistorical: true, supersedePrevious: false, reusedAsFresh: false, sourceObservedAt: previous?.observedAt ?? null, changed: false };
+  if (!previous) return { state: 'FRIA' as const, verdict: current.verdict, requiresReview: false,
+    preserveHistorical: true, supersedePrevious: false, reusedAsFresh: false, sourceObservedAt: current.observedAt, changed: false };
   const changed = previous.sourceVersion !== current.sourceVersion || previous.schemaVersion !== current.schemaVersion || previous.normalization !== current.normalization;
-  return changed
-    ? { state: 'DEGRADADA' as const, verdict: 'INDETERMINADA' as const, requiresReview: true, preserveHistorical: true, reusedAsFresh: false }
-    : { state: 'REUTILIZADA' as const, verdict: previous.verdict, requiresReview: false, preserveHistorical: true, reusedAsFresh: false, sourceObservedAt: previous.observedAt };
+  if (previous.verdict === 'SOSTENIDA' && current.verdict !== 'SOSTENIDA') return { state: 'DEGRADADA' as const, verdict: 'INDETERMINADA' as const,
+    requiresReview: true, preserveHistorical: true, supersedePrevious: true, reusedAsFresh: false, sourceObservedAt: current.observedAt, changed };
+  return { state: 'REVALIDADA' as const, verdict: current.verdict, requiresReview: changed,
+    preserveHistorical: true, supersedePrevious: false, reusedAsFresh: false, sourceObservedAt: current.observedAt, changed };
 }
 
 export function assessPartialTransport(input: { fragments: { requestId: string; rows: number }[]; error: { status: number; retryAfter?: string } }) {

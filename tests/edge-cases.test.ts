@@ -74,13 +74,20 @@ test('EC08: reused zone IDs with contradictory labels are misleading; matching l
   assert.equal(absentLabels,undefined);
 });
 
-test('EC17 contract: same-version cache stays dated; changed source or schema degrades without replacing history', () => {
+test('EC17 contract: every run re-probes; fingerprint change alone is reviewable, only complete contrary evidence degrades', () => {
   const prior = { sourceVersion: 'v1', schemaVersion: 's1', normalization: 'integer', observedAt: '2026-10-22T10:00:00Z', verdict: 'SOSTENIDA' };
-  const warm = assessFreshness(prior, { sourceVersion: 'v1', schemaVersion: 's1', normalization: 'integer' });
-  const drift = assessFreshness(prior, { sourceVersion: 'v2', schemaVersion: 's1', normalization: 'integer' });
-  assert.equal(warm.sourceObservedAt, prior.observedAt);
+  const warm = assessFreshness(prior, { sourceVersion: 'v1', schemaVersion: 's1', normalization: 'integer', observedAt: '2026-10-22T10:10:00Z', verdict: 'SOSTENIDA' });
+  const drift = assessFreshness(prior, { sourceVersion: 'v2', schemaVersion: 's1', normalization: 'integer', observedAt: '2026-10-22T10:20:00Z', verdict: 'SOSTENIDA' });
+  assert.equal(warm.state, 'REVALIDADA');
+  assert.equal(warm.sourceObservedAt, '2026-10-22T10:10:00Z');
   assert.equal(warm.reusedAsFresh, false);
-  assert.deepEqual({ state: drift.state, verdict: drift.verdict, requiresReview: drift.requiresReview, preserveHistorical: drift.preserveHistorical }, { state: 'DEGRADADA', verdict: 'INDETERMINADA', requiresReview: true, preserveHistorical: true });
+  assert.deepEqual({ state: drift.state, verdict: drift.verdict, requiresReview: drift.requiresReview, preserveHistorical: drift.preserveHistorical, supersedePrevious: drift.supersedePrevious }, { state: 'REVALIDADA', verdict: 'SOSTENIDA', requiresReview: true, preserveHistorical: true, supersedePrevious: false });
+  const contrary=assessFreshness(prior,{sourceVersion:'v2',schemaVersion:'s1',normalization:'integer',observedAt:'2026-10-22T10:20:00Z',verdict:'INDETERMINADA'});
+  assert.deepEqual({state:contrary.state,verdict:contrary.verdict,requiresReview:contrary.requiresReview,supersedePrevious:contrary.supersedePrevious},{state:'DEGRADADA',verdict:'INDETERMINADA',requiresReview:true,supersedePrevious:true});
+  const incomplete=assessFreshness(prior,{sourceVersion:'v2',schemaVersion:'s1',normalization:'integer',observedAt:'2026-10-22T10:30:00Z',verdict:'INDETERMINADA',complete:false});
+  assert.equal(incomplete.state,'INCOMPLETA');assert.equal(incomplete.supersedePrevious,false);
+  const cold=assessFreshness(null,{sourceVersion:'v1',schemaVersion:'s1',normalization:'integer',observedAt:'2026-10-22T10:00:00Z',verdict:'SOSTENIDA'});
+  assert.equal(cold.state,'FRIA');
 });
 
 test('EC18 contract: partial 429 evidence stays incomplete, preserves request IDs, and does not retry', () => {

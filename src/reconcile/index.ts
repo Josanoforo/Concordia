@@ -57,6 +57,13 @@ export class Reconciler {
       const next=this.addClaim({entity:'relation:'+r.relationId,attribute:'status',value:'INDETERMINADA',source:r.from.db+'.'+r.from.table,confidence:0,requestIds:counter?.requestId?[counter.requestId]:[],sourceVersion:r.evidence?.sourceVersion??inventory.tables[r.from.table]?.sourceVersion??'unversioned',observedAt:counter?.utc??r.evidence?.utc,rule:'critic_downgrade: '+r.critic.reason},false,prior.map(c=>c.id),'critic');
       for(const old of prior){const prev=structuredClone(this.hmem.store.get(old.id)!);this.hmem.store.update(old.id,{supersededBy:next.id});this.hmem.ledger.log(old.id,'update',this.actor,{previousState:prev,newState:structuredClone(this.hmem.store.get(old.id)!),details:{event:'critic_downgrade',from:'SOSTENIDA',to:'INDETERMINADA',reason:r.critic.reason,supersededBy:next.id}});}
     }
+    for(const r of relations.relations.filter((r:any)=>r.freshness?.state==='DEGRADADA')){
+      const prior=this.claims.filter(c=>c.entity==='relation:'+r.relationId&&c.attribute==='status'&&c.value==='SOSTENIDA'&&!this.hmem.store.get(c.id)?.supersededBy);
+      if(!prior.length)continue;
+      const requestIds=(r.evidence?.queries??[]).map((q:any)=>q.requestId).filter(Boolean);
+      const next=this.addClaim({entity:'relation:'+r.relationId,attribute:'status',value:'INDETERMINADA',source:r.from.db+'.'+r.from.table,confidence:0,requestIds,sourceVersion:r.evidence?.freshness?.sourceVersion??r.evidence?.sourceVersion??'unversioned',observedAt:r.evidence?.freshness?.sourceObservedAt??r.evidence?.utc,rule:'freshness_changed_requires_review'},false,prior.map(c=>c.id),'freshness-watcher');
+      for(const old of prior){const prev=structuredClone(this.hmem.store.get(old.id)!);this.hmem.store.update(old.id,{supersededBy:next.id});this.hmem.ledger.log(old.id,'update',this.actor,{previousState:prev,newState:structuredClone(this.hmem.store.get(old.id)!),details:{event:'freshness_degraded',from:'SOSTENIDA',to:'INDETERMINADA',preservedHistoricalClaim:old.id,supersededBy:next.id,requestIds}});}
+    }
     // The misleading catalog relation is intentionally retained as competing
     // claims about a candidate identity, never accepted as a verified join.
     const entitySources:any[]=this.universeId==='U1'?
