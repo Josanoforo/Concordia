@@ -81,7 +81,8 @@ export function buildDossier(id:string,inventory:any,relations:any,model:any,cfg
 export function uslDossier(id:string,options?:{snapshot:any;sample:boolean}){
   const inventory=options?.snapshot.artifacts.discovery??readJson(`out/${id}/discovery.json`),relations=options?.snapshot.artifacts.relaciones??readJson(`out/${id}/relaciones.json`);
   const publicFixture=options?.sample===true&&options.snapshot.publicFixture===true;
-  const file=`out/${id}/usl-complete.json`,model=publicFixture||id==='U3'||!fs.existsSync(path.join(ROOT,file))?null:readJson(file);
+  const completeFile=`out/${id}/usl-complete.json`,demoFile=`out/${id}/usl-demo.json`;
+  const model=publicFixture||id==='U3'?null:fs.existsSync(path.join(ROOT,completeFile))?readJson(completeFile):fs.existsSync(path.join(ROOT,demoFile))?readJson<any>(demoFile).modelDetails??null:null;
   const commentFile='evidence/comment-probe-04b.json',comment=!publicFixture&&fs.existsSync(path.join(ROOT,commentFile))?readJson(commentFile):null;
   const dossier=buildDossier(id,inventory,relations,model,readJson('config/reconcile.json'),readJson('config/thresholds.json'),readJson('config/cost-exclusions.json')[id]??[],comment);
   const sample=options?.sample??false,dir=`out/${id}${sample?'/sample':''}`;
