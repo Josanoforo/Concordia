@@ -5,7 +5,17 @@ import { predictColumn } from '../src/madi.ts';
 
 const catalog=readJson<any>('config/madi-aliases.json');
 const cfg=readJson<any>('universes/U3_madi_companies.json');
-const target=readJson<any>(cfg.localInput+'/'+cfg.targetSchema);
+// Keep the unit test hermetic: the reviewed benchmark schema lives in the
+// ignored local data directory and is intentionally absent from clean CI.
+const target={properties:{
+  id:{type:'string',description:'Identifier of the company.'},
+  name:{type:'string',description:'Name of the company.'},
+  founded:{type:'string',description:'Founding date in ISO 8601 format.'},
+  country:{type:'string',description:'Name of the country.'},
+  industry:{type:'string',description:'Primary industry.'},
+  assets:{type:'integer',description:'Total assets in US$ for 2016.'},
+  revenue:{type:'integer',description:'Total revenue in US$ for 2016.'},
+}};
 const targetNames=Object.keys(target.properties);
 const targetTypes=Object.fromEntries(Object.entries<any>(target.properties).map(([name,value])=>[name,value.type]));
 const targetDescriptions=Object.fromEntries(Object.entries<any>(target.properties).map(([name,value])=>[name,value.description??'']));
