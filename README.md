@@ -19,9 +19,10 @@ The sample demo uses a clearly labelled synthetic fixture. It runs offline witho
 
 This walkthrough uses an already-authorized, running Zetaris service, the existing U1 sources and deployed USL, and the local Nightshift runtime. It does not register databases, create a Zetaris platform, recompile or activate a USL, or touch Docker. Keep credentials in the existing private env file; point the loader at it instead of copying it into this checkout. If you already have a Nightshift budget ledger, point the client at that file so dispatch history stays append-only.
 
-PowerShell from the repository root:
+PowerShell from the repository root. Clear a sample-mode setting left by the offline example before starting the live path; `false` makes the CLI load its private environment normally.
 
 ```powershell
+$env:SAMPLE_MODE = 'false'
 $env:CONCORDIA_LOCAL_ENV_FILE = 'C:\path\to\private\.env'
 # Optional: keep appending to an existing ledger. Omit for a new local ledger.
 $env:CONCORDIA_BUDGET_FILE = 'C:\path\to\private\budget.json'
@@ -38,11 +39,19 @@ npm run reconcile -- --universe=U1
 npm run usl-dossier -- --universe=U1
 npm run review -- --universe=U1 --list
 
+# Inspect the local queue above. Only after a human chooses a queued conflict
+# and claim, replace every placeholder with that selected value and attribution.
+# The decision command also reconciles; the next commands refresh the final view.
+npm run review -- --universe=U1 --decide='<conflictId>=<claimId>' --actor='<reviewer>' --note='<reason and provenance>'
+npm run reconcile -- --universe=U1
+npm run usl-dossier -- --universe=U1
+
+Remove-Item Env:\SAMPLE_MODE -ErrorAction SilentlyContinue
 Remove-Item Env:\CONCORDIA_LOCAL_ENV_FILE -ErrorAction SilentlyContinue
 Remove-Item Env:\CONCORDIA_BUDGET_FILE -ErrorAction SilentlyContinue
 ```
 
-`demo` prints whether its data are `LIVE` or `CACHED`; its 24-hour warm path reuses saved evidence and skips new source probes. `complete-llm` uses saved discovery and probe evidence, records each dispatch before sending it, requires a receipt, and does not automatically retry a failed request. The model may propose candidates and explain fixed verdicts; it cannot change verdicts or SQL. Review output can contain source claims, so keep it local. To check connectivity separately, `npm run test-connection` reads Zetaris databases and the Nightshift catalog, then sends one useful cheap-route generation; it is not the full U1 workflow. Every live flow is distinct from the synthetic offline sample above.
+`demo` prints whether its data are `LIVE` or `CACHED`; its 24-hour warm path reuses saved evidence and skips new source probes. `complete-llm` uses saved discovery and probe evidence, records each dispatch before sending it, requires a receipt, and does not automatically retry a failed request. The model may propose candidates and explain fixed verdicts; it cannot change verdicts or SQL. The review template is intentionally a placeholder: choose an actual queued conflict and claim from `--list`, then supply the human reviewer and note. The decision writes append-only provenance, reconciles, and can be followed by a dossier refresh. Review output can contain source claims, so keep it local. To check connectivity separately, `npm run test-connection` reads Zetaris databases and the Nightshift catalog, then sends one useful cheap-route generation; it is not the full U1 workflow. Every live flow is distinct from the synthetic offline sample above.
 
 ## Repository map
 
