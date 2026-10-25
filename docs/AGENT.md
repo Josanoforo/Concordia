@@ -29,5 +29,5 @@ Read-only; no DDL; no gold; no push. U2's join-alternative comparison (`compareU
 
 ## Evidence status
 - **SYNTHETIC / LOCAL:** the generic loop, the exploration catalog, the budget and the COMA provider are exercised offline by `tests/agent-engine.test.ts` and `tests/agent-eval.test.ts` on synthetic fixtures. These runs prove the mechanics, not product accuracy.
-- **LIVE:** the earlier U2 company-brief runs (`agent-u2`) were executed against Zetaris and Nightshift with receipts. The U2 command now runs on the shared stages, and a first live run of the generic `npm run agent` command has not been executed yet.
+- **LIVE:** the earlier U2 company-brief runs (`agent-u2`) were executed against Zetaris and Nightshift with receipts. The U2 command now runs on the shared stages. The generic `npm run agent` command has since been run live on U1 and U2; all relation verdicts in those runs were `INDETERMINADA`. Their run artifacts are not published.
 - **Not claimed:** accuracy on real sources, table-wide coverage or key validity. U2 relations remain `INDETERMINADA` under the common policy unless an identifier space is declared.
