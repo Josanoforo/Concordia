@@ -9,4 +9,4 @@ Concordia separates candidate discovery, evidence collection, decisions, and dep
 5. **Compile the USL.** The compiler turns eligible relationships into a USL plan. Existing deployments are handled conservatively; a failed or ambiguous request is not treated as proof that a model is absent.
 6. **Report limits.** HTML and JSON reports distinguish observed samples, cached results, synthetic fixtures, and global guarantees. A schema correspondence alone never becomes a foreign key.
 
-The Zetaris client uses bounded SQL over its REST interface. Model-assisted text generation is optional and isolated from deterministic decisions. Offline `SAMPLE_MODE` replays an explicitly synthetic fixture and performs no network or credential reads.
+The Zetaris client uses bounded SQL over its REST interface. Model-assisted text generation goes through the Meterless Nightshift runtime (required integration) and is isolated from deterministic decisions. Offline `SAMPLE_MODE` replays an explicitly synthetic fixture and performs no network or credential reads.

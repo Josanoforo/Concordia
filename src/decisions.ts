@@ -5,6 +5,8 @@ import { execFileSync } from 'node:child_process';
 import { Zetaris, identifier } from './clients/zetaris.ts';
 import { ROOT, readJson, writeJson, SafeError, failure, loadLocalEnv, sanitize } from './runtime.ts';
 import { buildDossier, relationContract } from './usl/dossier.ts';
+import { readActiveReconcileSnapshot } from './reconcile/persistence.ts';
+import { assessConsumerInputVersions, consumerFreshnessSnapshot, type ConsumerFreshnessSnapshot, type ConsumerInputVersion } from './reconcile/consumer-freshness.ts';
 
 export const decisionTableSpecs: Record<string,string[]> = {
   concordia_verdicts:['universe','relation','relationId','from','to','verdict','confidence','evidenceId','requestId','utc'],
@@ -75,19 +77,25 @@ function readOtherUniverseRows(id:string,name:string,headers:string[]) {
   return parsed.slice(1).filter(row=>row.length===headers.length);
 }
 
+export function buildDecisionExportManifest(id:string,dryRun:boolean,freshness:ConsumerFreshnessSnapshot,negativeRelationIds:string[],files:unknown[]=[],utc=new Date().toISOString(),relationInputs:readonly ConsumerInputVersion[]=[]){
+  const assessedFreshness=assessConsumerInputVersions(freshness,relationInputs);
+  return {utc,universe:id,status:dryRun?'DRY_RUN':'PREPARED',dryRun,negativeRelationIds:[...negativeRelationIds],freshness:assessedFreshness,files};
+}
 export async function publishDecisions(id='U1',dryRun=false){
   if(!['U1','U2'].includes(id))throw new SafeError('PUBLISH_UNIVERSE_UNSUPPORTED');
   const priorManifestFile=path.join(ROOT,'out',id,'decisions','manifest.json');
   const priorManifest=fs.existsSync(priorManifestFile)?JSON.parse(fs.readFileSync(priorManifestFile,'utf8')):null;
   const priorPass=priorManifest?.status==='PASS'?priorManifest:null;
   const relationFile=readJson<any>(`out/${id}/relaciones.json`);
-  const ledgerFile=path.join(ROOT,`.concordia/${id}/ledger.jsonl`),ledger=fs.existsSync(ledgerFile)?fs.readFileSync(ledgerFile,'utf8').split(/\r?\n/).filter(Boolean).map((l:string)=>JSON.parse(l)):[];
-  const claimsFile=path.join(ROOT,`.concordia/${id}/claims.json`),claims=fs.existsSync(claimsFile)?JSON.parse(fs.readFileSync(claimsFile,'utf8')).claims:[];
+  const reconcileDir=path.join(ROOT,'.concordia',id),active=readActiveReconcileSnapshot(reconcileDir,id);
+  if(!active&&(fs.existsSync(path.join(reconcileDir,'claims.json'))||fs.existsSync(path.join(reconcileDir,'state.json'))||fs.existsSync(path.join(reconcileDir,'ledger.jsonl'))))throw new SafeError('RECONCILE_SNAPSHOT_REQUIRED');
+  const ledger=active?.ledger??[],claims=active?.claims??[];
   const reconcileConfig=readJson<any>('config/reconcile.json'),excluded=readJson<any>('config/cost-exclusions.json')[id]??[];
   const commentFile=path.join(ROOT,'evidence/comment-probe-04b.json');
+  const freshness=consumerFreshnessSnapshot(id,relationFile.relations.map((relation:any)=>relation.relationId),priorManifest?.freshness,{mode:'REGENERATE'});
   const built=buildLocalRows(id,relationFile,readJson(`out/${id}/discovery.json`),readJson(`out/${id}/usl-complete.json`),ledger,claims,reconcileConfig,readJson('config/thresholds.json'),excluded,fs.existsSync(commentFile)?readJson('evidence/comment-probe-04b.json'):null);
   const rows:any=built.rows,outDir=path.join(ROOT,'out',id,'decisions');
-  const local:any={utc:new Date().toISOString(),universe:id,status:'PREPARED',dryRun,negativeRelationIds:built.negativeIds,files:[]};
+  const local:any=buildDecisionExportManifest(id,dryRun,freshness,built.negativeIds,[],new Date().toISOString(),relationFile.relations.map((r:any)=>({relationId:r.relationId,verdict:r.verdict,contractVersion:r.contractVersion??r.contract?.contractVersion,decisionRef:r.decisionRef??r.decision?.decisionId,policyVersion:r.policyVersion??r.decision?.policyVersion,evidenceRefs:r.evidenceRefs??r.decision?.evidenceBundleRefs})));
   fs.mkdirSync(outDir,{recursive:true});
   for(const [name,headers] of Object.entries(decisionTableSpecs)){
     const body=encodeDecisionCsv(headers,rows[name]);

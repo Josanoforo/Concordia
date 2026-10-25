@@ -1,0 +1,80 @@
+{
+  "id": "GTFS",
+  "namespace": "gtfs_fixture",
+  "fixtureCapturedAt": "2026-10-23T00:00:00.000Z",
+  "normalizationContract": {
+    "modes": {
+      "text": {
+        "meaning": "exact text"
+      },
+      "integer": {
+        "meaning": "integer format"
+      }
+    }
+  },
+  "relationPolicyVersion": "1.1",
+  "minimumOverlapRatio": 1,
+  "tables": {
+    "trips": {
+      "db": "gtfs_fixture",
+      "keyColumns": ["route_id"],
+      "columns": [
+        {
+          "name": "route_id",
+          "type": "string"
+        }
+      ],
+      "fixtureRows": [
+        [
+          "r1"
+        ],
+        [
+          "r2"
+        ]
+      ]
+    },
+    "routes": {
+      "db": "gtfs_fixture",
+      "keyColumns": ["route_id"],
+      "columns": [
+        {
+          "name": "route_id",
+          "type": "string"
+        }
+      ],
+      "fixtureRows": [
+        [
+          "r1"
+        ],
+        [
+          "r2"
+        ]
+      ]
+    }
+  },
+  "relations": [
+    {
+      "id": "gtfs_trip_route",
+      "from": {
+        "db": "gtfs_fixture",
+        "table": "trips",
+        "column": "route_id"
+      },
+      "to": {
+        "db": "gtfs_fixture",
+        "table": "routes",
+        "column": "route_id"
+      },
+      "normalization": "text",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "gtfs-fixture-key-v1",
+      "normalizationVersion": "text-exact-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "exact-text",
+      "minDistinctKeys": 2
+    }
+  ],
+  "sampleLimit": 2,
+  "probeLimit": 50
+}

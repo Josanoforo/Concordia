@@ -30,6 +30,20 @@ test('429 transport diagnostics preserve Retry-After without response values', a
   try{await assert.rejects(jsonRequest('http://localhost/sql',{},1000,true),(error:unknown)=>{assert.ok(error instanceof SafeError);assert.equal(error.http,429);assert.equal(error.retryAfter,'37');assert.equal(error.detail,'rate limited');return true;});}
   finally{globalThis.fetch=originalFetch;}
 });
+test('Zetaris SQL results retain pagination metadata before the legacy row slice', async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => new Response(JSON.stringify({ data: [['a'], ['b'], ['c']], total: 3, hasMore: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  try {
+    const { Zetaris } = await import('../src/clients/zetaris.ts');
+    const client = new Zetaris({ base: 'http://localhost', key: 'fixture', org: '1' });
+    const result = await client.runSql('SELECT a FROM b LIMIT 2', 2, { trace: false });
+    assert.equal(result.rows.length, 2);
+    assert.equal(result.rawRowsReceived, 3);
+    assert.equal(result.reportedTotal, 3);
+    assert.equal(result.totalReported, true);
+    assert.equal(result.continuationPresent, true);
+  } finally { globalThis.fetch = originalFetch; }
+});
 test('identifiers cannot inject SQL', () => {
   assert.equal(identifier('PULocationID'), 'PULocationID');
   assert.throws(() => identifier('x;DROP TABLE x'));

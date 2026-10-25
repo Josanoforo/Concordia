@@ -1,8 +1,13 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import readline from 'node:readline/promises';
 import { Reconciler, reconcile } from './reconcile/index.ts';
 import { ROOT, SafeError, writeJson } from './runtime.ts';
+export function resolveReviewDecision(reconciler:Reconciler, conflict:Reconciler['conflicts'][number], claimId:string, note:string) {
+  const before=[...reconciler.hmem.ledger.all()].map(entry=>JSON.stringify(entry));
+  reconciler.resolve(conflict,claimId,true,note,conflict.version);
+  const after=[...reconciler.hmem.ledger.all()].map(entry=>JSON.stringify(entry));
+  if(after.length<before.length||before.some((entry,index)=>after[index]!==entry))throw new SafeError('LEDGER_APPEND_ONLY_VIOLATION');
+  return {conflict,correction:reconciler.hmem.store.get(conflict.correction!)};
+}
 export async function review(universeId: string, decision?: string, note='', actor='interactive-user', listOnly=false) {
   const r = new Reconciler(universeId,undefined,actor);
   const queued = r.conflicts.filter(c=>c.status==='queued');
@@ -20,10 +25,7 @@ export async function review(universeId: string, decision?: string, note='', act
   const match = /^([^=]+)=([^=]+)$/.exec(selected);
   if (!match) throw new SafeError('INVALID_REVIEW_DECISION');
   const c = queued.find(c=>c.id===match[1]); if (!c) throw new SafeError('CONFLICT_NOT_QUEUED');
-  const before = fs.readFileSync(path.join(ROOT,'.concordia',universeId,'ledger.jsonl'),'utf8');
-  r.resolve(c,match[2],true,note);
-  const after = fs.readFileSync(path.join(ROOT,'.concordia',universeId,'ledger.jsonl'),'utf8');
-  if (!after.startsWith(before)) throw new SafeError('LEDGER_APPEND_ONLY_VIOLATION');
-  writeJson(`evidence/review-${universeId}-${Date.now()}.json`,{utc:new Date().toISOString(),actor,decision:selected,note,conflict:c,appendOnly:true,correction:r.hmem.store.get(c.correction!)});
+  const resolved=resolveReviewDecision(r,c,match[2],note);
+  writeJson(`evidence/review-${universeId}-${Date.now()}.json`,{utc:new Date().toISOString(),actor,decision:selected,note,conflict:resolved.conflict,appendOnly:true,correction:resolved.correction});
   reconcile(universeId); console.log('PASS review',c.id,c.status,c.correction);
 }

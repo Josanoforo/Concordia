@@ -1,23 +1,203 @@
 {
   "id": "U2",
+  "namespace": "SEC_COMPANIES",
   "scope": "Apple public company evidence from officially registered SEC sources and SIC V4; no addresses, officers or contact fields",
   "normalizationContract": {
     "modes": {
-      "text": {"meaning": "Literal equality; case, whitespace, punctuation and leading zeroes remain significant.", "caseSensitive": true, "outerWhitespace": "significant", "unicode": "exact"},
-      "integer-pad10": {"meaning": "CIK decimal digits compared as an integer and rendered as ten-digit padding; use only on the explicitly configured CIK edge.", "leadingZeroes": "formatting", "suffixes": {".0": "not accepted"}},
-      "integer": {"meaning": "SIC numeric code comparison removes a zero-only decimal suffix but preserves textual codes that are not plain integers; do not infer equivalence beyond this edge.", "leadingZeroes": "numeric for this edge", "suffixes": {".0": "formatting"}}
+      "text": {
+        "meaning": "Literal equality; case, whitespace, punctuation and leading zeroes remain significant.",
+        "caseSensitive": true,
+        "outerWhitespace": "significant",
+        "unicode": "exact"
+      },
+      "integer-pad10": {
+        "meaning": "CIK decimal digits compared as an integer and rendered as ten-digit padding; use only on the explicitly configured CIK edge.",
+        "leadingZeroes": "formatting",
+        "suffixes": {
+          ".0": "not accepted"
+        }
+      },
+      "integer": {
+        "meaning": "SIC numeric code comparison removes a zero-only decimal suffix but preserves textual codes that are not plain integers; do not infer equivalence beyond this edge.",
+        "leadingZeroes": "numeric for this edge",
+        "suffixes": {
+          ".0": "formatting"
+        }
+      }
     },
     "scope": "Modes are selected per relation; no implicit canonicalization across U2 attributes."
   },
   "tables": {
-    "apple_revenue_facts": {"db":"SEC_DATA","physicalTable":"apple_revenue_facts","columns":[{"name":"cik","type":"integer"}],"keyColumns":["cik"],"role":"fact","labels":[]},
-    "apple_submissions_raw": {"db":"SEC_DATA","physicalTable":"apple_submissions_raw","columns":[{"name":"cik","type":"string"},{"name":"sic","type":"string"}],"keyColumns":["cik","sic"],"role":"dimension","labels":[]},
-    "sic_reference": {"db":"COMPANY_DNS","physicalTable":"sic_codes_v4_raw","columns":[{"name":"sic_code","type":"string"},{"name":"description","type":"string"}],"keyColumns":["sic_code"],"role":"dimension","labels":["description"],"baseSql":"SELECT item.class_id AS sic_code, item.class_desc AS description FROM company_dns.sic_codes_v4_raw LATERAL VIEW explode(data) AS item"}
+    "apple_revenue_facts": {
+      "db": "SEC_DATA",
+      "physicalTable": "apple_revenue_facts",
+      "columns": [
+        {
+          "name": "cik",
+          "type": "integer"
+        }
+      ],
+      "keyColumns": [
+        "cik"
+      ],
+      "role": "fact",
+      "labels": []
+    },
+    "apple_submissions_raw": {
+      "db": "SEC_DATA",
+      "physicalTable": "apple_submissions_raw",
+      "columns": [
+        {
+          "name": "cik",
+          "type": "string"
+        },
+        {
+          "name": "sic",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "cik",
+        "sic"
+      ],
+      "role": "dimension",
+      "labels": []
+    },
+    "sic_reference": {
+      "db": "COMPANY_DNS",
+      "physicalTable": "sic_codes_v4_raw",
+      "columns": [
+        {
+          "name": "sic_code",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "sic_code"
+      ],
+      "role": "dimension",
+      "labels": [
+        "description"
+      ],
+      "baseSql": "SELECT item.class_id AS sic_code, item.class_desc AS description FROM company_dns.sic_codes_v4_raw LATERAL VIEW explode(data) AS item"
+    }
   },
   "relations": [
-    {"id":"cik_text_trap","from":{"db":"SEC_DATA","table":"apple_revenue_facts","column":"cik"},"to":{"db":"SEC_DATA","table":"apple_submissions_raw","column":"cik"},"normalization":"text","minDistinctKeys":1,"reason":"Equality of the literal integer-looking and zero-padded strings; do not apply normalization implicitly"},
-    {"id":"cik_normalized","from":{"db":"SEC_DATA","table":"apple_revenue_facts","column":"cik"},"to":{"db":"SEC_DATA","table":"apple_submissions_raw","column":"cik"},"normalization":"integer-pad10","minDistinctKeys":1,"reason":"Canonical nonnegative integer key; leading zeroes removed locally; padded variants used only for the bounded lookup"},
-    {"id":"company_sic_reference","from":{"db":"SEC_DATA","table":"apple_submissions_raw","column":"sic"},"to":{"db":"COMPANY_DNS","table":"sic_reference","column":"sic_code"},"normalization":"integer","minDistinctKeys":1,"reason":"Company SIC must exist in the reference; one-company sample only; does not establish description agreement"}
+    {
+      "id": "cik_text_trap",
+      "from": {
+        "db": "SEC_DATA",
+        "table": "apple_revenue_facts",
+        "column": "cik"
+      },
+      "to": {
+        "db": "SEC_DATA",
+        "table": "apple_submissions_raw",
+        "column": "cik"
+      },
+      "normalization": "text",
+      "minDistinctKeys": 1,
+      "reason": "Equality of the literal integer-looking and zero-padded strings; do not apply normalization implicitly"
+    },
+    {
+      "id": "cik_normalized",
+      "from": {
+        "db": "SEC_DATA",
+        "table": "apple_revenue_facts",
+        "column": "cik"
+      },
+      "to": {
+        "db": "SEC_DATA",
+        "table": "apple_submissions_raw",
+        "column": "cik"
+      },
+      "normalization": "integer-pad10",
+      "minDistinctKeys": 1,
+      "reason": "Canonical nonnegative integer key; leading zeroes removed locally; padded variants used only for the bounded lookup"
+    },
+    {
+      "id": "company_sic_reference",
+      "from": {
+        "db": "SEC_DATA",
+        "table": "apple_submissions_raw",
+        "column": "sic"
+      },
+      "to": {
+        "db": "COMPANY_DNS",
+        "table": "sic_reference",
+        "column": "sic_code"
+      },
+      "normalization": "integer",
+      "minDistinctKeys": 1,
+      "reason": "Company SIC must exist in the reference; one-company sample only; does not establish description agreement"
+    }
   ],
-  "minimumDistinctExplanation": "This universe has one observed company per raw source. Threshold 1 is explicit for these endpoint-shaped samples and is not a global coverage claim; U1 retains its minimum of 3."
+  "minimumDistinctExplanation": "This universe has one observed company per raw source. Threshold 1 is explicit for these endpoint-shaped samples and is not a global coverage claim; U1 retains its minimum of 3.",
+  "sampleLimit": 20,
+  "probeLimit": 50,
+  "explorationCatalog": {
+    "productLabel": "U2",
+    "plannerTask": "bounded U2 company brief",
+    "safeOptionalColumns": {
+      "apple_submissions_raw": [
+        "company_name",
+        "entity_name",
+        "name",
+        "sicDescription",
+        "fiscal_year",
+        "period"
+      ],
+      "apple_revenue_facts": [
+        "revenue",
+        "revenue_amount",
+        "amount",
+        "value",
+        "fiscal_year",
+        "period",
+        "currency",
+        "unit"
+      ]
+    },
+    "observations": {
+      "observedCiks": {
+        "fromTable": "apple_revenue_facts",
+        "column": "cik",
+        "pattern": "^\\d+$",
+        "transform": "integer-pad10-variants",
+        "max": 20
+      },
+      "observedSicValues": {
+        "fromTable": "apple_submissions_raw",
+        "column": "sic",
+        "pattern": "^\\d+(?:\\.0)?$",
+        "max": 20,
+        "supersededBy": "READ_SEC_PROFILE"
+      }
+    },
+    "actions": [
+      {
+        "id": "READ_SEC_PROFILE",
+        "kind": "KEYED_READ",
+        "table": "apple_submissions_raw",
+        "filterColumn": "cik",
+        "observation": "observedCiks",
+        "requiredColumns": [
+          "cik"
+        ],
+        "description": "Bounded SEC profile rows for the observed company keys"
+      },
+      {
+        "id": "READ_DNS_REFERENCE",
+        "kind": "KEYED_READ",
+        "table": "sic_reference",
+        "filterColumn": "sic_code",
+        "observation": "observedSicValues",
+        "description": "Bounded SIC reference rows for the observed SIC codes"
+      }
+    ]
+  }
 }

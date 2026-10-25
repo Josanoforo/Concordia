@@ -1,0 +1,1280 @@
+[
+  {
+    "manifestId": "concordia.universe.gtfs-svp1",
+    "version": "3.0.0",
+    "alias": "GTFS_SVP1",
+    "sourcePackage": "SVP1",
+    "sourceCommit": "3c9e7b904b5035349622f03e11851e25c16d1d99",
+    "namespace": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99",
+    "dataOrigin": "SYNTHETIC",
+    "availability": "PUBLIC",
+    "license": "Apache-2.0",
+    "bounds": {
+      "maxKeyColumns": 1,
+      "maxRows": 20,
+      "probeLimit": 50
+    },
+    "tables": [
+      {
+        "tableId": "trips",
+        "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_trips",
+        "dataPath": "data/snapshots/svp1-v1/runtime/gtfs/trips.json",
+        "sha256": "6f4724baf8befc51ec7756f8cf591ec3f346e8d07d7ab578428659109c4202a1",
+        "csvPath": "data/snapshots/svp1-v1/runtime/gtfs/trips.csv",
+        "csvSha256": "499f3984b77603dfc274e678bf3e5c7311fad422a884fdd1852a75647864c906",
+        "columns": [
+          "trip_id",
+          "route_id"
+        ],
+        "types": [
+          "string",
+          "string"
+        ],
+        "rowCount": 11,
+        "rowLimit": 20,
+        "dataOrigin": "SYNTHETIC",
+        "proposedPrimaryKey": [
+          "trip_id"
+        ]
+      },
+      {
+        "tableId": "routes",
+        "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:routes",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_routes",
+        "dataPath": "data/snapshots/svp1-v1/runtime/gtfs/routes.json",
+        "sha256": "36765e6f9929c00b1479288a38bab02c32a813684925eecb3560b9a33ab125ba",
+        "csvPath": "data/snapshots/svp1-v1/runtime/gtfs/routes.csv",
+        "csvSha256": "8451af99a69eb7a27991c97ad5e1f5cda15f848e6b61077b643faecbf72b786b",
+        "columns": [
+          "route_id"
+        ],
+        "types": [
+          "string"
+        ],
+        "rowCount": 5,
+        "rowLimit": 20,
+        "dataOrigin": "SYNTHETIC",
+        "proposedPrimaryKey": [
+          "route_id"
+        ]
+      },
+      {
+        "tableId": "stop_times",
+        "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:stop_times",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_stop_times",
+        "dataPath": "data/snapshots/svp1-v1/runtime/gtfs/stop_times.json",
+        "sha256": "4c961f10281b1d9be60e05742236f45e085fd904c189dfdd56b832dad19b7f43",
+        "csvPath": "data/snapshots/svp1-v1/runtime/gtfs/stop_times.csv",
+        "csvSha256": "f6770668819394be5dc8778d470274e9cc27231d511db37a0b8c7b2dbf5ae6ae",
+        "columns": [
+          "trip_id",
+          "stop_sequence",
+          "stop_id"
+        ],
+        "types": [
+          "string",
+          "integer",
+          "string"
+        ],
+        "rowCount": 20,
+        "rowLimit": 20,
+        "dataOrigin": "SYNTHETIC",
+        "proposedPrimaryKey": [
+          "trip_id",
+          "stop_sequence"
+        ]
+      },
+      {
+        "tableId": "stops",
+        "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:stops",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_stops",
+        "dataPath": "data/snapshots/svp1-v1/runtime/gtfs/stops.json",
+        "sha256": "f83608db131e776cc4f6748d447c73a39b8cfbcb558e4398b5955f9a3aa18eaa",
+        "csvPath": "data/snapshots/svp1-v1/runtime/gtfs/stops.csv",
+        "csvSha256": "f6c8c981a73bfc5c42789afc4df9815f8a6a2b43881ebf6b0babff0dbc40fcbd",
+        "columns": [
+          "stop_id"
+        ],
+        "types": [
+          "string"
+        ],
+        "rowCount": 9,
+        "rowLimit": 20,
+        "dataOrigin": "SYNTHETIC",
+        "proposedPrimaryKey": [
+          "stop_id"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "schemaVersion": 1,
+        "id": "svp1_G01",
+        "contractVersion": "1.0",
+        "kind": "FOREIGN_KEY",
+        "universeRef": {
+          "universeId": "concordia.universe.gtfs-svp1",
+          "universeVersion": {
+            "state": "KNOWN",
+            "value": "3.0.0"
+          },
+          "namespace": {
+            "state": "KNOWN",
+            "value": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99"
+          },
+          "configFingerprint": {
+            "state": "KNOWN",
+            "value": "fb90bb8384834bd0dc77f9e66d5056548ecab9a78004e17650064904184e1e99"
+          }
+        },
+        "from": {
+          "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_trips",
+          "orderedColumns": [
+            "route_id"
+          ]
+        },
+        "to": {
+          "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:routes",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_routes",
+          "orderedColumns": [
+            "route_id"
+          ]
+        },
+        "identifierSpace": {
+          "state": "KNOWN",
+          "value": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99"
+        },
+        "normalization": [
+          {
+            "componentIndex": 0,
+            "operation": {
+              "state": "KNOWN",
+              "value": "text"
+            },
+            "version": {
+              "state": "KNOWN",
+              "value": "svp1-exact-native-v1"
+            },
+            "lossless": {
+              "state": "KNOWN",
+              "value": true
+            },
+            "adapterCapability": {
+              "state": "KNOWN",
+              "value": "exact-text"
+            }
+          }
+        ],
+        "semanticContext": {
+          "grain": {
+            "state": "KNOWN",
+            "value": "trips -> routes"
+          },
+          "unit": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "scale": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "period": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "timezone": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          }
+        },
+        "assertions": [
+          {
+            "assertionId": "upstream-G01",
+            "claim": "GTFS reference: trips.txt route_id",
+            "actor": {
+              "state": "KNOWN",
+              "value": "google/transit"
+            },
+            "sourceRef": {
+              "state": "KNOWN",
+              "value": "https://github.com/google/transit/tree/3c9e7b904b5035349622f03e11851e25c16d1d99"
+            },
+            "assertedAt": {
+              "state": "UNKNOWN"
+            },
+            "scope": {
+              "state": "KNOWN",
+              "value": "Pinned upstream schema declaration; backend binding not confirmed"
+            }
+          }
+        ],
+        "evidencePolicy": {
+          "requiredObservationTypes": [
+            "KEY_MEMBERSHIP"
+          ],
+          "minimumCompleteness": "COMPLETE_FOR_SCOPE",
+          "nulls": "REQUIRE_MEASUREMENT",
+          "cardinality": "REQUIRE_MEASUREMENT",
+          "declarationsAdmissible": true,
+          "minimumDistinctKeys": 2
+        },
+        "reviewState": "PENDING"
+      },
+      {
+        "schemaVersion": 1,
+        "id": "svp1_G02",
+        "contractVersion": "1.0",
+        "kind": "FOREIGN_KEY",
+        "universeRef": {
+          "universeId": "concordia.universe.gtfs-svp1",
+          "universeVersion": {
+            "state": "KNOWN",
+            "value": "3.0.0"
+          },
+          "namespace": {
+            "state": "KNOWN",
+            "value": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99"
+          },
+          "configFingerprint": {
+            "state": "KNOWN",
+            "value": "fb90bb8384834bd0dc77f9e66d5056548ecab9a78004e17650064904184e1e99"
+          }
+        },
+        "from": {
+          "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:stop_times",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_stop_times",
+          "orderedColumns": [
+            "trip_id"
+          ]
+        },
+        "to": {
+          "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_trips",
+          "orderedColumns": [
+            "trip_id"
+          ]
+        },
+        "identifierSpace": {
+          "state": "KNOWN",
+          "value": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99"
+        },
+        "normalization": [
+          {
+            "componentIndex": 0,
+            "operation": {
+              "state": "KNOWN",
+              "value": "text"
+            },
+            "version": {
+              "state": "KNOWN",
+              "value": "svp1-exact-native-v1"
+            },
+            "lossless": {
+              "state": "KNOWN",
+              "value": true
+            },
+            "adapterCapability": {
+              "state": "KNOWN",
+              "value": "exact-text"
+            }
+          }
+        ],
+        "semanticContext": {
+          "grain": {
+            "state": "KNOWN",
+            "value": "stop_times -> trips"
+          },
+          "unit": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "scale": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "period": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "timezone": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          }
+        },
+        "assertions": [
+          {
+            "assertionId": "upstream-G02",
+            "claim": "GTFS reference: stop_times.txt trip_id",
+            "actor": {
+              "state": "KNOWN",
+              "value": "google/transit"
+            },
+            "sourceRef": {
+              "state": "KNOWN",
+              "value": "https://github.com/google/transit/tree/3c9e7b904b5035349622f03e11851e25c16d1d99"
+            },
+            "assertedAt": {
+              "state": "UNKNOWN"
+            },
+            "scope": {
+              "state": "KNOWN",
+              "value": "Pinned upstream schema declaration; backend binding not confirmed"
+            }
+          }
+        ],
+        "evidencePolicy": {
+          "requiredObservationTypes": [
+            "KEY_MEMBERSHIP"
+          ],
+          "minimumCompleteness": "COMPLETE_FOR_SCOPE",
+          "nulls": "REQUIRE_MEASUREMENT",
+          "cardinality": "REQUIRE_MEASUREMENT",
+          "declarationsAdmissible": true,
+          "minimumDistinctKeys": 2
+        },
+        "reviewState": "PENDING"
+      }
+    ],
+    "candidates": [
+      {
+        "candidateId": "G01",
+        "task": "FOREIGN_KEY",
+        "from": {
+          "universe": "gtfs",
+          "table": "trips",
+          "orderedColumns": [
+            "route_id"
+          ]
+        },
+        "to": {
+          "universe": "gtfs",
+          "table": "routes",
+          "orderedColumns": [
+            "route_id"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1",
+        "relationContractRef": "svp1_G01"
+      },
+      {
+        "candidateId": "G02",
+        "task": "FOREIGN_KEY",
+        "from": {
+          "universe": "gtfs",
+          "table": "stop_times",
+          "orderedColumns": [
+            "trip_id"
+          ]
+        },
+        "to": {
+          "universe": "gtfs",
+          "table": "trips",
+          "orderedColumns": [
+            "trip_id"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1",
+        "relationContractRef": "svp1_G02"
+      },
+      {
+        "candidateId": "G03",
+        "task": "IDENTITY",
+        "from": {
+          "universe": "gtfs",
+          "table": "trips",
+          "orderedColumns": [
+            "trip_id"
+          ]
+        },
+        "to": {
+          "universe": "gtfs",
+          "table": "routes",
+          "orderedColumns": [
+            "route_id"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1"
+      },
+      {
+        "candidateId": "G04",
+        "task": "UNIQUE_KEY",
+        "from": {
+          "universe": "gtfs",
+          "table": "stop_times",
+          "orderedColumns": [
+            "trip_id",
+            "stop_sequence"
+          ]
+        },
+        "to": {
+          "universe": "gtfs",
+          "table": "stop_times",
+          "orderedColumns": [
+            "trip_id",
+            "stop_sequence"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1"
+      },
+      {
+        "candidateId": "G05",
+        "task": "UNIQUE_KEY",
+        "from": {
+          "universe": "gtfs",
+          "table": "stop_times",
+          "orderedColumns": [
+            "trip_id"
+          ]
+        },
+        "to": {
+          "universe": "gtfs",
+          "table": "stop_times",
+          "orderedColumns": [
+            "trip_id"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1"
+      },
+      {
+        "candidateId": "G06",
+        "task": "SCHEMA_CORRESPONDENCE",
+        "from": {
+          "universe": "gtfs",
+          "table": "trips",
+          "orderedColumns": [
+            "route_id"
+          ]
+        },
+        "to": {
+          "universe": "gtfs",
+          "table": "routes",
+          "orderedColumns": [
+            "route_id"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1",
+        "inputVariant": {
+          "kind": "SYNTHETIC_METADATA_OMISSION",
+          "identifierSpace": {
+            "state": "UNKNOWN"
+          },
+          "reviewState": "PENDING",
+          "bindingState": "NOT_BOUND",
+          "usage": "semantic completeness control only, not a real external source",
+          "omittedFields": [
+            "identifierSpace"
+          ]
+        },
+        "baseRelationContractRef": "svp1_G01"
+      }
+    ],
+    "snapshotRoot": "data/snapshots/svp1-v1",
+    "registrySourceId": "gtfs-pinned-keys-svp1"
+  },
+  {
+    "manifestId": "concordia.universe.chinook-svp1",
+    "version": "3.0.0",
+    "alias": "CHINOOK_SVP1",
+    "sourcePackage": "SVP1",
+    "sourceCommit": "4a944a942426e1f3263fe539155fb7ef92b04b4a",
+    "namespace": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a",
+    "dataOrigin": "UNKNOWN",
+    "availability": "PUBLIC",
+    "license": "MIT",
+    "bounds": {
+      "maxKeyColumns": 1,
+      "maxRows": 20,
+      "probeLimit": 50
+    },
+    "tables": [
+      {
+        "tableId": "album",
+        "sourceId": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a:album",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.chinook_album",
+        "dataPath": "data/snapshots/svp1-v1/runtime/chinook/album.json",
+        "sha256": "ff1ca86cfc7278228e2b76c7e1f433b41a677937c5ad0c86aab8f165338e4f86",
+        "csvPath": "data/snapshots/svp1-v1/runtime/chinook/album.csv",
+        "csvSha256": "b15626c2bb79235e47f7c679601449f755dd05ac7838ff1040b96d9f2acc4710",
+        "columns": [
+          "AlbumId",
+          "ArtistId"
+        ],
+        "types": [
+          "integer",
+          "integer"
+        ],
+        "rowCount": 20,
+        "rowLimit": 20,
+        "dataOrigin": "PUBLIC",
+        "proposedPrimaryKey": [
+          "AlbumId"
+        ]
+      },
+      {
+        "tableId": "artist",
+        "sourceId": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a:artist",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.chinook_artist",
+        "dataPath": "data/snapshots/svp1-v1/runtime/chinook/artist.json",
+        "sha256": "e35980f08d6e920c1728949aedd42dec98bc15d75ee5914960e8f6ed6cb2a78f",
+        "csvPath": "data/snapshots/svp1-v1/runtime/chinook/artist.csv",
+        "csvSha256": "38ece13a994cf5cc5ae79d784802d837952b138d65d549ce931bf6b11f1eed46",
+        "columns": [
+          "ArtistId"
+        ],
+        "types": [
+          "integer"
+        ],
+        "rowCount": 15,
+        "rowLimit": 20,
+        "dataOrigin": "PUBLIC",
+        "proposedPrimaryKey": [
+          "ArtistId"
+        ]
+      },
+      {
+        "tableId": "playlist_track",
+        "sourceId": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a:playlist_track",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.chinook_playlist_track",
+        "dataPath": "data/snapshots/svp1-v1/runtime/chinook/playlist_track.json",
+        "sha256": "20e99fc85f13ac5b09920afacb5d0a90018d9dd157da21ee50d8810d4f0e40d4",
+        "csvPath": "data/snapshots/svp1-v1/runtime/chinook/playlist_track.csv",
+        "csvSha256": "4e7d3af861d7af0a49de2bbf39fe184ae2e8e0d82371d6b9645aff75b775effd",
+        "columns": [
+          "PlaylistId",
+          "TrackId"
+        ],
+        "types": [
+          "integer",
+          "integer"
+        ],
+        "rowCount": 20,
+        "rowLimit": 20,
+        "dataOrigin": "UNKNOWN",
+        "proposedPrimaryKey": [
+          "PlaylistId",
+          "TrackId"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "schemaVersion": 1,
+        "id": "svp1_C01",
+        "contractVersion": "1.0",
+        "kind": "FOREIGN_KEY",
+        "universeRef": {
+          "universeId": "concordia.universe.chinook-svp1",
+          "universeVersion": {
+            "state": "KNOWN",
+            "value": "3.0.0"
+          },
+          "namespace": {
+            "state": "KNOWN",
+            "value": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a"
+          },
+          "configFingerprint": {
+            "state": "KNOWN",
+            "value": "fb90bb8384834bd0dc77f9e66d5056548ecab9a78004e17650064904184e1e99"
+          }
+        },
+        "from": {
+          "sourceId": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a:album",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.chinook_album",
+          "orderedColumns": [
+            "ArtistId"
+          ]
+        },
+        "to": {
+          "sourceId": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a:artist",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.chinook_artist",
+          "orderedColumns": [
+            "ArtistId"
+          ]
+        },
+        "identifierSpace": {
+          "state": "KNOWN",
+          "value": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a"
+        },
+        "normalization": [
+          {
+            "componentIndex": 0,
+            "operation": {
+              "state": "KNOWN",
+              "value": "integer"
+            },
+            "version": {
+              "state": "KNOWN",
+              "value": "svp1-exact-native-v1"
+            },
+            "lossless": {
+              "state": "KNOWN",
+              "value": true
+            },
+            "adapterCapability": {
+              "state": "KNOWN",
+              "value": "native-integer-only"
+            }
+          }
+        ],
+        "semanticContext": {
+          "grain": {
+            "state": "KNOWN",
+            "value": "album -> artist"
+          },
+          "unit": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "scale": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "period": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "timezone": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          }
+        },
+        "assertions": [
+          {
+            "assertionId": "upstream-C01",
+            "claim": "SQLite foreign_key_list(Album)",
+            "actor": {
+              "state": "KNOWN",
+              "value": "lerocha/chinook-database"
+            },
+            "sourceRef": {
+              "state": "KNOWN",
+              "value": "https://github.com/lerocha/chinook-database/tree/4a944a942426e1f3263fe539155fb7ef92b04b4a"
+            },
+            "assertedAt": {
+              "state": "UNKNOWN"
+            },
+            "scope": {
+              "state": "KNOWN",
+              "value": "Pinned upstream schema declaration; backend binding not confirmed"
+            }
+          }
+        ],
+        "evidencePolicy": {
+          "requiredObservationTypes": [
+            "KEY_MEMBERSHIP"
+          ],
+          "minimumCompleteness": "COMPLETE_FOR_SCOPE",
+          "nulls": "REQUIRE_MEASUREMENT",
+          "cardinality": "REQUIRE_MEASUREMENT",
+          "declarationsAdmissible": true,
+          "minimumDistinctKeys": 2
+        },
+        "reviewState": "PENDING"
+      }
+    ],
+    "candidates": [
+      {
+        "candidateId": "C01",
+        "task": "FOREIGN_KEY",
+        "from": {
+          "universe": "chinook",
+          "table": "album",
+          "orderedColumns": [
+            "ArtistId"
+          ]
+        },
+        "to": {
+          "universe": "chinook",
+          "table": "artist",
+          "orderedColumns": [
+            "ArtistId"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1",
+        "relationContractRef": "svp1_C01"
+      },
+      {
+        "candidateId": "C02",
+        "task": "IDENTITY",
+        "from": {
+          "universe": "chinook",
+          "table": "album",
+          "orderedColumns": [
+            "AlbumId"
+          ]
+        },
+        "to": {
+          "universe": "chinook",
+          "table": "artist",
+          "orderedColumns": [
+            "ArtistId"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1"
+      },
+      {
+        "candidateId": "C03",
+        "task": "UNIQUE_KEY",
+        "from": {
+          "universe": "chinook",
+          "table": "playlist_track",
+          "orderedColumns": [
+            "PlaylistId",
+            "TrackId"
+          ]
+        },
+        "to": {
+          "universe": "chinook",
+          "table": "playlist_track",
+          "orderedColumns": [
+            "PlaylistId",
+            "TrackId"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1"
+      },
+      {
+        "candidateId": "C04",
+        "task": "UNIQUE_KEY",
+        "from": {
+          "universe": "chinook",
+          "table": "playlist_track",
+          "orderedColumns": [
+            "PlaylistId"
+          ]
+        },
+        "to": {
+          "universe": "chinook",
+          "table": "playlist_track",
+          "orderedColumns": [
+            "PlaylistId"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1"
+      },
+      {
+        "candidateId": "C05",
+        "task": "SCHEMA_CORRESPONDENCE",
+        "from": {
+          "universe": "chinook",
+          "table": "album",
+          "orderedColumns": [
+            "AlbumId"
+          ]
+        },
+        "to": {
+          "universe": "chinook",
+          "table": "artist",
+          "orderedColumns": [
+            "ArtistId"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1",
+        "inputVariant": {
+          "kind": "SYNTHETIC_METADATA_OMISSION",
+          "identifierSpace": {
+            "state": "UNKNOWN"
+          },
+          "reviewState": "PENDING",
+          "bindingState": "NOT_BOUND",
+          "usage": "semantic completeness control only, not a real external source",
+          "omittedFields": [
+            "identifierSpace"
+          ]
+        }
+      }
+    ],
+    "snapshotRoot": "data/snapshots/svp1-v1",
+    "registrySourceId": "chinook-pinned-keys-svp1"
+  },
+  {
+    "manifestId": "vendor.universe.northwind-known-reserve",
+    "version": "1.0.0",
+    "alias": "NORTHWIND_SVP1",
+    "sourcePackage": "SVP1",
+    "sourceCommit": "dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a",
+    "namespace": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a",
+    "dataOrigin": "SYNTHETIC",
+    "availability": "PUBLIC",
+    "license": "MIT",
+    "bounds": {
+      "maxKeyColumns": 1,
+      "maxRows": 20,
+      "probeLimit": 50
+    },
+    "tables": [
+      {
+        "tableId": "order_details",
+        "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:order_details",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_order_details",
+        "dataPath": "data/snapshots/svp1-v1/runtime/northwind/order_details.json",
+        "sha256": "46092ab9a0a0754eae44fcd6cae5c82cc2e5b99ce9133ca75cc66f30c33a5fe7",
+        "csvPath": "data/snapshots/svp1-v1/runtime/northwind/order_details.csv",
+        "csvSha256": "b330c92259ef232fa9e2ad676f7066719317a5e784f5ac4d5da74ec66bc9c800",
+        "columns": [
+          "OrderID",
+          "ProductID"
+        ],
+        "types": [
+          "integer",
+          "integer"
+        ],
+        "rowCount": 20,
+        "rowLimit": 20,
+        "dataOrigin": "SYNTHETIC",
+        "proposedPrimaryKey": [
+          "OrderID",
+          "ProductID"
+        ]
+      },
+      {
+        "tableId": "orders",
+        "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:orders",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_orders",
+        "dataPath": "data/snapshots/svp1-v1/runtime/northwind/orders.json",
+        "sha256": "fc16087934e0b23e4afbf1f404b14902cc66b3dad4cc34f4e39a0adc2197bdf7",
+        "csvPath": "data/snapshots/svp1-v1/runtime/northwind/orders.csv",
+        "csvSha256": "889ba4a71a022d1e3c321bdb43bc4827381c5a342247574b28db2e13b50bcf1c",
+        "columns": [
+          "OrderID"
+        ],
+        "types": [
+          "integer"
+        ],
+        "rowCount": 7,
+        "rowLimit": 20,
+        "dataOrigin": "SYNTHETIC",
+        "proposedPrimaryKey": [
+          "OrderID"
+        ]
+      },
+      {
+        "tableId": "products",
+        "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:products",
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_products",
+        "dataPath": "data/snapshots/svp1-v1/runtime/northwind/products.json",
+        "sha256": "0a10208c125198011d9268ccc2816abc61d768a0e5c915a7425a16100b340ed8",
+        "csvPath": "data/snapshots/svp1-v1/runtime/northwind/products.csv",
+        "csvSha256": "c01d7429c2447b9f501c3b30747f18a89d195ad9ee39062760002e01cbd4f328",
+        "columns": [
+          "ProductID"
+        ],
+        "types": [
+          "integer"
+        ],
+        "rowCount": 18,
+        "rowLimit": 20,
+        "dataOrigin": "SYNTHETIC",
+        "proposedPrimaryKey": [
+          "ProductID"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "schemaVersion": 1,
+        "id": "svp1_N01",
+        "contractVersion": "1.0",
+        "kind": "FOREIGN_KEY",
+        "universeRef": {
+          "universeId": "vendor.universe.northwind-known-reserve",
+          "universeVersion": {
+            "state": "KNOWN",
+            "value": "1.0.0"
+          },
+          "namespace": {
+            "state": "KNOWN",
+            "value": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+          },
+          "configFingerprint": {
+            "state": "KNOWN",
+            "value": "fb90bb8384834bd0dc77f9e66d5056548ecab9a78004e17650064904184e1e99"
+          }
+        },
+        "from": {
+          "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:order_details",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_order_details",
+          "orderedColumns": [
+            "OrderID"
+          ]
+        },
+        "to": {
+          "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:orders",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_orders",
+          "orderedColumns": [
+            "OrderID"
+          ]
+        },
+        "identifierSpace": {
+          "state": "KNOWN",
+          "value": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+        },
+        "normalization": [
+          {
+            "componentIndex": 0,
+            "operation": {
+              "state": "KNOWN",
+              "value": "integer"
+            },
+            "version": {
+              "state": "KNOWN",
+              "value": "svp1-exact-native-v1"
+            },
+            "lossless": {
+              "state": "KNOWN",
+              "value": true
+            },
+            "adapterCapability": {
+              "state": "KNOWN",
+              "value": "native-integer-only"
+            }
+          }
+        ],
+        "semanticContext": {
+          "grain": {
+            "state": "KNOWN",
+            "value": "order_details -> orders"
+          },
+          "unit": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "scale": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "period": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "timezone": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          }
+        },
+        "assertions": [
+          {
+            "assertionId": "upstream-N01",
+            "claim": "instnwnd.sql FK_Order_Details_Orders",
+            "actor": {
+              "state": "KNOWN",
+              "value": "microsoft/sql-server-samples"
+            },
+            "sourceRef": {
+              "state": "KNOWN",
+              "value": "https://github.com/microsoft/sql-server-samples/tree/dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+            },
+            "assertedAt": {
+              "state": "UNKNOWN"
+            },
+            "scope": {
+              "state": "KNOWN",
+              "value": "Pinned upstream schema declaration; backend binding not confirmed"
+            }
+          }
+        ],
+        "evidencePolicy": {
+          "requiredObservationTypes": [
+            "KEY_MEMBERSHIP"
+          ],
+          "minimumCompleteness": "COMPLETE_FOR_SCOPE",
+          "nulls": "REQUIRE_MEASUREMENT",
+          "cardinality": "REQUIRE_MEASUREMENT",
+          "declarationsAdmissible": true,
+          "minimumDistinctKeys": 2
+        },
+        "reviewState": "PENDING"
+      },
+      {
+        "schemaVersion": 1,
+        "id": "svp1_N02",
+        "contractVersion": "1.0",
+        "kind": "FOREIGN_KEY",
+        "universeRef": {
+          "universeId": "vendor.universe.northwind-known-reserve",
+          "universeVersion": {
+            "state": "KNOWN",
+            "value": "1.0.0"
+          },
+          "namespace": {
+            "state": "KNOWN",
+            "value": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+          },
+          "configFingerprint": {
+            "state": "KNOWN",
+            "value": "fb90bb8384834bd0dc77f9e66d5056548ecab9a78004e17650064904184e1e99"
+          }
+        },
+        "from": {
+          "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:order_details",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_order_details",
+          "orderedColumns": [
+            "ProductID"
+          ]
+        },
+        "to": {
+          "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:products",
+          "namespace": {
+            "state": "KNOWN",
+            "value": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+          },
+          "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_products",
+          "orderedColumns": [
+            "ProductID"
+          ]
+        },
+        "identifierSpace": {
+          "state": "KNOWN",
+          "value": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+        },
+        "normalization": [
+          {
+            "componentIndex": 0,
+            "operation": {
+              "state": "KNOWN",
+              "value": "integer"
+            },
+            "version": {
+              "state": "KNOWN",
+              "value": "svp1-exact-native-v1"
+            },
+            "lossless": {
+              "state": "KNOWN",
+              "value": true
+            },
+            "adapterCapability": {
+              "state": "KNOWN",
+              "value": "native-integer-only"
+            }
+          }
+        ],
+        "semanticContext": {
+          "grain": {
+            "state": "KNOWN",
+            "value": "order_details -> products"
+          },
+          "unit": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "scale": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "period": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          },
+          "timezone": {
+            "state": "NOT_APPLICABLE",
+            "reason": "identifier relation"
+          }
+        },
+        "assertions": [
+          {
+            "assertionId": "upstream-N02",
+            "claim": "instnwnd.sql FK_Order_Details_Products",
+            "actor": {
+              "state": "KNOWN",
+              "value": "microsoft/sql-server-samples"
+            },
+            "sourceRef": {
+              "state": "KNOWN",
+              "value": "https://github.com/microsoft/sql-server-samples/tree/dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+            },
+            "assertedAt": {
+              "state": "UNKNOWN"
+            },
+            "scope": {
+              "state": "KNOWN",
+              "value": "Pinned upstream schema declaration; backend binding not confirmed"
+            }
+          }
+        ],
+        "evidencePolicy": {
+          "requiredObservationTypes": [
+            "KEY_MEMBERSHIP"
+          ],
+          "minimumCompleteness": "COMPLETE_FOR_SCOPE",
+          "nulls": "REQUIRE_MEASUREMENT",
+          "cardinality": "REQUIRE_MEASUREMENT",
+          "declarationsAdmissible": true,
+          "minimumDistinctKeys": 2
+        },
+        "reviewState": "PENDING"
+      }
+    ],
+    "candidates": [
+      {
+        "candidateId": "N01",
+        "task": "FOREIGN_KEY",
+        "from": {
+          "universe": "northwind",
+          "table": "order_details",
+          "orderedColumns": [
+            "OrderID"
+          ]
+        },
+        "to": {
+          "universe": "northwind",
+          "table": "orders",
+          "orderedColumns": [
+            "OrderID"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1",
+        "relationContractRef": "svp1_N01"
+      },
+      {
+        "candidateId": "N02",
+        "task": "FOREIGN_KEY",
+        "from": {
+          "universe": "northwind",
+          "table": "order_details",
+          "orderedColumns": [
+            "ProductID"
+          ]
+        },
+        "to": {
+          "universe": "northwind",
+          "table": "products",
+          "orderedColumns": [
+            "ProductID"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1",
+        "relationContractRef": "svp1_N02"
+      },
+      {
+        "candidateId": "N03",
+        "task": "UNIQUE_KEY",
+        "from": {
+          "universe": "northwind",
+          "table": "order_details",
+          "orderedColumns": [
+            "OrderID",
+            "ProductID"
+          ]
+        },
+        "to": {
+          "universe": "northwind",
+          "table": "order_details",
+          "orderedColumns": [
+            "OrderID",
+            "ProductID"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1"
+      },
+      {
+        "candidateId": "N04",
+        "task": "UNIQUE_KEY",
+        "from": {
+          "universe": "northwind",
+          "table": "order_details",
+          "orderedColumns": [
+            "OrderID"
+          ]
+        },
+        "to": {
+          "universe": "northwind",
+          "table": "order_details",
+          "orderedColumns": [
+            "OrderID"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1"
+      },
+      {
+        "candidateId": "N05",
+        "task": "IDENTITY",
+        "from": {
+          "universe": "northwind",
+          "table": "orders",
+          "orderedColumns": [
+            "OrderID"
+          ]
+        },
+        "to": {
+          "universe": "northwind",
+          "table": "products",
+          "orderedColumns": [
+            "ProductID"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1"
+      },
+      {
+        "candidateId": "N06",
+        "task": "SCHEMA_CORRESPONDENCE",
+        "from": {
+          "universe": "northwind",
+          "table": "orders",
+          "orderedColumns": [
+            "OrderID"
+          ]
+        },
+        "to": {
+          "universe": "northwind",
+          "table": "products",
+          "orderedColumns": [
+            "ProductID"
+          ]
+        },
+        "proposedBy": "source-prep-fixed-enumeration-v1",
+        "inputVariant": {
+          "kind": "SYNTHETIC_METADATA_OMISSION",
+          "identifierSpace": {
+            "state": "UNKNOWN"
+          },
+          "reviewState": "PENDING",
+          "bindingState": "NOT_BOUND",
+          "usage": "semantic completeness control only, not a real external source",
+          "omittedFields": [
+            "identifierSpace"
+          ]
+        }
+      }
+    ],
+    "snapshotRoot": "data/snapshots/svp1-v1",
+    "registrySourceId": "northwind-pinned-keys-svp1"
+  }
+]

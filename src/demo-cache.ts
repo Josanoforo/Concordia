@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { ROOT, readJson, SafeError, writeJson } from './runtime.ts';
+import { readActiveReconcileSnapshot } from './reconcile/persistence.ts';
 export const digest=(v:unknown)=>createHash('sha256').update(JSON.stringify(v)).digest('hex');
 export function isolateTrace(text:string,runId:string) {return text.split(/\r?\n/).filter(Boolean).map(s=>JSON.parse(s)).filter(e=>e.run===runId);}
 export const artifacts=['discovery','probes','relaciones','fichas','eval','usl-demo','critic','critic-eval'] as const;
@@ -49,6 +50,7 @@ export function loadCache(id:string,required=false) {
   return snapshot;
 }
 export function ledgerRows(id:string) {
-  const file=path.join(ROOT,'.concordia',id,'ledger.jsonl');
-  return fs.existsSync(file)?fs.readFileSync(file,'utf8').trim().split(/\r?\n/).filter(Boolean).map(s=>JSON.parse(s)):[];
+  const dir=path.join(ROOT,'.concordia',id),active=readActiveReconcileSnapshot(dir,id);
+  if(!active&&(fs.existsSync(path.join(dir,'claims.json'))||fs.existsSync(path.join(dir,'state.json'))||fs.existsSync(path.join(dir,'ledger.jsonl'))))throw new SafeError('RECONCILE_SNAPSHOT_REQUIRED');
+  return active?.ledger??[];
 }

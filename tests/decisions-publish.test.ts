@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildDecisionLedgerRows, decodeDecisionCsv, decisionReason, decisionTableSpecs, encodeDecisionCsv } from '../src/decisions.ts';
+import { buildDecisionExportManifest, buildDecisionLedgerRows, decodeDecisionCsv, decisionReason, decisionTableSpecs, encodeDecisionCsv } from '../src/decisions.ts';
 
 test('decision CSV preserves commas, quotes and multiline metadata on round trip',()=>{
   const csv=encodeDecisionCsv(['entity','source'],[['zone:1','catalog, "zones"\nsecond line']]);
@@ -25,4 +25,10 @@ test('ledger export is deterministic and excludes claim values and state payload
 test('negative decision reason is a controlled code, never model prose',()=>{
   assert.equal(decisionReason({verdict:'INDETERMINADA',normalization:'text',explanation:'PRIVATE_COLUMN_VALUE'}),'unsafe_literal_key_format');
   assert.equal(decisionReason({verdict:'INDETERMINADA',rule:'thresholds_not_met',explanation:'PRIVATE_COLUMN_VALUE'}),'thresholds_not_met');
+});
+
+test('B5 dry-run decision export records current dependency refs and status',()=>{
+  const freshness={schemaVersion:1 as const,universeId:'U-SYNTH',state:'CURRENT' as const,dependencies:[{relationId:'relation-1',state:'CURRENT' as const,semanticSourceVersion:'semantic-v1',contractVersion:'1.0',decisionRef:'decision-1',policyVersion:'1.1',verdict:'SOSTENIDA',evidenceRefs:['evidence-1'],attemptRef:'attempt-1',latestCompleteAttemptRef:'attempt-1',checkedAt:'2026-10-23T00:00:00Z'}]};
+  const manifest=buildDecisionExportManifest('U-SYNTH',true,freshness,[],[], '2026-10-23T00:00:01Z');
+  assert.equal(manifest.status,'DRY_RUN');assert.equal(manifest.freshness.dependencies[0].decisionRef,'decision-1');assert.equal(manifest.freshness.dependencies[0].policyVersion,'1.1');
 });

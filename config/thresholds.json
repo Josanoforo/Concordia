@@ -10,5 +10,6 @@
   "criticLabelAgreementFloor": 0.8,
   "criticSampleLimit": 20,
   "criticProbeLimit": 50,
-  "criticMaxProbesPerRelation": 3
+  "criticMaxProbesPerRelation": 3,
+  "relationPolicyVersion": "1.1"
 }

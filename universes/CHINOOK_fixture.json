@@ -1,0 +1,80 @@
+{
+  "id": "CHINOOK",
+  "namespace": "chinook_fixture",
+  "fixtureCapturedAt": "2026-10-23T00:00:00.000Z",
+  "normalizationContract": {
+    "modes": {
+      "text": {
+        "meaning": "exact text"
+      },
+      "integer": {
+        "meaning": "integer format"
+      }
+    }
+  },
+  "relationPolicyVersion": "1.1",
+  "minimumOverlapRatio": 1,
+  "tables": {
+    "invoices": {
+      "db": "chinook_fixture",
+      "keyColumns": ["customer_id"],
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "string"
+        }
+      ],
+      "fixtureRows": [
+        [
+          "c1"
+        ],
+        [
+          "c2"
+        ]
+      ]
+    },
+    "customers": {
+      "db": "chinook_fixture",
+      "keyColumns": ["customer_id"],
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "string"
+        }
+      ],
+      "fixtureRows": [
+        [
+          "c1"
+        ],
+        [
+          "c2"
+        ]
+      ]
+    }
+  },
+  "relations": [
+    {
+      "id": "chinook_invoice_customer",
+      "from": {
+        "db": "chinook_fixture",
+        "table": "invoices",
+        "column": "customer_id"
+      },
+      "to": {
+        "db": "chinook_fixture",
+        "table": "customers",
+        "column": "customer_id"
+      },
+      "normalization": "text",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "chinook-fixture-key-v1",
+      "normalizationVersion": "text-exact-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "exact-text",
+      "minDistinctKeys": 2
+    }
+  ],
+  "sampleLimit": 2,
+  "probeLimit": 50
+}

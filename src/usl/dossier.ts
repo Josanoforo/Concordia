@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT, readJson, writeJson, SafeError } from '../runtime.ts';
 import { computeImpacts, impactMarkdown, persistImpacts } from '../impact.ts';
+import { assessConsumerInputVersions, consumerFreshnessSnapshot, type ConsumerFreshnessSnapshot } from '../reconcile/consumer-freshness.ts';
 
 export type RelationContract={relationId:string;from:any;to:any;normalization:string;verdict:string;reason:string;evidenceId:string;confidence:number|null;evidence:any;costExcluded:boolean;uslColumn?:string;operation?:string;impact?:any;reviewStatus?:string;critic?:any;eligibleForNewUsl:boolean};
 const endpoints=(r:any)=>JSON.stringify([r.from.db,r.from.table,r.from.column,r.to.db,r.to.table,r.to.column]);
@@ -39,8 +40,9 @@ export function pendingRequirements(r:any,thresholds:any){
   if(!p.typeCompat?.castable)needs.push('Confirmar tipos compatibles o una normalización explícita sin pérdida.');
   return needs.length?needs:['Revisión de la evidencia y del contrato semántico; no fabricar una FK.'];
 }
-export function buildDossier(id:string,inventory:any,relations:any,model:any,cfg:any,thresholds:any,excluded:string[],comment:any){
+export function buildDossier(id:string,inventory:any,relations:any,model:any,cfg:any,thresholds:any,excluded:string[],comment:any,freshness?:ConsumerFreshnessSnapshot){
   const rows=relations.relations,impacts=computeImpacts(rows,inventory),contracts=rows.map((r:any)=>relationContract(r,cfg,excluded));
+  const consumerFreshness=freshness?assessConsumerInputVersions(freshness,rows.map((r:any)=>({relationId:r.relationId,verdict:r.verdict,contractVersion:r.contractVersion??r.contract?.contractVersion,decisionRef:r.decisionRef??r.decision?.decisionId,policyVersion:r.policyVersion??r.decision?.policyVersion,evidenceRefs:r.evidenceRefs??r.decision?.evidenceBundleRefs}))):undefined;
   const foreignKeys:RelationContract[]=(model?.mappings??[]).map((m:any)=>{
     const r=contracts.find((r:RelationContract)=>r.relationId===m.relationId);
     if(!r)throw new SafeError('USL_FK_WITHOUT_RELATION_EVIDENCE');
@@ -54,11 +56,16 @@ export function buildDossier(id:string,inventory:any,relations:any,model:any,cfg
     if(corrected)forbidden.push({...contracts.find((c:RelationContract)=>c.relationId===r.relationId)!,reason:'unsafe_literal_equality_format_mismatch; normalized edge remains independently allowed',operation:'literal-equality-only',impact:impacts.find(i=>i.relationId===r.relationId)});
   }
   const pending=rows.filter((r:any)=>r.verdict==='INDETERMINADA').map((r:any)=>({...contracts.find((c:RelationContract)=>c.relationId===r.relationId),missing:pendingRequirements(r,thresholds)}));
+  if(consumerFreshness){
+    for(const fk of foreignKeys){const dependency=consumerFreshness.dependencies.find(item=>item.relationId===fk.relationId),state=dependency?.state??'UNKNOWN';(fk as any).freshnessState=state;if(state!=='CURRENT'){(fk as any).eligibleForNewUsl=false;(fk as any).freshnessReason=`dependency_${state.toLowerCase()}`;}}
+    for(const dependency of consumerFreshness.dependencies.filter(item=>item.state!=='CURRENT'))if(!pending.some((item:any)=>item.relationId===dependency.relationId))pending.push({relationId:dependency.relationId,freshnessState:dependency.state,missing:[`freshness_${dependency.state.toLowerCase()}_requires_recheck`],latestCompleteAttemptRef:dependency.latestCompleteAttemptRef});
+  }
   const sourceUtc=relations.critic?.utc??relations.utc,cacheLabel=relations.syntheticFixture?'SYNTHETIC FIXTURE':'CACHED '+sourceUtc;
+  const freshnessLines=consumerFreshness?['## Frescura y dependencias','',`Estado general: ${consumerFreshness.state}.`,...consumerFreshness.dependencies.map(item=>`- ${item.relationId}: ${item.state}; contract ${item.contractVersion??'UNKNOWN'}; decision ${item.decisionRef??'UNKNOWN'}; policy ${item.policyVersion??'UNKNOWN'}; attempt ${item.attemptRef??'UNKNOWN'}; checkedAt ${item.checkedAt??'UNKNOWN'}.`),'']:[];
   const header=['# Dossier USL '+id,'',cacheLabel,'',`Modelo: ${model?.fullModel??'no desplegado (correspondencias de esquema no son FKs)'}. Generado desde evidencia guardada, sin SQL ni LLM.`,
     'Confianza = .50 + .25*overlap + .10*tipos compatibles (config/reconcile.json); si el crítico degrada, soporte actual de la FK = 0. Score de evidencia, no probabilidad calibrada ni garantía global. Cada contraprueba y la sonda inicial conservan su fecha propia. La normalización procede del contrato del universo y la arista; no se canonizan claves a ciegas. Etiquetas ausentes significan evidencia semántica ausente, nunca 100 % de acuerdo. Los duplicados se describen sobre filas observadas; ausencia de duplicados no prueba unicidad global.','',
     'La reconciliación conserva alternativas con regla, source, versión, fecha de observación y requestIds; la evidencia reinyectada recupera contexto sin sumar un voto nuevo. Umbrales de resolución: ganador ≥0,70 y margen ≥0,20.','',
-    '## FKs del USL','',`FKs declaradas: ${foreignKeys.length}. La presencia en el modelo no prueba una lectura exitosa ni integridad global.`,''];
+    ...freshnessLines,'## FKs del USL','',`FKs declaradas: ${foreignKeys.length}. La presencia en el modelo no prueba una lectura exitosa ni integridad global.`,''];
   for(const fk of foreignKeys)header.push(`### ${fk.from.table}.${fk.uslColumn} → ${fk.to.table}.${fk.to.column}`,'',
     `Origen físico: ${fk.from.db}.${fk.from.table}.${fk.from.column}. Veredicto: ${fk.verdict}. Estado: ${fk.reviewStatus}. Confianza: ${fk.confidence??'no calculable'}. Normalización declarada: ${fk.normalization}.`,
     `evidenceId: ${fk.evidenceId}; fecha: ${fk.evidence.utc}; requestIds: ${fk.evidence.requestIds.join(', ')}.`,
@@ -71,12 +78,12 @@ export function buildDossier(id:string,inventory:any,relations:any,model:any,cfg
     `Operación prohibida: ${n.operation}. evidenceId: ${n.evidenceId}; requestIds: ${n.evidence.requestIds.join(', ')}.`,
     '',n.impact?.sentence??'Impacto no cuantificable con la evidencia disponible.',...(n.impact?.examples??[]).map((x:any)=>`- Clave ${x.key}: wrong=${x.wrong??'sin vínculo'}; right=${x.right??'sin referencia'}.`),'');
   header.push('## Pendientes','');
-  for(const p of pending)header.push(`- ${p.relationId}: ${p.missing.join(' ')} Fecha ${p.evidence.utc}; requestIds ${p.evidence.requestIds.join(', ')}.`);
+  for(const p of pending)header.push(`- ${p.relationId}: ${p.missing.join(' ')} Fecha ${p.evidence?.utc??'sin nueva observación'}; requestIds ${(p.evidence?.requestIds??[]).join(', ')||'no disponibles'}.`);
   if(!pending.length)header.push('Ninguna relación INDETERMINADA en esta evidencia.');
   header.push('','## Excluidas por coste','',...(excluded.length?excluded.map(t=>`- ${t}: exclusión histórica D2/D3, no una restricción vigente. Se conserva la distinción entre lectura del USL y contrasondas D4a sobre fuentes físicas; las llamadas nuevas figuran con su requestId en Crítica.`):['Ninguna exclusión de coste histórica en este universo.']),
     '','## Comentarios embebidos','',comment?`Prueba única U1: ${comment.status}; ${comment.compileStatements} sentencia COMPILE sin DEPLOY. ${comment.error?.detail??'Resultado en evidence/comment-probe-04b.json'}. No se reemplaza un USL existente. Los comentarios de cada FK quedan en este dossier si COMMENT no se admite en la forma probada.`:'COMMENT pendiente de prueba única autorizada. No se infiere soporte.',
     '',impactMarkdown(impacts,cacheLabel));
-  return {cacheLabel,universe:id,sourceUtc,foreignKeys,forbidden,pending,excludedByCost:excluded,comments:comment?{status:comment.status,evidence:'evidence/comment-probe-04b.json'}:null,markdown:header.join('\n')+'\n'};
+  return {cacheLabel,universe:id,sourceUtc,foreignKeys,forbidden,pending,excludedByCost:excluded,comments:comment?{status:comment.status,evidence:'evidence/comment-probe-04b.json'}:null,...(consumerFreshness?{freshness:consumerFreshness}:{}),markdown:header.join('\n')+'\n'};
 }
 export function uslDossier(id:string,options?:{snapshot:any;sample:boolean}){
   const inventory=options?.snapshot.artifacts.discovery??readJson(`out/${id}/discovery.json`),relations=options?.snapshot.artifacts.relaciones??readJson(`out/${id}/relaciones.json`);
@@ -84,8 +91,10 @@ export function uslDossier(id:string,options?:{snapshot:any;sample:boolean}){
   const completeFile=`out/${id}/usl-complete.json`,demoFile=`out/${id}/usl-demo.json`;
   const model=publicFixture||id==='U3'?null:fs.existsSync(path.join(ROOT,completeFile))?readJson(completeFile):fs.existsSync(path.join(ROOT,demoFile))?readJson<any>(demoFile).modelDetails??null:null;
   const commentFile='evidence/comment-probe-04b.json',comment=!publicFixture&&fs.existsSync(path.join(ROOT,commentFile))?readJson(commentFile):null;
-  const dossier=buildDossier(id,inventory,relations,model,readJson('config/reconcile.json'),readJson('config/thresholds.json'),readJson('config/cost-exclusions.json')[id]??[],comment);
-  const sample=options?.sample??false,dir=`out/${id}${sample?'/sample':''}`;
+  const sample=options?.sample??false,dir=`out/${id}${sample?'/sample':''}`,priorPath=path.join(ROOT,dir,'usl-dossier.json');let previousFreshness:ConsumerFreshnessSnapshot|undefined;
+  if(fs.existsSync(priorPath)){try{previousFreshness=JSON.parse(fs.readFileSync(priorPath,'utf8')).freshness;}catch{previousFreshness=undefined;}}
+  const freshness=consumerFreshnessSnapshot(id,(relations.relations??[]).map((relation:any)=>relation.relationId),previousFreshness,{mode:'REGENERATE'});
+  const dossier=buildDossier(id,inventory,relations,model,readJson('config/reconcile.json'),readJson('config/thresholds.json'),readJson('config/cost-exclusions.json')[id]??[],comment,freshness);
   persistImpacts(id,inventory,relations,{sample,sourceUtc:relations.utc});
   writeJson(dir+'/negative_usl.json',{universe:id,cacheLabel:dossier.cacheLabel,sqlCalls:0,generations:0,relations:dossier.forbidden});
   writeJson(dir+'/usl-dossier.json',{...dossier,markdown:undefined});

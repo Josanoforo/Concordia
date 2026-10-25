@@ -1,11 +1,18 @@
 import { Zetaris, type SqlResult } from '../clients/zetaris.ts';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createHash } from 'node:crypto';
 import type { Candidate, Discovery, Endpoint, LiveTable } from '../discovery/index.ts';
-import { failure, readJson, writeJson, ROOT } from '../runtime.ts';
-import { normalizeKey, projection, quotedValues, type NormalizationMode } from '../universe.ts';
-import { assessFreshness, assessPartialTransport } from './evidence-contract.ts';
+import type { Decision, EvidenceBundle, RelationContract } from '../contracts/types.ts';
+import { failure, readJson, writeJson, ROOT, SafeError } from '../runtime.ts';
+import { normalizeKey, type NormalizationMode } from '../universe.ts';
+import { assessPartialTransport } from './evidence-contract.ts';
+import { recordFreshnessAttempt, sourceSchemaFingerprintFromDescription } from '../reconcile/freshness-history.ts';
+import { resolveUniverseManifest, validateUniverseConfig } from '../registry/universes.ts';
+import { legacyRelationContract, planLegacyProbe } from '../relations/legacy.ts';
+import { addSampleQualitySignals, executeProbe } from '../relations/probes.ts';
+import { ZetarisProbeAdapter, zetarisTableSpecs } from '../relations/adapters/zetaris.ts';
+import { evaluateRelation } from '../relations/decision.ts';
+import { relationPolicyFromConfig } from '../relations/policy.ts';
 import { classify } from './verdicts.ts';
 export type Probe = {
   relation: Candidate; utc: string; status: string; queries: SqlResult[]; error?: object;
@@ -14,7 +21,7 @@ export type Probe = {
   labelAgreement?: { agree: number; compared: number; ratio: number; examples: { key: string; fromLabel: string[]; toLabel: string[]; agrees: boolean }[] };
   typeCompat: { from: string; to: string; castable: boolean; normalization: string };
   nullRate: { from: number | null; to: number | null; denominatorFrom: number; denominatorTo: number };
-  alerts: string[]; durationMs: number; freshness?: any;
+  alerts: string[]; durationMs: number; freshness?: any; decision?: Decision; relationContract?: RelationContract; typedEvidence?: EvidenceBundle;
 };
 export type RowMultiplicity = { rows: number; nonNullRows: number; nullRows: number; emptyRows: number; distinctKeys: number; duplicateKeys: { key: string; rows: number }[] };
 function keyValues(t: LiveTable, e: Endpoint) { return t.sample.rows.map(row => row[t.columns.indexOf(e.column)]); }
@@ -76,67 +83,78 @@ export function compareLabels(fromRows: any[][], toRows: any[][], fromCols: stri
   const agree = examples.filter(e => e.agrees).length;
   return { agree, compared: examples.length, ratio: agree / examples.length, examples: examples.slice(0, 20) };
 }
-export async function probe(options?: { candidateIds: string[]; append?: boolean }) {
-  const inventory = readJson<Discovery>('out/U1/discovery.json'), z = new Zetaris();
-  const config = readJson('config/thresholds.json'), universeConfig = readJson<any>('universes/U1_ny_taxi.json');
-  const mode: NormalizationMode = universeConfig.normalizationContract.defaultMode;
-  if (!universeConfig.normalizationContract.modes[mode]) throw new Error('NORMALIZATION_NOT_DECLARED_FOR_UNIVERSE');
-  const probes: Probe[] = options?.append ? readJson<{probes: Probe[]}>('out/U1/probes.json').probes : [];
-  const candidates = options ? inventory.candidates.filter(c => options.candidateIds.includes(c.id) && !probes.some(p => p.relation.id === c.id)) : inventory.candidates;
-  for (const relation of candidates) {
-    const start = performance.now(), a = inventory.tables[relation.from.table], b = inventory.tables[relation.to.table];
-    const rawKeys = keyValues(a, relation.from).filter(v => normalizeKey(v, mode) !== null);
-    const seeds = [...new Set(rawKeys.map(v => normalizeKey(v, mode)!))].slice(0, config.sampleLimit);
-    const result: Probe = { relation, utc: new Date().toISOString(), status: 'PASS', queries: [],
-      overlap: { matched: 0, probed: seeds.length, ratio: seeds.length ? 0 : null, sampleKeys: seeds },
-      typeCompat: { from: a.schema.find(c => c.name === relation.from.column)?.type ?? 'unknown', to: b.schema.find(c => c.name === relation.to.column)?.type ?? 'unknown', castable: false, normalization: mode },
-      nullRate: { from: nullRate(a, relation.from, mode), to: nullRate(b, relation.to, mode), denominatorFrom: a.sample.rows.length, denominatorTo: b.sample.rows.length }, alerts: semanticAlerts(a), durationMs: 0 };
-    let transportFailure:any;
-    try {
-      if (seeds.length) {
-        for (const [endpoint, table] of [[relation.from, a], [relation.to, b]] as const) {
-          const cols = [...new Set([endpoint.column, ...table.labels])];
-          // Numeric format variants match string-backed catalogs without remote casts.
-          const values = [...new Set([...rawKeys.map(String), ...seeds, ...(mode === 'integer' ? seeds.filter(k => /^-?\d+$/.test(k)).map(k => k + '.0') : [])])].slice(0, 50);
-          const sql = `SELECT ${projection(endpoint.table, cols)} FROM ${endpoint.db}.${endpoint.table} WHERE ${endpoint.column} IN (${quotedValues(values)}) LIMIT ${config.probeLimit}`;
-          result.queries.push(await z.runSql(sql, config.probeLimit));
-        }
-        const [fromQuery, toQuery] = result.queries;
-        const fromMultiplicity = measureMultiplicity(fromQuery.rows, 0, mode), toMultiplicity = measureMultiplicity(toQuery.rows, 0, mode);
-        const rowPairs = sharedRowPairs(fromQuery.rows, 0, toQuery.rows, 0, mode);
-        result.multiplicity = { from: fromMultiplicity, to: toMultiplicity, sharedRowPairs: rowPairs.sharedRowPairs, pairCounts: rowPairs.pairCounts, manyToManyKeys: rowPairs.manyToManyKeys,
-          bounded: { from: fromQuery.rows.length >= config.probeLimit, to: toQuery.rows.length >= config.probeLimit } };
-        if (toMultiplicity.duplicateKeys.length) result.alerts.push('DUPLICATE_REFERENCED_KEYS_OBSERVED_IN_BOUNDED_RESPONSE');
-        if (rowPairs.manyToManyKeys.length) result.alerts.push('MANY_TO_MANY_MULTIPLICITY_OBSERVED_IN_BOUNDED_RESPONSES');
-        const targetKeys = new Set(toQuery.rows.map(row => normalizeKey(row[0], mode)).filter(v => v !== null));
-        result.overlap.matched = seeds.filter(k => targetKeys.has(k)).length;
-        result.overlap.ratio = result.overlap.matched / seeds.length;
-        const fromCols = [...new Set([relation.from.column, ...a.labels])], toCols = [...new Set([relation.to.column, ...b.labels])];
-        result.labelAgreement = compareLabels(fromQuery.rows, toQuery.rows, fromCols, toCols, relation.from, relation.to, a.labels, b.labels, mode);
-        const both = [...rawKeys, ...toQuery.rows.map(row => row[0])].filter(v => normalizeKey(v, mode) !== null);
-        const numericDomain = both.every(v => /^-?\d+(?:\.0+)?$/.test(String(v).trim()));
-        result.typeCompat.castable = numericDomain || result.typeCompat.from === result.typeCompat.to;
-      } else result.alerts.push('NO_NON_NULL_SOURCE_KEYS_IN_SAMPLE');
-    } catch (error) { transportFailure=error; result.status = 'FAIL'; result.error = failure(error); }
-    const stamp=new Date().toISOString(),digest=(value:unknown)=>createHash('sha256').update(JSON.stringify(value)).digest('hex');
-    const previousPath=path.join(ROOT,'.concordia','freshness','U1',relation.id+'.json');
-    const previous=fs.existsSync(previousPath)?JSON.parse(fs.readFileSync(previousPath,'utf8')):null;
-    // Fingerprint the bounded rows returned by this live probe, never the cached
-    // discovery sample. Schema identity is limited to the allowlisted projection.
-    const sourceVersion=digest(result.queries.map(q=>q.rows)),schemaVersion=digest([a.schema,b.schema]);
-    const complete=result.status==='PASS';
-    const freshness=assessFreshness(previous,{sourceVersion,schemaVersion,normalization:mode,observedAt:stamp,verdict:complete?classify(result,config).verdict:'INDETERMINADA',complete});
-    result.freshness={...freshness,sourceVersion,schemaVersion,normalization:mode,observedAt:stamp};
-    if(!complete){const transport=failure(transportFailure);result.error={...result.error,...assessPartialTransport({fragments:result.queries.map(q=>({requestId:q.requestId,rows:q.rows.length})),error:{status:errorStatus(transport),retryAfter:transport.retryAfter}})};}
-    else {
-      const next={sourceVersion,schemaVersion,normalization:mode,observedAt:stamp,verdict:classify(result,config).verdict,state:freshness.state,requestIds:result.queries.map(q=>q.requestId),rule:classify(result,config).rule};
-      fs.mkdirSync(path.dirname(previousPath),{recursive:true});fs.appendFileSync(previousPath.replace(/\.json$/,'')+'.history.jsonl',JSON.stringify(next)+'\n');
-      fs.writeFileSync(previousPath+'.tmp',JSON.stringify(next,null,2)+'\n');fs.renameSync(previousPath+'.tmp',previousPath);
-    }
-    result.durationMs = Math.round(performance.now() - start); probes.push(result);
-    writeJson('out/U1/probes.json', { utc: new Date().toISOString(), live: true, llmApplicable: false, sampleWarning: 'Bounded nonrandom samples; no global coverage/uniqueness established', probes });
-    console.log(result.status, relation.id, 'overlap', result.overlap.ratio, 'labels', result.labelAgreement?.ratio ?? 'absent', 'alerts', result.alerts.length);
+export interface ProbeDependencies { inventory?: Discovery; client?: Pick<Zetaris, 'runSql'>; persist?: boolean; recordFreshness?: boolean; now?:()=>string; }
+export async function probe(options?: { candidateIds: string[]; append?: boolean }, dependencies: ProbeDependencies = {}) {
+  const inventory=dependencies.inventory??readJson<Discovery>('out/U1/discovery.json'),z=dependencies.client??new Zetaris();
+  const config=readJson('config/thresholds.json'),relationPolicy=relationPolicyFromConfig(config),universeConfig=readJson<any>('universes/U1_ny_taxi.json');
+  const manifest=resolveUniverseManifest('U1')!,configIssues=validateUniverseConfig(manifest,universeConfig);
+  if(configIssues.length)throw new SafeError('UNIVERSE_CONFIG_INVALID',undefined,JSON.stringify(configIssues));
+  const mode:NormalizationMode=universeConfig.normalizationContract.defaultMode;
+  if(!universeConfig.normalizationContract.modes[mode])throw new Error('NORMALIZATION_NOT_DECLARED_FOR_UNIVERSE');
+  const probes:Probe[]=options?.append&&dependencies.persist!==false?readJson<{probes:Probe[]}>('out/U1/probes.json').probes:[];
+  const candidates=options?inventory.candidates.filter(candidate=>options.candidateIds.includes(candidate.id)&&!probes.some(probe=>probe.relation.id===candidate.id)):inventory.candidates;
+  const relationBound=manifest.capabilityBounds?.BOUNDED_RELATION_PROBE?.maxRelationsPerRun;
+  if(candidates.length>relationBound!)throw new SafeError('RELATION_COUNT_EXCEEDS_CAPABILITY_BOUND');
+  const contractVersion=manifest.version.split('.').slice(0,2).join('.');
+  const adapter=new ZetarisProbeAdapter(zetarisTableSpecs(universeConfig),z);
+  for(const relation of candidates){
+    const start=performance.now(),a=inventory.tables[relation.from.table],b=inventory.tables[relation.to.table];
+    const rawKeys=keyValues(a,relation.from).filter(value=>normalizeKey(value,mode)!==null);
+    const seeds=[...new Set(rawKeys.map(value=>normalizeKey(value,mode)!))].slice(0,config.sampleLimit);
+    const result:Probe={relation,utc:new Date().toISOString(),status:'INCOMPLETE',queries:[],overlap:{matched:0,probed:seeds.length,ratio:seeds.length?0:null,sampleKeys:seeds},
+      typeCompat:{from:a.schema.find(column=>column.name===relation.from.column)?.type??'unknown',to:b.schema.find(column=>column.name===relation.to.column)?.type??'unknown',castable:false,normalization:mode},
+      nullRate:{from:nullRate(a,relation.from,mode),to:nullRate(b,relation.to,mode),denominatorFrom:a.sample.rows.length,denominatorTo:b.sample.rows.length},alerts:semanticAlerts(a),durationMs:0};
+    const fromObject=`${relation.from.db}.${relation.from.table}`,toObject=`${relation.to.db}.${relation.to.table}`;
+    const approved=(table:string)=>universeConfig.tables[table].columns.map((column:any)=>column.name);
+    const allowlist={[fromObject]:approved(relation.from.table),[toObject]:approved(relation.to.table)};
+    const additionalColumns={[fromObject]:a.labels,[toObject]:b.labels};
+    const rawVariants=[...rawKeys.map(String),...seeds,...(mode==='integer'?seeds.filter(key=>/^-?\d+$/.test(key)).map(key=>key+'.0'):[])];
+    const filterValues=[...new Set(rawVariants)].slice(0,universeConfig.probeLimit);
+    const filters=filterValues.length?{
+      [fromObject]:{column:relation.from.column,values:filterValues},
+      [toObject]:{column:relation.to.column,values:filterValues}
+    }:{};
+    const plan=planLegacyProbe(relation,'U1',contractVersion,mode,config.minDistinctKeys,allowlist,universeConfig.probeLimit,additionalColumns,filters);
+    const currentAt=dependencies.now?.()??new Date().toISOString();
+    const execution=await executeProbe(plan,adapter,{runId:`U1:${relation.id}:${currentAt}`,checkedAt:currentAt,scope:'allowlisted bounded key lookup',executionMode:'LIVE',dataOrigin:manifest.source.dataOrigin});
+    result.utc=currentAt;
+    result.queries=execution.reads.map(read=>({sql:read.statement??'',requestId:read.requestId??'',queryId:read.queryId??'',rows:read.tuples as any[][],durationMs:read.durationMs??0,utc:read.requestedAt??currentAt}));
+    const fromSource=`${relation.from.db}:${relation.from.table}:from`,toSource=`${relation.to.db}:${relation.to.table}:to`;
+    const fromRows=execution.bundle.observations.find(observation=>observation.sourceRef===fromSource)?.measuredTuples??[];
+    const toRows=execution.bundle.observations.find(observation=>observation.sourceRef===toSource)?.measuredTuples??[];
+    const fromCols=plan.endpoints[0].columns as string[],toCols=plan.endpoints[1].columns as string[];
+    const fromMultiplicity=measureMultiplicity(fromRows as any[][],0,mode),toMultiplicity=measureMultiplicity(toRows as any[][],0,mode);
+    const rowPairs=sharedRowPairs(fromRows as any[][],0,toRows as any[][],0,mode);
+    result.multiplicity={from:fromMultiplicity,to:toMultiplicity,sharedRowPairs:rowPairs.sharedRowPairs,pairCounts:rowPairs.pairCounts,manyToManyKeys:rowPairs.manyToManyKeys,bounded:{from:fromRows.length>=plan.limit,to:toRows.length>=plan.limit}};
+    if(toMultiplicity.duplicateKeys.length)result.alerts.push('DUPLICATE_REFERENCED_KEYS_OBSERVED_IN_BOUNDED_RESPONSE');
+    if(rowPairs.manyToManyKeys.length)result.alerts.push('MANY_TO_MANY_MULTIPLICITY_OBSERVED_IN_BOUNDED_RESPONSES');
+    const targetKeys=new Set(toRows.map(row=>normalizeKey(row[0],mode)).filter((value):value is string=>value!==null));
+    result.overlap.matched=seeds.filter(key=>targetKeys.has(key)).length;
+    result.overlap.ratio=seeds.length?result.overlap.matched/seeds.length:null;
+    result.labelAgreement=compareLabels(fromRows as any[][],toRows as any[][],fromCols,toCols,relation.from,relation.to,a.labels,b.labels,mode);
+    const both=[...rawKeys,...toRows.map(row=>row[0])].filter(value=>normalizeKey(value,mode)!==null);
+    const numericDomain=both.every(value=>/^-?\d+(?:\.0+)?$/.test(String(value).trim()));
+    result.typeCompat.castable=numericDomain||result.typeCompat.from===result.typeCompat.to;
+    if(execution.errors.length)result.alerts.push('transport_incomplete');
+    result.status=execution.status==='COMPLETE'?'PASS':'INCOMPLETE';
+    const qualitySignals:string[]=[];
+    if(result.labelAgreement&&result.labelAgreement.ratio<config.misleadingLabelAgreement)qualitySignals.push('LABEL_CONFLICT');
+    else if(result.labelAgreement&&result.labelAgreement.ratio<config.sustainedLabelAgreement)qualitySignals.push('LABEL_UNCERTAIN');
+    if(rowPairs.manyToManyKeys.length)qualitySignals.push('MANY_TO_MANY');
+    if(toMultiplicity.duplicateKeys.length)qualitySignals.push('DUPLICATE_REFERENCED_KEYS');
+    if(!result.typeCompat.castable)qualitySignals.push('TYPE_INCOMPATIBLE');
+    if(result.alerts.length)qualitySignals.push('SAMPLE_ALERT');
+    addSampleQualitySignals(execution.bundle,qualitySignals,currentAt);
+    const contract=legacyRelationContract(relation,'concordia.universe.ny-taxi',contractVersion,mode,config.minDistinctKeys);
+    result.decision=evaluateRelation(contract,[execution.bundle],relationPolicy);
+    result.relationContract=contract;result.typedEvidence=execution.bundle;
+    const stamp=currentAt,complete=execution.status==='COMPLETE';
+    const attempt=dependencies.persist===false&&!dependencies.recordFreshness?null:recordFreshnessAttempt({universeId:manifest.manifestId,relationId:relation.id,contract,evidence:execution.bundle,decision:result.decision!,policy:relationPolicy,reads:execution.reads,errors:execution.errors,sourceSchemaFingerprints:[sourceSchemaFingerprintFromDescription(`${relation.from.db}:${relation.from.table}:from`,`${relation.from.db}.${relation.from.table}`,a.schema,'LEGACY_DESCRIBE_CAPTURE',inventory.utc),sourceSchemaFingerprintFromDescription(`${relation.to.db}:${relation.to.table}:to`,`${relation.to.db}.${relation.to.table}`,b.schema,'LEGACY_DESCRIBE_CAPTURE',inventory.utc)],checkedAt:stamp});
+    result.freshness=attempt?{state:attempt.comparison,requiresReview:attempt.validity.requiresReview||attempt.comparison==='CHANGED_REQUIRES_REVIEW',preserveHistorical:true,supersedePrevious:false,reusedAsFresh:false,observedAt:attempt.validity.observedAt,checkedAt:attempt.validity.checkedAt,attemptRef:attempt.attemptId,lastCompleteAttemptRef:attempt.latestCompleteAttemptRef,sourceToken:attempt.validity.sourceToken,sourceFingerprint:attempt.validity.sourceFingerprint,fingerprintScope:attempt.fingerprintScope,scopeDescription:attempt.scopeDescription}: {state:complete?'FIRST_CHECK':'INCOMPLETA',requiresReview:!complete,preserveHistorical:true,supersedePrevious:false,reusedAsFresh:false,observedAt:null,checkedAt:stamp};
+    if(!complete){const failed=execution.errors[0];const partial=assessPartialTransport({fragments:result.queries.map(query=>({requestId:query.requestId,rows:query.rows.length})),error:{status:failed?.http??0,retryAfter:failed?.retryAfter}});result.error={...partial,failedSources:execution.errors.map(error=>({sourceRef:error.sourceRef,code:error.adapterCode,http:error.http,retryAfter:error.retryAfter}))};}
+    result.durationMs=Math.round(performance.now()-start);probes.push(result);
+    if(dependencies.persist!==false)writeJson('out/U1/probes.json',{utc:new Date().toISOString(),live:true,llmApplicable:false,sampleWarning:'Bounded nonrandom samples; no global coverage/uniqueness established',probes});
+    console.log(result.status,relation.id,'overlap',result.overlap.ratio,'labels',result.labelAgreement?.ratio??'absent','alerts',result.alerts.length);
   }
   return probes;
-}
-function errorStatus(error:any){return typeof error?.http==='number'?error.http:0;}
+}function errorStatus(error:any){return typeof error?.http==='number'?error.http:0;}

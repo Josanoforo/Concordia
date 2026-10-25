@@ -18,9 +18,9 @@ test('missing labels cannot become a fabricated zero-error claim; unmatched labe
 });
 test('CIK literal mismatch loses one link and is not mislabeled as another company',()=>{
   const wrong:any={...misleading(1),relationId:'synthetic_cik_literal',verdict:'INDETERMINADA',normalization:'text'};
-  wrong.evidence={...wrong.evidence,labelAgreement:undefined,overlap:{matched:0,probed:1,ratio:0},queries:[{requestId:'literal-a',utc:'2026-01-01',rows:[['12345']]},{requestId:'literal-b',utc:'2026-01-01',rows:[]}]};
-  const right={...wrong,relationId:'synthetic_cik_normalized',verdict:'SOSTENIDA',normalization:'integer-pad10',evidence:{...wrong.evidence,overlap:{matched:1,probed:1,ratio:1},queries:[wrong.evidence.queries[0],{requestId:'normal-b',utc:'2026-01-01',rows:[['0000012345']]}]}};
-  const impact=computeImpacts([wrong,right],inventory)[0];assert.equal(impact.sample,1);assert.equal(impact.lostMatches,1);assert.equal(impact.misattributed,0);assert.deepEqual(impact.examples[0],{key:'12345',wrong:null,right:'0000012345'});
+  wrong.evidence={...wrong.evidence,labelAgreement:undefined,overlap:{matched:0,probed:1,ratio:0},queries:[{requestId:'literal-a',utc:'2026-01-01',rows:[['320193']]},{requestId:'literal-b',utc:'2026-01-01',rows:[]}]};
+  const right={...wrong,relationId:'synthetic_cik_normalized',verdict:'SOSTENIDA',normalization:'integer-pad10',evidence:{...wrong.evidence,overlap:{matched:1,probed:1,ratio:1},queries:[wrong.evidence.queries[0],{requestId:'normal-b',utc:'2026-01-01',rows:[['0000320193']]}]}};
+  const impact=computeImpacts([wrong,right],inventory)[0];assert.equal(impact.sample,1);assert.equal(impact.lostMatches,1);assert.equal(impact.misattributed,0);assert.deepEqual(impact.examples[0],{key:'320193',wrong:null,right:'0000320193'});
   const dossier=buildDossier('U2',inventory,{utc:'2026-01-01',relations:[wrong,right]},{fullModel:'synthetic.model',mappings:[{relationId:right.relationId,uslColumn:'id'}]},cfg,thresholds,[],null);
   assert.equal(dossier.foreignKeys.length,1);assert.equal(dossier.forbidden.length,1);assert.equal(dossier.forbidden[0].relationId,wrong.relationId);assert.equal(dossier.forbidden[0].operation,'literal-equality-only');
 });
@@ -62,4 +62,12 @@ test('fresh critic overlap is scored independently of the baseline and missing e
   assert.equal(evidenceConfidence({evidence:{}},cfg),null);
   assert.equal(evidenceConfidence({evidence:{kind:'schema-correspondence',overlap:{ratio:1}}},cfg),null);
   assert.equal(evidenceConfidence({...r,critic:{status:'DEGRADED'}},cfg),0);
+});
+
+test('B5 dossier and static report expose dependency freshness without recomputing evidence',()=>{
+  const relation=misleading(),freshness={schemaVersion:1 as const,universeId:'U1',state:'PENDING' as const,dependencies:[{relationId:relation.relationId,state:'PENDING' as const,semanticSourceVersion:'semantic-v2',contractVersion:'1.0',decisionRef:'decision-fixture',policyVersion:'1.0',verdict:'ENGAÑOSA',evidenceRefs:[],attemptRef:'attempt-pending',latestCompleteAttemptRef:'attempt-complete',checkedAt:'2026-01-01T00:00:00Z'}]};
+  const dossier=buildDossier('U1',inventory,{utc:'2026-01-01',relations:[relation]},null,cfg,thresholds,[],null,freshness);
+  assert.equal(dossier.freshness?.state,'PENDING');assert.equal(dossier.freshness?.dependencies[0].latestCompleteAttemptRef,'attempt-complete');
+  const html=reportHtml('U1',{sampleMode:true,mode:'offline',runId:'synthetic'},{sourceUtc:'2026-01-01',artifacts:{discovery:inventory,relaciones:{relations:[relation]},dossier,fichas:{fichas:[],freshness},eval:{},'usl-demo':{}},ledger:[],receipts:[]});
+  assert.ok(html.includes('Estado de frescura y dependencias'));assert.ok(html.includes('PENDING'));assert.ok(html.includes('attempt-complete'));
 });

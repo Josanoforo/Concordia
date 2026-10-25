@@ -5,8 +5,16 @@ import { failure, jsonHttp, localUrl, readJson, required, ROOT, SafeError, trace
 import { budgetFilePath, readBudget, writeBudget } from '../budget.ts';
 
 export type Receipt = { receiptId: string; provider: string; model: string; inputTokens: number; outputTokens: number; totalTokens: number; latencyMs: number; fromCache: boolean; requestedMode?: string; routedMode?: string; modeCoerced?: boolean; boundMode?: string; predicted?: string | null; winner?: string | null; routingReason?: string | null; routingPolicy?: string | null; costUsd?: number };
+export type CompletionMetadata = { finishReason?: string; stopReason?: string; truncated: boolean };
 type Attempt = { id: string; utc: string; route: string; status: string; receipt?: Receipt; policyAlerts?: string[]; error?: object };
 type Budget = { limit: null; consumed: number; attempts: Attempt[] };
+export class NightshiftChatError extends SafeError {
+  constructor(code: string, http: number | undefined, detail: string | undefined, retryAfter: string | undefined,
+    readonly attemptId: string, readonly responseText?: string, readonly receipt?: Receipt, readonly receiptValidated = false, readonly finishReason?: string, readonly stopReason?: string, readonly responseTruncated = false) {
+    super(code, http, detail, retryAfter);
+    this.name = 'NightshiftChatError';
+  }
+}
 export type ModelPolicy = { route: string; preferredProvider: string; preferredModelFamilies: string[]; watchModelFamilies: string[]; modelPolicy: 'observe_and_continue' };
 export function assertGenerationAllowed(route: string, policy: ModelPolicy) {
   if (route !== policy.route) throw new SafeError('CONSTRUCTION_REQUIRES_CHEAP_ROUTE');
@@ -53,6 +61,13 @@ function finishAttempt(attempt: Attempt) {
 export function normalizeBase(value: string): string {
   const url = localUrl(value.includes('://') ? value : 'http://' + value);
   return url.replace(/\/(?:v1(?:\/(?:chat\/completions|models))?|healthz)$/, '') + '/v1';
+}
+export function extractCompletionMetadata(response: any): CompletionMetadata {
+  const finishReason = typeof response?.choices?.[0]?.finish_reason === 'string' ? response.choices[0].finish_reason : undefined;
+  const choiceStopReason = response?.choices?.[0]?.stop_reason;
+  const stopReason = typeof response?.stop_reason === 'string' ? response.stop_reason : typeof choiceStopReason === 'string' ? choiceStopReason : undefined;
+  const truncated = [finishReason, stopReason].some(reason => typeof reason === 'string' && /(?:length|max[_-]?tokens?|max[_-]?output[_-]?tokens?|token[_-]?limit)/i.test(reason));
+  return { ...(finishReason ? { finishReason } : {}), ...(stopReason ? { stopReason } : {}), truncated };
 }
 function receiptRows(body: any): any[] {
   const rows = Array.isArray(body) ? body : body?.receipts ?? body?.data;
@@ -114,7 +129,7 @@ export class Nightshift {
         bound_mode: null, routed_mode: null, mode_coerced: null, floor: null, raced: null, candidates: [] };
     }
   }
-  async chat(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], options: { maxTokens: number; route?: string }): Promise<{ text: string; receipt: Receipt; policyAlerts: string[] }> {
+  async chat(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], options: { maxTokens: number; route?: string; preserveTextOnFailure?: boolean }): Promise<{ text: string; receipt: Receipt; policyAlerts: string[] } & CompletionMetadata> {
     const config = readJson('config/budget.json');
     if (!Number.isInteger(options.maxTokens) || options.maxTokens < 1 || options.maxTokens > Math.min(2000, config.maxTokensPerGeneration)) throw new SafeError('INVALID_MAX_TOKENS');
     const route = options.route ?? this.route;
@@ -125,8 +140,10 @@ export class Nightshift {
     assertGenerationAllowed(route, policy);
     const attempt = reserveGeneration(route);
     let receivedText: string | undefined;
+    let completion: CompletionMetadata = { truncated: false };
     try {
       const response = await this.request('/chat/completions', { model: route, messages, max_tokens: options.maxTokens, stream: false });
+      completion = extractCompletionMetadata(response);
       const text = response.choices?.[0]?.message?.content;
       if (typeof text !== 'string' || !text.trim()) throw new SafeError('NO_GENERATED_TEXT');
       receivedText = text;
@@ -141,12 +158,13 @@ export class Nightshift {
       attempt.status = policyAlerts.length ? 'PASS_WITH_POLICY_ALERT' : 'PASS';
       writeJson(`evidence/generation-${attempt.id}.json`, { utc: attempt.utc, attemptId: attempt.id, route, responsePresent: true, receiptObserved: true, receipt: receiptSummary(receipt), policyAlerts, status: attempt.status });
       finishAttempt(attempt); trace({ kind: 'nightshift', attemptId: attempt.id, status: attempt.status, route, ...receiptSummary(receipt), policyAlerts });
-      return { text, receipt, policyAlerts };
+      return { text, receipt, policyAlerts, ...completion };
     } catch (error) {
       attempt.status = 'FAIL'; attempt.error = failure(error); finishAttempt(attempt);
-      if (receivedText) writeJson(`evidence/generation-${attempt.id}.json`, { utc: attempt.utc, attemptId: attempt.id, route,
-        responsePresent: true, receiptObserved: Boolean(attempt.receipt), ...(attempt.receipt ? { receipt: receiptSummary(attempt.receipt) } : {}), status: 'FAIL', error: attempt.error });
+      if (receivedText) writeJson('evidence/generation-' + attempt.id + '.json', { utc: attempt.utc, attemptId: attempt.id, route,
+        responsePresent: true, receiptObserved: Boolean(attempt.receipt), ...(attempt.receipt ? { receipt: receiptSummary(attempt.receipt) } : {}), ...(options.preserveTextOnFailure ? { generatedText: receivedText } : {}), status: 'FAIL', error: attempt.error });
       trace({ kind: 'nightshift', attemptId: attempt.id, status: 'FAIL', route, ...failure(error) });
+      if (options.preserveTextOnFailure) { const diagnostic = failure(error); throw new NightshiftChatError(diagnostic.code, diagnostic.http, diagnostic.detail, diagnostic.retryAfter, attempt.id, receivedText, attempt.receipt, Boolean(attempt.receipt), completion.finishReason, completion.stopReason, completion.truncated); }
       throw error;
     }
   }

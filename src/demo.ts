@@ -8,7 +8,7 @@ import { Reconciler, reconcile } from './reconcile/index.ts';
 import { Nightshift } from './clients/nightshift.ts';
 import { Zetaris } from './clients/zetaris.ts';
 import { failure, readJson, writeJson, ROOT, setTraceRun, stamp, SafeError, traceFileForRun } from './runtime.ts';
-import { budgetFilePath, readBudget } from './budget.ts';
+import { readBudget } from './budget.ts';
 import { discoverUniverse, probeUniverse, evaluateUniverse, universeConfig } from './universe-pipeline.ts';
 import { discoverMappings, probeMappings, evaluateMadi } from './madi.ts';
 import { demoUsl } from './usl/demo.ts';
@@ -25,7 +25,7 @@ export async function optionalNightshift(check:()=>Promise<unknown>) {
 export async function requireZetaris(check:()=>Promise<unknown>) {
   try{await check();}catch(error){throw new SafeError('ZETARIS_UNAVAILABLE_STOP_NO_SIMULATED_PROBES',undefined,JSON.stringify(failure(error)));}
 }
-const budget=()=>fs.existsSync(budgetFilePath())?readBudget():{consumed:0,attempts:[]};
+const budget=()=>readBudget();
 export async function demo(universeId='U1') {
   const started=performance.now(),sampleMode=process.env.SAMPLE_MODE==='true',runId='d4a-'+universeId+'-'+stamp();
   const cached=loadCache(universeId,sampleMode);

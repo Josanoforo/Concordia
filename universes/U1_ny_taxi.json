@@ -1,11 +1,23 @@
 {
   "id": "U1",
+  "namespace": "NY_TAXI",
   "database": "NY_TAXI",
   "normalizationContract": {
     "defaultMode": "integer",
     "modes": {
-      "integer": {"meaning": "Numeric zone identifiers; outer whitespace and a zero-only decimal suffix such as .0 are formatting. Leading zeroes are numeric padding only for these ID columns.", "caseSensitive": true, "suffixes": {".0": "insignificant"}},
-      "text": {"meaning": "Exact text identifiers; case, whitespace, leading zeroes, punctuation and Unicode code points remain significant.", "caseSensitive": true, "outerWhitespace": "significant", "unicode": "exact"}
+      "integer": {
+        "meaning": "Numeric zone identifiers; outer whitespace and a zero-only decimal suffix such as .0 are formatting. Leading zeroes are numeric padding only for these ID columns.",
+        "caseSensitive": true,
+        "suffixes": {
+          ".0": "insignificant"
+        }
+      },
+      "text": {
+        "meaning": "Exact text identifiers; case, whitespace, leading zeroes, punctuation and Unicode code points remain significant.",
+        "caseSensitive": true,
+        "outerWhitespace": "significant",
+        "unicode": "exact"
+      }
     },
     "scope": "This contract applies to configured U1 location/zone identifier columns and does not assert global uniqueness or extend to other datasets."
   },
@@ -381,5 +393,6 @@
       "labels": [],
       "role": "fact"
     }
-  }
+  },
+  "probeLimit": 50
 }

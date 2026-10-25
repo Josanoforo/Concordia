@@ -1,0 +1,78 @@
+{
+  "alias": "U2",
+  "basis": "SYNTHETIC_FIXTURE shaped like the U2 schema; no SEC or COMPANY_DNS values. cik_text_trap and cik_normalized are DECLARED_CONTROL by construction; the SIC relation is left UNKNOWN",
+  "chooserScript": [
+    "READ_SEC_PROFILE",
+    "READ_DNS_REFERENCE"
+  ],
+  "tables": {
+    "apple_revenue_facts": {
+      "columns": [
+        {
+          "name": "cik",
+          "type": "integer"
+        }
+      ],
+      "rows": [
+        [
+          100001
+        ]
+      ]
+    },
+    "apple_submissions_raw": {
+      "columns": [
+        {
+          "name": "cik",
+          "type": "string"
+        },
+        {
+          "name": "sic",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "sicDescription",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "0000100001",
+          "1111",
+          "SYNTHETIC CO",
+          "Synthetic Sector"
+        ]
+      ]
+    },
+    "sic_reference": {
+      "columns": [
+        {
+          "name": "sic_code",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "1111",
+          "Synthetic Sector"
+        ],
+        [
+          "2222",
+          "Other Sector"
+        ]
+      ]
+    }
+  },
+  "adjudications": {
+    "cik_text_trap": "NONAPPROVABLE",
+    "cik_normalized": "APPROVABLE",
+    "company_sic_reference": "UNKNOWN"
+  }
+}

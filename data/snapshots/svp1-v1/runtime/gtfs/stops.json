@@ -1,0 +1,37 @@
+{
+  "columns": [
+    "stop_id"
+  ],
+  "types": [
+    "string"
+  ],
+  "rows": [
+    [
+      "FUR_CREEK_RES"
+    ],
+    [
+      "BEATTY_AIRPORT"
+    ],
+    [
+      "BULLFROG"
+    ],
+    [
+      "STAGECOACH"
+    ],
+    [
+      "NADAV"
+    ],
+    [
+      "NANAA"
+    ],
+    [
+      "DADAN"
+    ],
+    [
+      "EMSI"
+    ],
+    [
+      "AMV"
+    ]
+  ]
+}

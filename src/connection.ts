@@ -3,11 +3,11 @@ import { Zetaris } from './clients/zetaris.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { failure, readJson, ROOT, SafeError, stamp, writeJson } from './runtime.ts';
-import { budgetFilePath, readBudget } from './budget.ts';
+import { readBudget } from './budget.ts';
 
 export async function connection(smoke: boolean) {
   const evidence: any = { utc: new Date().toISOString(), live: true, steps: [], generations: 0 };
-  const consumed = () => fs.existsSync(budgetFilePath()) ? readBudget().consumed : 0;
+  const consumed = () => readBudget().consumed;
   const consumedBefore = consumed();
   let blocked = false;
   const step = async (name: string, fn: () => Promise<unknown>) => {
@@ -32,7 +32,7 @@ export async function connection(smoke: boolean) {
   evidence.status = blocked ? 'FAIL' : 'PASS';
   evidence.generations = consumed() - consumedBefore;
   if (!smoke) {
-    const state = fs.existsSync(budgetFilePath()) ? readBudget() : null;
+    const state = readBudget();
     const latest = state?.attempts?.at(-1);
     writeJson(`evidence/route-check-${stamp()}.json`, { utc: new Date().toISOString(), status: evidence.status,
       generationsAdded: evidence.generations, consumed: state?.consumed, receipt: latest?.receipt,

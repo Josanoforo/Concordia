@@ -1,0 +1,2 @@
+# Snapshots are byte-pinned upstream artifacts; preserve their hashes and whitespace.
+/data/snapshots/** -text -whitespace

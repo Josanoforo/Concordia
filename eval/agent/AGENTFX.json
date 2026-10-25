@@ -1,0 +1,121 @@
+{
+  "alias": "AGENTFX",
+  "basis": "SYNTHETIC_FIXTURE: truth is declared by construction of the rows below",
+  "chooserScript": [
+    "READ_CUSTOMER_PROFILE",
+    "READ_REGION_REFERENCE"
+  ],
+  "tables": {
+    "orders": {
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "string"
+        },
+        {
+          "name": "customer_id",
+          "type": "string"
+        },
+        {
+          "name": "region_code",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "o1",
+          "c1",
+          "r1"
+        ],
+        [
+          "o2",
+          "c2",
+          "r2"
+        ],
+        [
+          "o3",
+          "c3",
+          "r3"
+        ],
+        [
+          "o4",
+          "c1",
+          "r1"
+        ]
+      ]
+    },
+    "customers": {
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "string"
+        },
+        {
+          "name": "customer_name",
+          "type": "string"
+        },
+        {
+          "name": "segment_code",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "c1",
+          "Ana",
+          "s1"
+        ],
+        [
+          "c2",
+          "Beto",
+          "s2"
+        ],
+        [
+          "c3",
+          "Carla",
+          "s3"
+        ],
+        [
+          "c9",
+          "Extra",
+          "s9"
+        ]
+      ]
+    },
+    "regions": {
+      "columns": [
+        {
+          "name": "region_code",
+          "type": "string"
+        },
+        {
+          "name": "region_name",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "r1",
+          "North"
+        ],
+        [
+          "r2",
+          "South"
+        ],
+        [
+          "r3",
+          "East"
+        ],
+        [
+          "r7",
+          "Unused"
+        ]
+      ]
+    }
+  },
+  "adjudications": {
+    "orders_customer": "APPROVABLE",
+    "orders_region": "APPROVABLE",
+    "orders_order_trap": "NONAPPROVABLE"
+  }
+}

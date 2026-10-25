@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "captures": [
+    {
+      "captureId": "json2-product-live-20261023-01",
+      "inputRef": ".concordia/live-explanations/inputs/json2-product-live-1-20261023-01.json",
+      "inputSha256": "7e270c4dc624d1136a8b766fa732f7ddbb9176869042257b5e7d483e43217a4a",
+      "runId": "json2-product-live-1-20261023-01",
+      "manifestId": "concordia.universe.gtfs-svp1-live",
+      "manifestVersion": "1.0.0",
+      "sourceAdapterId": "zetaris-json2-live",
+      "sourceExecutionMode": "REPLAY",
+      "sourceCaptureExecutionMode": "LIVE",
+      "modelExecutionMode": "LIVE",
+      "producerCommit": "fa405fe1f6c3b1010aa079e9826e2956fea4328a",
+      "captureTime": {
+        "status": "UPPER_BOUND_ONLY",
+        "upperBound": "2026-10-23T22:36:59Z"
+      },
+      "sourceValidation": {
+        "status": "COMPLETE",
+        "tableStatus": "VERIFIED",
+        "tableCount": 4,
+        "totalRows": 45
+      },
+      "bounds": {
+        "maxInputBytes": 2097152,
+        "maxCandidates": 32
+      }
+    }
+  ]
+}

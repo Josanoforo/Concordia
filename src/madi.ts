@@ -6,6 +6,10 @@ import { Zetaris, identifier } from './clients/zetaris.ts';
 import { ROOT, readJson, writeJson, SafeError } from './runtime.ts';
 import { universeConfig } from './universe-pipeline.ts';
 import { quotedValues } from './universe.ts';
+import { evaluateSchemaCorrespondence } from './relations/schema-correspondence.ts';
+import { evaluateRelation } from './relations/decision.ts';
+import { relationPolicyFromConfig } from './relations/policy.ts';
+import { resolveUniverseManifest } from './registry/universes.ts';
 export type MetadataAliasRule={
   sourceDataset:string; sourceColumn:string; decision:'approved'|'abstain'; targetColumn?:string;
   sourceDescriptionPattern?:string; sourceType?:string; targetType?:string; reason:string;
@@ -76,7 +80,7 @@ export async function discoverMappings(id='U3') {
     const metadata=await z.describe(cfg.database,table);
     const columns=spec.columns.map((c:any)=>identifier(c.name));
     if(columns.some((c:string)=>!metadata.rows.some(r=>r[0]===c)))throw new SafeError('MADI_COLUMN_NOT_PRESENT');
-    const sample=await z.runSql(`SELECT ${columns.length?columns.join(', '):'1 AS row_present'} FROM ${identifier(cfg.database)}.${identifier(table)} LIMIT 20`,20);
+    const sample=await z.runSql(`SELECT ${columns.length?columns.join(', '):'1 AS row_present'} FROM ${identifier(cfg.database)}.${identifier(table)} LIMIT ${cfg.sampleLimit}`,cfg.sampleLimit);
     result.tables[table]={columns:columns.length?columns:['row_present'],schema:spec.columns,sample,labels:spec.labels,keyColumns:spec.keyColumns,role:spec.role};
     const sourceMeta=readJson(cfg.localInput+'/'+spec.metadata);
     for(const column of spec.columns){
@@ -89,29 +93,50 @@ export async function discoverMappings(id='U3') {
   writeJson(`out/${id}/discovery.json`,result);return result;
 }
 export async function probeMappings(id='U3') {
-  const cfg=universeConfig(id),inventory=readJson(`out/${id}/discovery.json`),thresholds=readJson('config/thresholds.json'),z=new Zetaris();
+  const cfg=universeConfig(id),inventory=readJson(`out/${id}/discovery.json`),thresholds=readJson('config/thresholds.json'),relationPolicy=relationPolicyFromConfig(thresholds),z=new Zetaris();
   const probes:any[]=[],relations:any[]=[];
+  const candidateBound=resolveUniverseManifest(id)!.capabilityBounds?.SCHEMA_MATCHING?.maxCandidatesPerRun;
+  if(inventory.candidates.length>candidateBound!)throw new SafeError('CANDIDATE_COUNT_EXCEEDS_CAPABILITY_BOUND');
   for(const c of inventory.candidates){
     const t=inventory.tables[c.from.table],index=t.columns.indexOf(c.from.column);
-    const values=[...new Set<any>(t.sample.rows.map((r:any[])=>r[index]).filter((v:any)=>v!==null&&String(v).trim()!==''))].slice(0,20);
+    const values=[...new Set<any>(t.sample.rows.map((r:any[])=>r[index]).filter((v:any)=>v!==null&&String(v).trim()!==''))].slice(0,cfg.sampleLimit);
     const queries:any[]=[];
-    if(c.target&&values.length)queries.push(await z.runSql(`SELECT ${identifier(c.from.column)} FROM ${identifier(c.from.db)}.${identifier(c.from.table)} WHERE ${identifier(c.from.column)} IN (${quotedValues(values)}) LIMIT 50`,50));
+    if(c.target&&values.length)queries.push(await z.runSql(`SELECT ${identifier(c.from.column)} FROM ${identifier(c.from.db)}.${identifier(c.from.table)} WHERE ${identifier(c.from.column)} IN (${quotedValues(values)}) LIMIT ${cfg.probeLimit}`,cfg.probeLimit));
     const observed=queries.flatMap(q=>q.rows.map((r:any[])=>r[0])).filter(v=>v!==null&&String(v).trim()!=='');
     // A semantic mapping is not an equality join. Numeric sources may require
     // unit normalization; do not silently equate income and revenue.
     const numeric=observed.every(v=>/^[-+]?[0-9]+(?:[.][0-9]+)?$/.test(String(v).trim().replaceAll(',','')));
     const compatible=c.targetType==='integer'?numeric:c.targetType==='array'?false:observed.every(v=>typeof v==='string'||typeof v==='number');
-    const supported=Boolean(c.target&&values.length>=thresholds.minDistinctKeys&&observed.length&&compatible);
+    const checkedAt=new Date().toISOString();
+    const evaluated=evaluateSchemaCorrespondence({universeId:id,contractVersion:resolveUniverseManifest(id)!.version.split('.').slice(0,2).join('.'),relationId:c.id,source:c.from,target:{dataset:cfg.targetDataset,column:c.target??'unknown'},candidate:c.target,rule:c.rule,distinctValues:values.length,observedRows:observed.length,compatible,minDistinctKeys:thresholds.minDistinctKeys,policyVersion:thresholds.relationPolicyVersion,policy:relationPolicy,checkedAt,provenance:{executionMode:'LIVE',dataOrigin:'UNKNOWN'}});
+    const decision=evaluated.decision;
     const evidence={relation:c,utc:new Date().toISOString(),status:'PASS',kind:'schema-correspondence',queries,usesGold:false,
       overlap:{matched:0,probed:values.length,ratio:null,sampleKeys:[]},
       semanticEvidence:{uniqueConcept:c.target,observedRows:observed.length,targetType:c.targetType,rule:c.rule},
       typeCompat:{from:'source string',to:c.targetType,castable:compatible,normalization:'schema mapping only; numeric unit conversion not executed'},alerts:[],nullRate:{from:t.sample.rows.length?t.sample.rows.filter((row:any[])=>row[index]==null||String(row[index]).trim()==='').length/t.sample.rows.length:null}};
     probes.push(evidence);
-    relations.push({relationId:c.id,from:c.from,to:c.to,verdict:supported?'SOSTENIDA':'INDETERMINADA',rule:supported?'unique_metadata_concept_and_bounded_type_evidence':'unknown_ambiguous_or_insufficient_evidence',kind:'schema-correspondence',proposedBy:c.proposedBy,evidence,explanation:`${supported?'SOSTENIDA':'INDETERMINADA'}: concepto ${c.target??'no identificable de forma única'}; ${values.length} valores distintos en muestra; ${observed.length} filas sondeadas; tipos compatibles=${compatible}. Correspondencia semántica, no FK, identidad empresarial ni igualdad de valores; sin gold y sin transformación monetaria.`});
+    relations.push({relationId:c.id,from:c.from,to:c.to,candidate:c.target?{status:'PROPOSED',target:c.target,rule:c.rule}: {status:'ABSTAINED',rule:c.rule},verdict:decision.verdict,rule:decision.reasonCodes[0],decision,relationContract:evaluated.contract,typedEvidence:evaluated.evidence,kind:'schema-correspondence',proposedBy:c.proposedBy,evidence,explanation:`${decision.verdict}: concepto ${c.target??'no identificable de forma única'}; ${values.length} valores distintos en muestra; ${observed.length} filas sondeadas; tipos compatibles=${compatible}. Correspondencia semántica, no FK, identidad empresarial ni igualdad de valores; sin gold y sin transformación monetaria.`});
   }
   const result={utc:new Date().toISOString(),live:true,usesGold:false,pending_llm:false,relations};
   writeJson(`out/${id}/probes.json`,{utc:result.utc,probes});writeJson(`out/${id}/relaciones.json`,result);
   return result;
+}
+/** Re-evaluate saved typed schema evidence without loading any gold mapping file. */
+export function evaluateMadiTyped(id='U3') {
+  const relations=readJson<any>(`out/${id}/relaciones.json`).relations,thresholds=readJson<any>('config/thresholds.json'),relationPolicy=relationPolicyFromConfig(thresholds);
+  const results=relations.map((relation:any)=>{
+    if(!relation.relationContract||!relation.typedEvidence)return {relationId:relation.relationId,verdict:'INDETERMINADA',reasonCodes:['typed_schema_evidence_missing'],status:'UNKNOWN'};
+    const sourceContractVersion=relation.relationContract.contractVersion;
+    const sourceEvidenceContractVersion=relation.typedEvidence.contractVersion;
+    const sourcePolicyVersion=relation.decision?.policyVersion??null;
+    const evaluationPolicyVersion=relationPolicy.policyVersion;
+    const decision=evaluateRelation(relation.relationContract,[relation.typedEvidence],relationPolicy);
+    return {relationId:relation.relationId,candidate:relation.candidate,verdict:decision.verdict,reasonCodes:decision.reasonCodes,status:decision.status,contractVersion:decision.contractVersion,
+      evaluationMode:'REPLAY',evaluationPolicyVersion,sourcePolicyVersion,sourceContractVersion,sourceEvidenceContractVersion,
+      sourceExecutionMode:relation.typedEvidence.runRef.executionMode,sourceDataOrigin:relation.typedEvidence.runRef.dataOrigin};
+  });
+  const result={utc:new Date().toISOString(),status:'EVALUATED',universe:id,evaluationMode:'REPLAY',evaluationPolicyVersion:thresholds.relationPolicyVersion,scope:'saved typed schema-correspondence evidence; no gold or source values',results};
+  writeJson(`out/${id}/eval.json`,result);console.log('Eval',id,JSON.stringify(result));return result;
 }
 export type Mapping={source_dataset:string;source_column:string;target_dataset:string;target_column:string};
 const key=(m:Mapping)=>JSON.stringify([m.source_dataset,m.source_column,m.target_dataset,m.target_column]);
@@ -126,7 +151,7 @@ export function evaluateMadi(id='U3') {
   // Validate the actual published format, never infer silently from values.
   const goldRows=Array.isArray(gold)?gold:gold.mappings;
   if(!Array.isArray(goldRows)||!goldRows.every((g:any)=>typeof g.source_dataset==='string'&&typeof g.source_column==='string'&&typeof g.target_dataset==='string'&&typeof g.target_column==='string'))throw new SafeError('MADI_GOLD_FORMAT_NOT_SUPPORTED');
-  const predictions=relations.filter((r:any)=>r.verdict==='SOSTENIDA').map((r:any)=>({source_dataset:r.from.table,source_column:r.from.column,target_dataset:cfg.targetDataset,target_column:r.to.column}));
+  const predictions=relations.filter((r:any)=>r.candidate?.status==='PROPOSED').map((r:any)=>({source_dataset:r.from.table,source_column:r.from.column,target_dataset:cfg.targetDataset,target_column:r.candidate.target}));
   const result={utc:new Date().toISOString(),status:'MEASURED',universe:id,scope:'Column correspondences, full published gold including privacy-excluded fields; not entity matching, fusion, normalization or FK accuracy',...mappingMetrics(predictions,goldRows)};
   writeJson(`out/${id}/eval.json`,result);console.log('Eval',id,JSON.stringify(result));return result;
 }

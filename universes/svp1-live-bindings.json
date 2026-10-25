@@ -1,0 +1,265 @@
+{
+  "schemaVersion": 1,
+  "bindingId": "concordia.json2.bounded-key-snapshot.20261023",
+  "bindingVersion": "1.0.0",
+  "status": "ROOT_REVIEWED_FOR_BOUNDED_READ_ONLY_CONSUMPTION",
+  "reviewedAtUtc": "2026-10-23T15:17:00.814043-06:00",
+  "registrationPlanFingerprint": "b3f1c7776be22fb478eaae63d7ac8a72099b6f5ca4d4aa9325a665e20ce766be",
+  "packageSealSha256": "e532f6564259e33b6e5a8315f594e14b8c333a2abca186f2d318dbad047657b0",
+  "registrationJournalSha256": "7fe2c903105842409e794b29151bdcb14d27439aeeacbe4a56ad0652e148aa01",
+  "backendEngineVersion": "2.4.3.1",
+  "wireEncoding": "SQL_EDITOR_STRING_CELLS_CANONICAL_INTEGER_V1",
+  "wireEvidenceSha256": "05c3ad668cec9386d1aee1190e26b911ca9c793cd7763742239d34afb8a9375d",
+  "readLimit": 50,
+  "maxRowsPerTable": 20,
+  "requiresFreshSchemaAndTypedMultisetCheckBeforeUse": true,
+  "sqlMutationAllowed": false,
+  "uslAllowed": false,
+  "tables": [
+    {
+      "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_trips",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "gtfs_trips",
+      "columns": [
+        {
+          "name": "trip_id",
+          "kind": "string"
+        },
+        {
+          "name": "route_id",
+          "kind": "string"
+        }
+      ],
+      "expectedRows": 11,
+      "maxRows": 20,
+      "observedSchemaSha256": "4f6c013f3404bd12ea95bf2985c597e9bb020c2148355ae6b55175f54967447b",
+      "typedMultisetSha256": "c18ff0ebb06b97c5663a5a5f8896fbb097a4d5f51d7fedce6f932d11b4ff4b26",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "SYNTHETIC",
+      "manifestId": "concordia.universe.gtfs-svp1",
+      "profileAlias": "GTFS_SVP1",
+      "tableId": "trips",
+      "readLimit": 50
+    },
+    {
+      "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:routes",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_routes",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "gtfs_routes",
+      "columns": [
+        {
+          "name": "route_id",
+          "kind": "string"
+        }
+      ],
+      "expectedRows": 5,
+      "maxRows": 20,
+      "observedSchemaSha256": "893ddf1a10589a18338d31656365a8a5bfd3d1f36089d49983dc70a82997af1b",
+      "typedMultisetSha256": "7a3fca8f039544ab5dba3216e07a9a9f69f149ac16b3f322296f12f879690234",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "SYNTHETIC",
+      "manifestId": "concordia.universe.gtfs-svp1",
+      "profileAlias": "GTFS_SVP1",
+      "tableId": "routes",
+      "readLimit": 50
+    },
+    {
+      "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:stop_times",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_stop_times",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "gtfs_stop_times",
+      "columns": [
+        {
+          "name": "trip_id",
+          "kind": "string"
+        },
+        {
+          "name": "stop_sequence",
+          "kind": "integer"
+        },
+        {
+          "name": "stop_id",
+          "kind": "string"
+        }
+      ],
+      "expectedRows": 20,
+      "maxRows": 20,
+      "observedSchemaSha256": "2fb207869b3e750d32ca70285c5c15d7b4552e6df1d9f1ecc5530c646825e5bb",
+      "typedMultisetSha256": "edbf1c826616ae28fa4a7b8c07fe36ac5286e005c9cd36fa7918f5cec0792b60",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "SYNTHETIC",
+      "manifestId": "concordia.universe.gtfs-svp1",
+      "profileAlias": "GTFS_SVP1",
+      "tableId": "stop_times",
+      "readLimit": 50
+    },
+    {
+      "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:stops",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_stops",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "gtfs_stops",
+      "columns": [
+        {
+          "name": "stop_id",
+          "kind": "string"
+        }
+      ],
+      "expectedRows": 9,
+      "maxRows": 20,
+      "observedSchemaSha256": "a25561cecd471c063eb6ac0dd2ece15382cbb58bfc5fe17d797c1c486bf3e9af",
+      "typedMultisetSha256": "2666e6085c65db0b0520f13fc09349d9da6fd064832dda99bbb8e6137d60769a",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "SYNTHETIC",
+      "manifestId": "concordia.universe.gtfs-svp1",
+      "profileAlias": "GTFS_SVP1",
+      "tableId": "stops",
+      "readLimit": 50
+    },
+    {
+      "sourceId": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a:album",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.chinook_album",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "chinook_album",
+      "columns": [
+        {
+          "name": "AlbumId",
+          "kind": "integer"
+        },
+        {
+          "name": "ArtistId",
+          "kind": "integer"
+        }
+      ],
+      "expectedRows": 20,
+      "maxRows": 20,
+      "observedSchemaSha256": "53bf1a492f9fedb0a47ff3169e1d9f79890d4cc4e8d6545169382a692010c9cf",
+      "typedMultisetSha256": "e37187a5c4aa6635a7ea5f873848607cdcfd3e9467fd2f8e952261ebabfa0de5",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "PUBLIC",
+      "manifestId": "concordia.universe.chinook-svp1",
+      "profileAlias": "CHINOOK_SVP1",
+      "tableId": "album",
+      "readLimit": 50
+    },
+    {
+      "sourceId": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a:artist",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.chinook_artist",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "chinook_artist",
+      "columns": [
+        {
+          "name": "ArtistId",
+          "kind": "integer"
+        }
+      ],
+      "expectedRows": 15,
+      "maxRows": 20,
+      "observedSchemaSha256": "78fb9d91a28759cb847883f9b6d788b86e9b217ea646800d6ecaebdd2c464719",
+      "typedMultisetSha256": "939d33d713d58acd283a806ab484116337269311862a74bdc345a1be1cd9f5a1",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "PUBLIC",
+      "manifestId": "concordia.universe.chinook-svp1",
+      "profileAlias": "CHINOOK_SVP1",
+      "tableId": "artist",
+      "readLimit": 50
+    },
+    {
+      "sourceId": "chinook:4a944a942426e1f3263fe539155fb7ef92b04b4a:playlist_track",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.chinook_playlist_track",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "chinook_playlist_track",
+      "columns": [
+        {
+          "name": "PlaylistId",
+          "kind": "integer"
+        },
+        {
+          "name": "TrackId",
+          "kind": "integer"
+        }
+      ],
+      "expectedRows": 20,
+      "maxRows": 20,
+      "observedSchemaSha256": "60f042550605a2b79514922dded787d9161680494338ecfafce40a83d37c877b",
+      "typedMultisetSha256": "d4b17d716cd62426f1820401af03c8e789333e4b67b75a82034210d407c03f2e",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "UNKNOWN",
+      "manifestId": "concordia.universe.chinook-svp1",
+      "profileAlias": "CHINOOK_SVP1",
+      "tableId": "playlist_track",
+      "readLimit": 50
+    },
+    {
+      "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:order_details",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_order_details",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "northwind_order_details",
+      "columns": [
+        {
+          "name": "OrderID",
+          "kind": "integer"
+        },
+        {
+          "name": "ProductID",
+          "kind": "integer"
+        }
+      ],
+      "expectedRows": 20,
+      "maxRows": 20,
+      "observedSchemaSha256": "0fb85d520bf0b290a8836a9f2bca9ecf633dbf11c6ee2927dbad51d48b90ac64",
+      "typedMultisetSha256": "f1ddf64b318909d5c01dd39a1af78fa0f9836f8b6a91effffd08c830455ddf29",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "SYNTHETIC",
+      "manifestId": "vendor.universe.northwind-known-reserve",
+      "profileAlias": "NORTHWIND_SVP1",
+      "tableId": "order_details",
+      "readLimit": 50
+    },
+    {
+      "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:orders",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_orders",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "northwind_orders",
+      "columns": [
+        {
+          "name": "OrderID",
+          "kind": "integer"
+        }
+      ],
+      "expectedRows": 7,
+      "maxRows": 20,
+      "observedSchemaSha256": "fb3a8050d35cd01a80586ff97b03c62d52fa01c345eed916ddce0a12392280d9",
+      "typedMultisetSha256": "aebcf46a44d06e0710c8fe3fe593ad0ca6d3059cbc271a840b46274245c06353",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "SYNTHETIC",
+      "manifestId": "vendor.universe.northwind-known-reserve",
+      "profileAlias": "NORTHWIND_SVP1",
+      "tableId": "orders",
+      "readLimit": 50
+    },
+    {
+      "sourceId": "northwind:dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a:products",
+      "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.northwind_products",
+      "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "northwind_products",
+      "columns": [
+        {
+          "name": "ProductID",
+          "kind": "integer"
+        }
+      ],
+      "expectedRows": 18,
+      "maxRows": 20,
+      "observedSchemaSha256": "fc5fb74d0c3e7696813dcd6a4c3df8e19f7aca1c3d2bd9559b97f353d8ef3928",
+      "typedMultisetSha256": "419c3d72af19e907a79c791975a3cba20b58f5d97bf12e22a936f13d76efe05e",
+      "fingerprintAlgorithm": "CANONICAL_TYPED_ROWS_MULTISET_V1",
+      "dataOrigin": "SYNTHETIC",
+      "manifestId": "vendor.universe.northwind-known-reserve",
+      "profileAlias": "NORTHWIND_SVP1",
+      "tableId": "products",
+      "readLimit": 50
+    }
+  ],
+  "profileConfigPath": "universes/svp1-snapshots.json"
+}

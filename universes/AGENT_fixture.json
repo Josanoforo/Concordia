@@ -1,0 +1,200 @@
+{
+  "id": "AGENTFX",
+  "namespace": "agent_fixture",
+  "scope": "Synthetic orders, customers and regions fixture for the generic agent loop; no real data",
+  "normalizationContract": {
+    "defaultMode": "text",
+    "modes": {
+      "text": {
+        "meaning": "exact text"
+      }
+    }
+  },
+  "tables": {
+    "orders": {
+      "db": "AGENT_FIXTURE",
+      "physicalTable": "orders",
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "string"
+        },
+        {
+          "name": "customer_id",
+          "type": "string"
+        },
+        {
+          "name": "region_code",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "customer_id",
+        "region_code",
+        "order_id"
+      ],
+      "role": "fact",
+      "labels": []
+    },
+    "customers": {
+      "db": "AGENT_FIXTURE",
+      "physicalTable": "customers",
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "string"
+        },
+        {
+          "name": "customer_name",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "customer_id"
+      ],
+      "role": "dimension",
+      "labels": [
+        "customer_name"
+      ]
+    },
+    "regions": {
+      "db": "AGENT_FIXTURE",
+      "physicalTable": "regions",
+      "columns": [
+        {
+          "name": "region_code",
+          "type": "string"
+        },
+        {
+          "name": "region_name",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "region_code"
+      ],
+      "role": "dimension",
+      "labels": [
+        "region_name"
+      ]
+    }
+  },
+  "relations": [
+    {
+      "id": "orders_customer",
+      "from": {
+        "db": "AGENT_FIXTURE",
+        "table": "orders",
+        "column": "customer_id"
+      },
+      "to": {
+        "db": "AGENT_FIXTURE",
+        "table": "customers",
+        "column": "customer_id"
+      },
+      "normalization": "text",
+      "minDistinctKeys": 1,
+      "reason": "Literal text equality of the customer key",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "agentfx-key-v1",
+      "normalizationVersion": "text-exact-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "exact-text"
+    },
+    {
+      "id": "orders_region",
+      "from": {
+        "db": "AGENT_FIXTURE",
+        "table": "orders",
+        "column": "region_code"
+      },
+      "to": {
+        "db": "AGENT_FIXTURE",
+        "table": "regions",
+        "column": "region_code"
+      },
+      "normalization": "text",
+      "minDistinctKeys": 1,
+      "reason": "Literal text equality of the region key",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "agentfx-key-v1",
+      "normalizationVersion": "text-exact-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "exact-text"
+    },
+    {
+      "id": "orders_order_trap",
+      "from": {
+        "db": "AGENT_FIXTURE",
+        "table": "orders",
+        "column": "order_id"
+      },
+      "to": {
+        "db": "AGENT_FIXTURE",
+        "table": "customers",
+        "column": "customer_id"
+      },
+      "normalization": "text",
+      "minDistinctKeys": 1,
+      "reason": "Different identifier spaces; text keys never coincide",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "agentfx-key-v1",
+      "normalizationVersion": "text-exact-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "exact-text"
+    }
+  ],
+  "explorationCatalog": {
+    "productLabel": "AGENTFX",
+    "plannerTask": "synthetic order fixture exploration",
+    "safeOptionalColumns": {
+      "customers": [
+        "segment_code"
+      ]
+    },
+    "observations": {
+      "observedCustomers": {
+        "fromTable": "orders",
+        "column": "customer_id",
+        "pattern": "^[A-Za-z0-9_-]+$",
+        "max": 20
+      },
+      "observedRegions": {
+        "fromTable": "orders",
+        "column": "region_code",
+        "pattern": "^[A-Za-z0-9_-]+$",
+        "max": 20
+      }
+    },
+    "actions": [
+      {
+        "id": "READ_CUSTOMER_PROFILE",
+        "kind": "KEYED_READ",
+        "table": "customers",
+        "filterColumn": "customer_id",
+        "observation": "observedCustomers",
+        "requiredColumns": [
+          "customer_id"
+        ],
+        "description": "Bounded customer rows for observed order customers"
+      },
+      {
+        "id": "READ_REGION_REFERENCE",
+        "kind": "KEYED_READ",
+        "table": "regions",
+        "filterColumn": "region_code",
+        "observation": "observedRegions",
+        "requiredColumns": [
+          "region_code"
+        ],
+        "description": "Bounded region rows for observed order regions"
+      }
+    ]
+  },
+  "sampleLimit": 20,
+  "probeLimit": 50,
+  "relationPolicyVersion": "1.1"
+}

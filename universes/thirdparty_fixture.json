@@ -1,0 +1,80 @@
+{
+  "id": "TRAINING_FIXTURE",
+  "namespace": "training_fixture",
+  "fixtureCapturedAt": "2026-10-23T00:00:00.000Z",
+  "normalizationContract": {
+    "modes": {
+      "text": {
+        "meaning": "exact text"
+      },
+      "integer": {
+        "meaning": "integer format"
+      }
+    }
+  },
+  "relationPolicyVersion": "1.1",
+  "minimumOverlapRatio": 1,
+  "tables": {
+    "child": {
+      "db": "training_fixture",
+      "keyColumns": ["parent_id"],
+      "columns": [
+        {
+          "name": "parent_id",
+          "type": "string"
+        }
+      ],
+      "fixtureRows": [
+        [
+          "p1"
+        ],
+        [
+          "p2"
+        ]
+      ]
+    },
+    "parent": {
+      "db": "training_fixture",
+      "keyColumns": ["parent_id"],
+      "columns": [
+        {
+          "name": "parent_id",
+          "type": "string"
+        }
+      ],
+      "fixtureRows": [
+        [
+          "p1"
+        ],
+        [
+          "p2"
+        ]
+      ]
+    }
+  },
+  "relations": [
+    {
+      "id": "training_parent_child",
+      "from": {
+        "db": "training_fixture",
+        "table": "child",
+        "column": "parent_id"
+      },
+      "to": {
+        "db": "training_fixture",
+        "table": "parent",
+        "column": "parent_id"
+      },
+      "normalization": "text",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "thirdparty-fixture-key-v1",
+      "normalizationVersion": "text-exact-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "exact-text",
+      "minDistinctKeys": 2
+    }
+  ],
+  "sampleLimit": 2,
+  "probeLimit": 50
+}

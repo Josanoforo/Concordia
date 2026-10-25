@@ -1,13 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import { assertEffectiveModel, assertGenerationAllowed, Nightshift, normalizeBase, reserveGeneration, resolveReceipt } from '../src/clients/nightshift.ts';
+import { assertEffectiveModel, assertGenerationAllowed, extractCompletionMetadata, Nightshift, NightshiftChatError, normalizeBase, reserveGeneration, resolveReceipt } from '../src/clients/nightshift.ts';
 import { ROOT } from '../src/runtime.ts';
 
 test('base URL normalization avoids duplicate v1', () => {
   for (const suffix of ['', '/v1', '/v1/models', '/v1/chat/completions', '/healthz']) assert.equal(normalizeBase('127.0.0.1:8088' + suffix), 'http://127.0.0.1:8088/v1');
   assert.throws(() => normalizeBase('https://remote.example/v1'));
+});
+test('completion metadata preserves stop reasons and recognizes truncation', () => {
+  assert.deepEqual(extractCompletionMetadata({ choices: [{ finish_reason: 'length' }], stop_reason: 'max_tokens' }), {
+    finishReason: 'length', stopReason: 'max_tokens', truncated: true
+  });
+  assert.deepEqual(extractCompletionMetadata({ choices: [{ finish_reason: 'stop', stop_reason: 'end_turn' }] }), {
+    finishReason: 'stop', stopReason: 'end_turn', truncated: false
+  });
+  assert.deepEqual(extractCompletionMetadata({ choices: [{ message: { content: 'ok' } }] }), { truncated: false });
 });
 test('cheap stays fixed while model/provider differences produce warnings instead of blocking', () => {
   const policy = { route: 'meterless/cheap', preferredProvider: 'anthropic', preferredModelFamilies: ['haiku','sonnet'], watchModelFamilies: ['opus','fable'], modelPolicy: 'observe_and_continue' as const };
@@ -66,6 +76,39 @@ test('external budget reference appends to the original ledger and fails closed 
   }
 });
 
+test('receipt resolution failure preserves generated explanation text in the attempt artifact', async () => {
+  const temp = fs.mkdtempSync(path.join(ROOT, '.concordia', 'nightshift-text-preserve-'));
+  const budgetFile = path.join(temp, 'canonical-budget.json'), previousBudget = process.env.CONCORDIA_BUDGET_FILE;
+  const traceFile = path.join(ROOT, 'evidence/trace.jsonl'), generationIndex = path.join(ROOT, 'evidence/generations.json');
+  const previousTrace = fs.existsSync(traceFile) ? fs.readFileSync(traceFile) : undefined;
+  const previousIndex = fs.existsSync(generationIndex) ? fs.readFileSync(generationIndex) : undefined;
+  const originalFetch = globalThis.fetch;
+  const generatedText = '{"explanations":[{"candidateId":"candidate-a","explanation":"Texto editorial de prueba."}]}';
+  fs.writeFileSync(budgetFile, JSON.stringify({ limit: null, consumed: 0, attempts: [] }));
+  process.env.CONCORDIA_BUDGET_FILE = budgetFile;
+  globalThis.fetch = async (input, init) => {
+    if (String(input).includes('/chat/completions')) return new Response(JSON.stringify({ choices: [{ message: { content: generatedText } }], meterless: { receipt_id: 'receipt-missing' } }), { status: 200 });
+    return new Response(JSON.stringify({ data: [] }), { status: 200 });
+  };
+  try {
+    const client = new Nightshift({ base: 'http://127.0.0.1:8088', token: 'fixture', route: 'meterless/cheap' });
+    await assert.rejects(() => client.chat([{ role: 'user', content: 'fixture prompt' }], { maxTokens: 100, route: 'meterless/cheap', preserveTextOnFailure: true }), error => {
+      assert.ok(error instanceof NightshiftChatError);
+      assert.equal(error.code, 'RECEIPT_NOT_FOUND');
+      assert.equal(error.responseText, generatedText);
+      assert.equal(error.receiptValidated, false);
+      assert.ok(error.attemptId);
+      assert.equal(JSON.parse(fs.readFileSync(path.join(ROOT, 'evidence/generation-' + error.attemptId + '.json'), 'utf8')).generatedText, generatedText);
+      return true;
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousBudget === undefined) delete process.env.CONCORDIA_BUDGET_FILE; else process.env.CONCORDIA_BUDGET_FILE = previousBudget;
+    if (previousTrace === undefined) { if (fs.existsSync(traceFile)) fs.rmSync(traceFile); } else fs.writeFileSync(traceFile, previousTrace);
+    if (previousIndex === undefined) { if (fs.existsSync(generationIndex)) fs.rmSync(generationIndex); } else fs.writeFileSync(generationIndex, previousIndex);
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
 test('disallowed construction route blocks HTTP and does not consume a generation', async () => {
   const budgetFile = path.join(ROOT, '.concordia/budget.json');
   const snapshot = () => fs.existsSync(budgetFile) ? fs.readFileSync(budgetFile, 'utf8') : null;

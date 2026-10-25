@@ -1,0 +1,25 @@
+{
+  "columns": [
+    "route_id"
+  ],
+  "types": [
+    "string"
+  ],
+  "rows": [
+    [
+      "AB"
+    ],
+    [
+      "BFC"
+    ],
+    [
+      "STBA"
+    ],
+    [
+      "CITY"
+    ],
+    [
+      "AAMV"
+    ]
+  ]
+}

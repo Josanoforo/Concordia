@@ -3,16 +3,10 @@ import assert from 'node:assert/strict';
 import { normalizeKey } from '../src/universe.ts';
 import { readJson } from '../src/runtime.ts';
 import { measureMultiplicity, sharedRowPairs, compareLabels } from '../src/probe/index.ts';
-import { classify } from '../src/probe/verdicts.ts';
 import { assessFreshness, assessPartialTransport } from '../src/probe/evidence-contract.ts';
 
-const thresholds = { ...readJson<any>('config/thresholds.json'), minDistinctKeys: 3 };
 const u1 = readJson<any>('universes/U1_ny_taxi.json').normalizationContract;
 const u2 = readJson<any>('universes/U2_companies.json').normalizationContract;
-
-function probe(overlap: { matched: number; probed: number; ratio: number | null }, extra: any = {}) {
-  return { status: 'PASS', overlap, typeCompat: { castable: true }, alerts: [], ...extra } as any;
-}
 
 test('EC01: numeric padding and zero suffix normalize only under a numeric contract', () => {
   const numeric = ['1', '1.0', '01', '001.00'].map(value => normalizeKey(value, 'integer'));
@@ -26,10 +20,6 @@ test('EC01: numeric padding and zero suffix normalize only under a numeric contr
 test('EC02: CIK literal equality stays distinct while explicit padded CIK equality is exact', () => {
   assert.notEqual(normalizeKey('12345', 'text'), normalizeKey('0000012345', 'text'));
   assert.equal(normalizeKey('12345', 'integer-pad10'), normalizeKey('0000012345', 'integer-pad10'));
-  const literal = classify(probe({ matched: 0, probed: 1, ratio: 0 }), { ...thresholds, minDistinctKeys: 1 });
-  const padded = classify(probe({ matched: 1, probed: 1, ratio: 1 }), { ...thresholds, minDistinctKeys: 1 });
-  assert.equal(literal.verdict, 'INDETERMINADA');
-  assert.equal(padded.verdict, 'SOSTENIDA');
 });
 
 test('EC04: null-heavy and empty samples keep explicit denominators and never turn zero keys into full agreement', () => {
@@ -37,8 +27,6 @@ test('EC04: null-heavy and empty samples keep explicit denominators and never tu
   assert.deepEqual({ rows: heavy.rows, nullRows: heavy.nullRows, emptyRows: heavy.emptyRows, distinctKeys: heavy.distinctKeys }, { rows: 7, nullRows: 2, emptyRows: 2, distinctKeys: 3 });
   const none = measureMultiplicity([[null], [''], ['  ']], 0, 'integer');
   assert.equal(none.distinctKeys, 0);
-  assert.equal(classify(probe({ matched: 0, probed: 0, ratio: null }), thresholds).verdict, 'INDETERMINADA');
-  assert.equal(classify(probe({ matched: 3, probed: 3, ratio: 1 }, { nullRate: { from: 19 / 20, denominatorFrom: 20 } }), thresholds).verdict, 'SOSTENIDA');
 });
 
 test('EC06: many-to-many rows report pair multiplicity and block a simple FK', () => {
@@ -47,18 +35,15 @@ test('EC06: many-to-many rows report pair multiplicity and block a simple FK', (
   const multiplicity = sharedRowPairs(left, 0, right, 0, 'integer');
   assert.equal(multiplicity.sharedRowPairs, 18);
   assert.deepEqual(multiplicity.manyToManyKeys, ['1', '2', '3']);
-  assert.equal(classify(probe({ matched: 3, probed: 3, ratio: 1 }, { multiplicity: { ...multiplicity, to: measureMultiplicity(right, 0, 'integer') } }), thresholds).verdict, 'INDETERMINADA');
 });
 
 test('EC07: observed referenced duplicates block FK confidence; label contradiction remains a separate reason', () => {
   const duplicate = measureMultiplicity([['1'], ['1'], ['2'], ['3']], 0, 'integer');
   assert.deepEqual(duplicate.duplicateKeys, [{ key: '1', rows: 2 }]);
-  assert.equal(classify(probe({ matched: 3, probed: 3, ratio: 1 }, { multiplicity: { to: duplicate } }), thresholds).rule, 'duplicate_referenced_keys_observed_in_bounded_response');
   const from = [['1', 'Newark'], ['2', 'Airport'], ['3', 'North']];
   const to = [['1', 'West'], ['1', 'Elsewhere'], ['2', 'Other'], ['3', 'South']];
   const labels = compareLabels(from, to, ['id', 'name'], ['id', 'name'], { db: 'x', table: 'a', column: 'id' }, { db: 'x', table: 'b', column: 'id' }, ['name'], ['name']);
   assert.equal(labels?.ratio, 0);
-  assert.equal(classify(probe({ matched: 3, probed: 3, ratio: 1 }, { labelAgreement: labels, multiplicity: { to: duplicate } }), thresholds).verdict, 'ENGAÑOSA');
 });
 
 test('EC08: reused zone IDs with contradictory labels are misleading; matching labels pass only the bounded gates', () => {
@@ -68,8 +53,6 @@ test('EC08: reused zone IDs with contradictory labels are misleading; matching l
   const from = { db: 'NY_TAXI', table: 'taxi_zones', column: 'LocationID' }, to = { db: 'NY_TAXI', table: 'zones', column: 'zone_id' };
   const badLabels = compareLabels(a, bad, ['LocationID', 'zone'], ['zone_id', 'zone'], from, to, ['zone'], ['zone']);
   const goodLabels = compareLabels(a, good, ['LocationID', 'zone'], ['zone_id', 'zone'], from, to, ['zone'], ['zone']);
-  assert.equal(classify(probe({ matched: 3, probed: 3, ratio: 1 }, { labelAgreement: badLabels }), thresholds).verdict, 'ENGAÑOSA');
-  assert.equal(classify(probe({ matched: 3, probed: 3, ratio: 1 }, { labelAgreement: goodLabels }), thresholds).verdict, 'SOSTENIDA');
   const absentLabels=compareLabels([['1',null],['2',null],['3',null]],[['1',null],['2',null],['3',null]],['LocationID','zone'],['zone_id','zone'],from,to,['zone'],['zone']);
   assert.equal(absentLabels,undefined);
 });

@@ -1,0 +1,136 @@
+{
+  "package": "SVP1",
+  "inventorySha256": "779b4bcb947b4e7553e31e02499e395aa5384d8a55b99a9e45dd61ed2f688965",
+  "readyAtUtc": "2026-10-23T19:14:09.104197+00:00",
+  "productBase": "9572980aa4179f1f6eef9af3b6840c21add3e9bd",
+  "copiedFiles": [
+    {
+      "path": "data/snapshots/svp1-v1/licenses/CHINOOK-LICENSE.md",
+      "bytes": 1117,
+      "sha256": "5064d720db431474b0a0b0cef9d2b5e362b6c6f80602b35c6443b07cbc979f77"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/licenses/GTFS-LICENSE",
+      "bytes": 11328,
+      "sha256": "9ebd66b7d7dd21f55cefe64ecabf21677ce47e8f0a40a2e8e310ac81ec669242"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/licenses/NORTHWIND-license.txt",
+      "bytes": 1142,
+      "sha256": "201f3705979e932c92cd3c6ddbddf4dc3c71dcc5a82089a1e4018227cfe1cf09"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/chinook/album.csv",
+      "bytes": 200,
+      "sha256": "b15626c2bb79235e47f7c679601449f755dd05ac7838ff1040b96d9f2acc4710"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/chinook/album.json",
+      "bytes": 827,
+      "sha256": "ff1ca86cfc7278228e2b76c7e1f433b41a677937c5ad0c86aab8f165338e4f86"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/chinook/artist.csv",
+      "bytes": 77,
+      "sha256": "38ece13a994cf5cc5ae79d784802d837952b138d65d549ce931bf6b11f1eed46"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/chinook/artist.json",
+      "bytes": 462,
+      "sha256": "e35980f08d6e920c1728949aedd42dec98bc15d75ee5914960e8f6ed6cb2a78f"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/chinook/playlist_track.csv",
+      "bytes": 194,
+      "sha256": "4e7d3af861d7af0a49de2bbf39fe184ae2e8e0d82371d6b9645aff75b775effd"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/chinook/playlist_track.json",
+      "bytes": 821,
+      "sha256": "20e99fc85f13ac5b09920afacb5d0a90018d9dd157da21ee50d8810d4f0e40d4"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/gtfs/routes.csv",
+      "bytes": 43,
+      "sha256": "8451af99a69eb7a27991c97ad5e1f5cda15f848e6b61077b643faecbf72b786b"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/gtfs/routes.json",
+      "bytes": 237,
+      "sha256": "36765e6f9929c00b1479288a38bab02c32a813684925eecb3560b9a33ab125ba"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/gtfs/stop_times.csv",
+      "bytes": 490,
+      "sha256": "f6770668819394be5dc8778d470274e9cc27231d511db37a0b8c7b2dbf5ae6ae"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/gtfs/stop_times.json",
+      "bytes": 1337,
+      "sha256": "4c961f10281b1d9be60e05742236f45e085fd904c189dfdd56b832dad19b7f43"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/gtfs/stops.csv",
+      "bytes": 104,
+      "sha256": "f6c8c981a73bfc5c42789afc4df9815f8a6a2b43881ebf6b0babff0dbc40fcbd"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/gtfs/stops.json",
+      "bytes": 386,
+      "sha256": "f83608db131e776cc4f6748d447c73a39b8cfbcb558e4398b5955f9a3aa18eaa"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/gtfs/trips.csv",
+      "bytes": 173,
+      "sha256": "499f3984b77603dfc274e678bf3e5c7311fad422a884fdd1852a75647864c906"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/gtfs/trips.json",
+      "bytes": 608,
+      "sha256": "6f4724baf8befc51ec7756f8cf591ec3f346e8d07d7ab578428659109c4202a1"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/northwind/order_details.csv",
+      "bytes": 282,
+      "sha256": "b330c92259ef232fa9e2ad676f7066719317a5e784f5ac4d5da74ec66bc9c800"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/northwind/order_details.json",
+      "bytes": 909,
+      "sha256": "46092ab9a0a0754eae44fcd6cae5c82cc2e5b99ce9133ca75cc66f30c33a5fe7"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/northwind/orders.csv",
+      "bytes": 66,
+      "sha256": "889ba4a71a022d1e3c321bdb43bc4827381c5a342247574b28db2e13b50bcf1c"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/northwind/orders.json",
+      "bytes": 291,
+      "sha256": "fc16087934e0b23e4afbf1f404b14902cc66b3dad4cc34f4e39a0adc2197bdf7"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/northwind/products.csv",
+      "bytes": 102,
+      "sha256": "c01d7429c2447b9f501c3b30747f18a89d195ad9ee39062760002e01cbd4f328"
+    },
+    {
+      "path": "data/snapshots/svp1-v1/runtime/northwind/products.json",
+      "bytes": 547,
+      "sha256": "0a10208c125198011d9268ccc2816abc61d768a0e5c915a7425a16100b340ed8"
+    }
+  ],
+  "sourceCommits": {
+    "gtfs": "3c9e7b904b5035349622f03e11851e25c16d1d99",
+    "chinook": "4a944a942426e1f3263fe539155fb7ef92b04b4a",
+    "northwind": "dac9747acaca4e54a3b5ea4c6de1c4be6c1b964a"
+  },
+  "verification": {
+    "labelsCopied": false,
+    "liveBinding": "NOT_BOUND",
+    "rows": 145,
+    "tables": 10,
+    "maximumRowsPerTable": 20,
+    "sourcePackageImmutable": true
+  }
+}

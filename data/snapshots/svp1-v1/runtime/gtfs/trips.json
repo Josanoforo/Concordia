@@ -1,0 +1,56 @@
+{
+  "columns": [
+    "trip_id",
+    "route_id"
+  ],
+  "types": [
+    "string",
+    "string"
+  ],
+  "rows": [
+    [
+      "AB1",
+      "AB"
+    ],
+    [
+      "AB2",
+      "AB"
+    ],
+    [
+      "STBA",
+      "STBA"
+    ],
+    [
+      "CITY1",
+      "CITY"
+    ],
+    [
+      "CITY2",
+      "CITY"
+    ],
+    [
+      "BFC1",
+      "BFC"
+    ],
+    [
+      "BFC2",
+      "BFC"
+    ],
+    [
+      "AAMV1",
+      "AAMV"
+    ],
+    [
+      "AAMV2",
+      "AAMV"
+    ],
+    [
+      "AAMV3",
+      "AAMV"
+    ],
+    [
+      "AAMV4",
+      "AAMV"
+    ]
+  ]
+}

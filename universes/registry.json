@@ -1,0 +1,442 @@
+[
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.ny-taxi",
+    "version": "2.0.0",
+    "aliases": [
+      "U1"
+    ],
+    "source": {
+      "sourceId": "ny-taxi-source",
+      "adapterId": "zetaris",
+      "configPath": "universes/U1_ny_taxi.json",
+      "dataOrigin": "UNKNOWN"
+    },
+    "capabilities": [
+      "DISCOVERY",
+      "BOUNDED_RELATION_PROBE",
+      "RELATION_EVALUATION",
+      "USL"
+    ],
+    "relationIds": [],
+    "capabilityBounds": {
+      "DISCOVERY": {
+        "sampleLimit": 20
+      },
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 100,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.sec-companies",
+    "version": "2.0.0",
+    "aliases": [
+      "U2"
+    ],
+    "source": {
+      "sourceId": "sec-companies-source",
+      "adapterId": "zetaris",
+      "configPath": "universes/U2_companies.json",
+      "dataOrigin": "PUBLIC"
+    },
+    "capabilities": [
+      "DISCOVERY",
+      "BOUNDED_RELATION_PROBE",
+      "RELATION_EVALUATION",
+      "USL",
+      "AGENT_EXPLORATION"
+    ],
+    "relationIds": [
+      "cik_text_trap",
+      "cik_normalized",
+      "company_sic_reference"
+    ],
+    "capabilityBounds": {
+      "DISCOVERY": {
+        "sampleLimit": 20
+      },
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 3,
+        "maxKeyColumns": 1
+      },
+      "AGENT_EXPLORATION": {
+        "maxQueriesPerRun": 25,
+        "readLimit": 20,
+        "maxTokensPerRun": 15000,
+        "maxSteps": 3
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.madi-schema-matching",
+    "version": "1.0.0",
+    "aliases": [
+      "U3"
+    ],
+    "source": {
+      "sourceId": "madi-local-metadata",
+      "adapterId": "madi-schema",
+      "configPath": "universes/U3_madi_companies.json",
+      "dataOrigin": "UNKNOWN"
+    },
+    "capabilities": [
+      "DISCOVERY",
+      "BOUNDED_RELATION_PROBE",
+      "RELATION_EVALUATION",
+      "SCHEMA_MATCHING",
+      "LOCAL_EVALUATION"
+    ],
+    "relationIds": [],
+    "capabilityBounds": {
+      "DISCOVERY": {
+        "sampleLimit": 20
+      },
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 100,
+        "maxKeyColumns": 1
+      },
+      "SCHEMA_MATCHING": {
+        "sampleLimit": 20,
+        "probeLimit": 50,
+        "maxCandidatesPerRun": 100
+      },
+      "LOCAL_EVALUATION": {
+        "sampleLimit": 20,
+        "probeLimit": 50,
+        "maxRelationsPerRun": 100,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.gtfs",
+    "version": "2.0.0",
+    "aliases": [
+      "GTFS"
+    ],
+    "source": {
+      "sourceId": "gtfs-local-fixture",
+      "adapterId": "local-files",
+      "configPath": "universes/GTFS_fixture.json",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "LOCAL_EVALUATION",
+      "RELATION_EVALUATION"
+    ],
+    "relationIds": [
+      "gtfs_trip_route"
+    ],
+    "capabilityBounds": {
+      "LOCAL_EVALUATION": {
+        "sampleLimit": 2,
+        "probeLimit": 50,
+        "maxRelationsPerRun": 1,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.chinook",
+    "version": "2.0.0",
+    "aliases": [
+      "CHINOOK"
+    ],
+    "source": {
+      "sourceId": "chinook-local-fixture",
+      "adapterId": "local-files",
+      "configPath": "universes/CHINOOK_fixture.json",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "LOCAL_EVALUATION",
+      "RELATION_EVALUATION"
+    ],
+    "relationIds": [
+      "chinook_invoice_customer"
+    ],
+    "capabilityBounds": {
+      "LOCAL_EVALUATION": {
+        "sampleLimit": 2,
+        "probeLimit": 50,
+        "maxRelationsPerRun": 1,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "vendor.universe.training-fixture",
+    "version": "2.0.0",
+    "aliases": [
+      "TRAINING_FIXTURE"
+    ],
+    "source": {
+      "sourceId": "training-local-fixture",
+      "adapterId": "local-files",
+      "configPath": "universes/thirdparty_fixture.json",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "LOCAL_EVALUATION",
+      "RELATION_EVALUATION"
+    ],
+    "relationIds": [
+      "training_parent_child"
+    ],
+    "capabilityBounds": {
+      "LOCAL_EVALUATION": {
+        "sampleLimit": 2,
+        "probeLimit": 50,
+        "maxRelationsPerRun": 1,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.gtfs-svp1",
+    "version": "3.0.0",
+    "aliases": [
+      "GTFS_SVP1"
+    ],
+    "source": {
+      "sourceId": "gtfs-pinned-keys-svp1",
+      "adapterId": "local-snapshot",
+      "configPath": "universes/svp1-snapshots.json",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "LOCAL_EVALUATION",
+      "RELATION_EVALUATION"
+    ],
+    "relationIds": [
+      "svp1_G01",
+      "svp1_G02"
+    ],
+    "capabilityBounds": {
+      "LOCAL_EVALUATION": {
+        "sampleLimit": 20,
+        "probeLimit": 50,
+        "maxRelationsPerRun": 2,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.chinook-svp1",
+    "version": "3.0.0",
+    "aliases": [
+      "CHINOOK_SVP1"
+    ],
+    "source": {
+      "sourceId": "chinook-pinned-keys-svp1",
+      "adapterId": "local-snapshot",
+      "configPath": "universes/svp1-snapshots.json",
+      "dataOrigin": "UNKNOWN"
+    },
+    "capabilities": [
+      "LOCAL_EVALUATION",
+      "RELATION_EVALUATION"
+    ],
+    "relationIds": [
+      "svp1_C01"
+    ],
+    "capabilityBounds": {
+      "LOCAL_EVALUATION": {
+        "sampleLimit": 20,
+        "probeLimit": 50,
+        "maxRelationsPerRun": 1,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "vendor.universe.northwind-known-reserve",
+    "version": "1.0.0",
+    "aliases": [
+      "NORTHWIND_SVP1"
+    ],
+    "source": {
+      "sourceId": "northwind-pinned-keys-svp1",
+      "adapterId": "local-snapshot",
+      "configPath": "universes/svp1-snapshots.json",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "LOCAL_EVALUATION",
+      "RELATION_EVALUATION"
+    ],
+    "relationIds": [
+      "svp1_N01",
+      "svp1_N02"
+    ],
+    "capabilityBounds": {
+      "LOCAL_EVALUATION": {
+        "sampleLimit": 20,
+        "probeLimit": 50,
+        "maxRelationsPerRun": 2,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.gtfs-svp1-live",
+    "version": "1.0.0",
+    "aliases": [
+      "GTFS_SVP1_LIVE"
+    ],
+    "source": {
+      "sourceId": "gtfs-json2-live-source",
+      "adapterId": "zetaris-json2-live",
+      "configPath": "universes/svp1-live-bindings.json",
+      "profileManifestId": "concordia.universe.gtfs-svp1",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "BOUNDED_RELATION_PROBE",
+      "LIVE_RELATION_PROBE",
+      "RELATION_EVALUATION"
+    ],
+    "relationIds": [
+      "GTFS_SVP1_LIVE_svp1_G01",
+      "GTFS_SVP1_LIVE_svp1_G02"
+    ],
+    "capabilityBounds": {
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 6,
+        "maxKeyColumns": 1
+      },
+      "LIVE_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 6,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.chinook-svp1-live",
+    "version": "1.0.0",
+    "aliases": [
+      "CHINOOK_SVP1_LIVE"
+    ],
+    "source": {
+      "sourceId": "chinook-json2-live-source",
+      "adapterId": "zetaris-json2-live",
+      "configPath": "universes/svp1-live-bindings.json",
+      "profileManifestId": "concordia.universe.chinook-svp1",
+      "dataOrigin": "UNKNOWN"
+    },
+    "capabilities": [
+      "BOUNDED_RELATION_PROBE",
+      "LIVE_RELATION_PROBE",
+      "RELATION_EVALUATION"
+    ],
+    "relationIds": [
+      "CHINOOK_SVP1_LIVE_svp1_C01"
+    ],
+    "capabilityBounds": {
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 5,
+        "maxKeyColumns": 1
+      },
+      "LIVE_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 5,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "vendor.universe.northwind-known-reserve-live",
+    "version": "1.0.0",
+    "aliases": [
+      "NORTHWIND_SVP1_LIVE"
+    ],
+    "source": {
+      "sourceId": "northwind-json2-live-source",
+      "adapterId": "zetaris-json2-live",
+      "configPath": "universes/svp1-live-bindings.json",
+      "profileManifestId": "vendor.universe.northwind-known-reserve",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "BOUNDED_RELATION_PROBE",
+      "LIVE_RELATION_PROBE",
+      "RELATION_EVALUATION"
+    ],
+    "relationIds": [
+      "NORTHWIND_SVP1_LIVE_svp1_N01",
+      "NORTHWIND_SVP1_LIVE_svp1_N02"
+    ],
+    "capabilityBounds": {
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 6,
+        "maxKeyColumns": 1
+      },
+      "LIVE_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 6,
+        "maxKeyColumns": 1
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.agent-fixture",
+    "version": "1.0.0",
+    "aliases": [
+      "AGENTFX"
+    ],
+    "source": {
+      "sourceId": "agent-fixture-source",
+      "adapterId": "zetaris",
+      "configPath": "universes/AGENT_fixture.json",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "DISCOVERY",
+      "BOUNDED_RELATION_PROBE",
+      "RELATION_EVALUATION",
+      "AGENT_EXPLORATION"
+    ],
+    "relationIds": [
+      "orders_customer",
+      "orders_region",
+      "orders_order_trap"
+    ],
+    "capabilityBounds": {
+      "DISCOVERY": {
+        "sampleLimit": 20
+      },
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 5,
+        "maxKeyColumns": 1
+      },
+      "AGENT_EXPLORATION": {
+        "maxQueriesPerRun": 25,
+        "readLimit": 50,
+        "maxTokensPerRun": 15000,
+        "maxSteps": 3
+      }
+    }
+  }
+]

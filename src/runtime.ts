@@ -43,7 +43,9 @@ export function writeJson(relative: string, data: unknown) {
 export function readJson<T = any>(relative: string): T { return JSON.parse(fs.readFileSync(path.join(ROOT, relative), 'utf8')); }
 let activeRun: string | undefined;
 export function setTraceRun(run?: string) { activeRun = run; }
-export function traceFileForRun(run?:string) { return path.join(ROOT,run?.startsWith('d3-')&&run.includes('U3')?'out/U3/trace.jsonl':'evidence/trace.jsonl'); }
+export function traceFileForRun(run?:string) { return run?.startsWith('agent-') && /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(run)
+  ? path.join(ROOT,'.concordia','agent-runs',run,'trace.jsonl')
+  : path.join(ROOT,run?.startsWith('d3-')&&run.includes('U3')?'out/U3/trace.jsonl':'evidence/trace.jsonl'); }
 export function trace(event: object) {
   const dest = traceFileForRun(activeRun);
   fs.mkdirSync(path.dirname(dest), { recursive: true });
