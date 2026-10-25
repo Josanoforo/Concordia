@@ -1,6 +1,6 @@
 # Public file manifest
 
-Positive path allowlist for the sanitized working tree prepared on 2026-10-22 and refreshed on 2026-10-25 for v1.1-rc4. Public sample data is limited to the explicitly synthetic U3 schema/CSV and the U1 schema-graph fixture; there are no observed source rows, query/request IDs, or MaDI raw/gold files in these sample paths. Test fixtures under `tests/fixtures/agent-runs/` are sanitized copies of two live agent runs over public sources: bounded result rows only, with receipt and query identifiers replaced by fixture ids.
+Positive path allowlist for the sanitized working tree prepared on 2026-10-22 and refreshed on 2026-10-25 for v1.1-rc5. Public sample data is limited to the explicitly synthetic U3 schema/CSV and the U1 schema-graph fixture; there are no observed source rows, query/request IDs, or MaDI raw/gold files in these sample paths. Test fixtures under `tests/fixtures/agent-runs/` are sanitized copies of two live agent runs over public sources: bounded result rows only, with receipt and query identifiers replaced by fixture ids.
 
 This describes the current index, not earlier commits. It does not sanitize history; do not publish the existing history without first rebuilding the unpublished commit on the public base.
 
@@ -64,6 +64,7 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `docs/USL_U3.md`
 - `docs/v1_1/OFFLINE_ACCEPTANCE.md`
 - `eval/agent/AGENTFX.json`
+- `eval/agent/GTFSAGENT.json`
 - `eval/agent/U1.json`
 - `eval/agent/U2.json`
 - `eval/agent/U3.json`
@@ -106,6 +107,7 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `src/agent/exploration-policy.ts`
 - `src/agent/exploration.ts`
 - `src/agent/join-compare.ts`
+- `src/agent/json2-guard.ts`
 - `src/agent/memory.ts`
 - `src/agent/post-coma.ts`
 - `src/agent/probe-selector.ts`
@@ -216,6 +218,7 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `tests/agent-continuation.test.ts`
 - `tests/agent-engine.test.ts`
 - `tests/agent-eval.test.ts`
+- `tests/agent-gtfs-json2.test.ts`
 - `tests/agent-join-compare.test.ts`
 - `tests/agent-join-comparison-stage.test.ts`
 - `tests/agent-local-universe.test.ts`
@@ -271,6 +274,7 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `tests/route-preview.test.ts`
 - `tests/run-registry.test.ts`
 - `tests/svp1.test.ts`
+- `tests/u1-review-governance.test.ts`
 - `tests/u2-adaptive.test.ts`
 - `tests/u2-flow-offline.test.ts`
 - `tests/universe-pipeline.test.ts`
@@ -286,6 +290,7 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `universes/AGENT_local.json`
 - `universes/CHINOOK_fixture.json`
 - `universes/GTFS_fixture.json`
+- `universes/GTFS_json2_agent.json`
 - `universes/U1_ny_taxi.json`
 - `universes/U2_companies.json`
 - `universes/U3_madi_companies.json`

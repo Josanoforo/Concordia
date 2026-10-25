@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { agentFixtures, evaluateAgentLoop } from '../src/eval/agent-eval.ts';
-import { universeManifests } from '../src/registry/universes.ts';
+import { resolveUniverseManifest, universeManifests } from '../src/registry/universes.ts';
 
 test('agent loop offline evaluation reports exact denominators per universe and is reproducible (L3-E, synthetic, no gold, no live)', async () => {
   const first = await evaluateAgentLoop(), second = await evaluateAgentLoop();
@@ -26,11 +26,12 @@ test('agent loop offline evaluation reports exact denominators per universe and 
   assert.equal(u2.counts.abstentions, 3); assert.equal(u2.counts.unknownAdjudications, 1);
   assert.equal(u2.precisionAccept, null, 'no accepts: precision is undefined, not zero');
   const ny = metric('concordia.universe.ny-taxi', 'agent-loop');
-  assert.deepEqual(ny.denominator, { allCases: 6, consulted: 6, evaluated: 6, notConsulted: 0, accepts: 0, adjudicatedAccepts: 0, nonapprovable: 1, positives: 0 });
-  assert.equal(ny.counts.abstentions, 6); assert.equal(ny.counts.unknownAdjudications, 5); assert.equal(ny.precisionAccept, null);
+  assert.deepEqual(ny.denominator, { allCases: 6, consulted: 6, evaluated: 6, notConsulted: 0, accepts: 4, adjudicatedAccepts: 0, nonapprovable: 1, positives: 0 });
+  // F-04: the 4 human-reviewed U1 relations now reach SOSTENIDA on the untruncated synthetic fixture; the fixture leaves them unadjudicated on purpose, so none counts as correct.
+  assert.equal(ny.counts.correctAccept, 0); assert.equal(ny.counts.falseAccept, 0); assert.equal(ny.counts.abstentions, 2); assert.equal(ny.counts.unknownAdjudications, 5); assert.equal(ny.precisionAccept, 0);
   for (const universe of ['concordia.universe.agent-fixture', 'concordia.universe.sec-companies', 'concordia.universe.ny-taxi']) {
     assert.deepEqual(metric(universe, 'probes-only').counts, metric(universe, 'agent-loop').counts, 'exploration never changes the deterministic verdicts');
   }
-  assert.ok(first.runs.every(run => run.status === 'COMPLETED' && run.queries <= 25));
+  assert.ok(first.runs.every(run => run.status === 'COMPLETED' && run.queries <= (resolveUniverseManifest(run.alias)!.capabilityBounds!.AGENT_EXPLORATION!.maxQueriesPerRun as number)), 'every run stays inside its own universe query bound');
   assert.deepEqual(first.runs.filter(run => run.method === 'probes-only').map(run => run.steps), agentFixtures().map(() => 0));
 });

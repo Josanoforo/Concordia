@@ -1,0 +1,113 @@
+{
+  "id": "GTFSAGENT",
+  "namespace": "gtfs_json2_agent",
+  "database": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+  "scope": "Bounded read-only agent exploration of the root-reviewed JSON2 GTFS snapshot (trips, routes); synthetic data, no USL",
+  "liveBinding": "universes/svp1-live-bindings.json",
+  "normalizationContract": {
+    "defaultMode": "text",
+    "modes": {
+      "text": {
+        "meaning": "Exact text identifiers; case, whitespace, leading zeroes and punctuation remain significant.",
+        "caseSensitive": true,
+        "outerWhitespace": "significant",
+        "unicode": "exact"
+      }
+    },
+    "scope": "Applies to the GTFS route_id columns only; no global uniqueness claim."
+  },
+  "tables": {
+    "trips": {
+      "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "gtfs_trips",
+      "columns": [
+        {
+          "name": "trip_id",
+          "type": "string"
+        },
+        {
+          "name": "route_id",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "route_id"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "routes": {
+      "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "gtfs_routes",
+      "columns": [
+        {
+          "name": "route_id",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "route_id"
+      ],
+      "labels": [],
+      "role": "dimension"
+    }
+  },
+  "relations": [
+    {
+      "id": "gtfsagent_trip_route",
+      "from": {
+        "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+        "table": "trips",
+        "column": "route_id"
+      },
+      "to": {
+        "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+        "table": "routes",
+        "column": "route_id"
+      },
+      "normalization": "text",
+      "reason": "GTFS trips reference routes by route_id (svp1_G01)",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99",
+      "normalizationVersion": "svp1-exact-native-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "exact-text",
+      "reviewAuthorization": {
+        "approver": "project-owner",
+        "approvedAt": "2026-10-25",
+        "quote": "Apruebo como revisión humana la relación gtfs_trips.route_id → gtfs_routes.route_id (svp1_G01), REVIEWED con la normalización del perfil (text, svp1-exact-native-v1, lossless).",
+        "channel": "human review (recorded in the project decision log)",
+        "scope": "governance metadata of the GTFSAGENT agent universe only; svp1_G01 in svp1-snapshots.json and svp1_G02 are untouched"
+      }
+    }
+  ],
+  "explorationCatalog": {
+    "productLabel": "GTFSAGENT",
+    "plannerTask": "bounded GTFS route reference exploration",
+    "observations": {
+      "observedRoutes": {
+        "fromTable": "trips",
+        "column": "route_id",
+        "pattern": "^[A-Za-z0-9._-]{1,64}$",
+        "max": 20
+      }
+    },
+    "actions": [
+      {
+        "id": "READ_ROUTE_REFERENCE",
+        "kind": "KEYED_READ",
+        "table": "routes",
+        "filterColumn": "route_id",
+        "observation": "observedRoutes",
+        "requiredColumns": [
+          "route_id"
+        ],
+        "description": "Bounded route rows for the route ids observed in trips"
+      }
+    ]
+  },
+  "sampleLimit": 20,
+  "probeLimit": 50,
+  "relationPolicyVersion": "1.1"
+}

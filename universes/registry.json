@@ -495,5 +495,44 @@
         "maxSteps": 3
       }
     }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.gtfs-json2-agent",
+    "version": "1.0.0",
+    "aliases": [
+      "GTFSAGENT"
+    ],
+    "source": {
+      "sourceId": "gtfs-json2-agent-source",
+      "adapterId": "zetaris",
+      "configPath": "universes/GTFS_json2_agent.json",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "DISCOVERY",
+      "BOUNDED_RELATION_PROBE",
+      "RELATION_EVALUATION",
+      "AGENT_EXPLORATION"
+    ],
+    "relationIds": [
+      "gtfsagent_trip_route"
+    ],
+    "capabilityBounds": {
+      "DISCOVERY": {
+        "sampleLimit": 20
+      },
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 2,
+        "maxKeyColumns": 1
+      },
+      "AGENT_EXPLORATION": {
+        "maxQueriesPerRun": 15,
+        "readLimit": 20,
+        "maxTokensPerRun": 8000,
+        "maxSteps": 2
+      }
+    }
   }
 ]

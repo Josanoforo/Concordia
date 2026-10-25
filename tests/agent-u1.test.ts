@@ -50,7 +50,10 @@ test('the full offline agent loop runs on U1 with its fixture: read-only, budget
   assert.deepEqual(report.phases.probes.selected, EXPECTED_RELATIONS, 'every configured relation is affordable inside the U1 bound');
   assert.deepEqual(report.phases.probes.skipped, []);
   assert.deepEqual(report.decisions.map((item: any) => item.relationId), EXPECTED_RELATIONS);
-  assert.ok(report.decisions.every((item: any) => item.verdict !== 'SOSTENIDA'), 'unreviewed relations never reach SOSTENIDA');
+  const reviewed = ['yellow_pu_taxi_zones', 'yellow_do_taxi_zones', 'hvv_pu_taxi_zones', 'trips_pickup_zones'];
+  for (const item of report.decisions) if (!reviewed.includes(item.relationId)) assert.notEqual(item.verdict, 'SOSTENIDA', `${item.relationId} is not human-reviewed, so it never reaches SOSTENIDA`);
+  // F-04: reviewed relations may reach SOSTENIDA, but only on untruncated evidence (the live run stays INDETERMINADA, see u1-review-governance.test.ts).
+  assert.ok(report.decisions.filter((item: any) => item.verdict === 'SOSTENIDA').every((item: any) => reviewed.includes(item.relationId)));
   assert.equal(report.phases.critic.status, 'EVALUATED');
   assert.ok(report.budget.used.queries <= report.budget.limits.maxQueriesPerRun);
   assert.equal(report.budget.used.queries, log.length, 'every SQL statement is charged to the run budget');

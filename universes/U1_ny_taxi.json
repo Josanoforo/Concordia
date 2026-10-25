@@ -427,7 +427,21 @@
         "column": "LocationID"
       },
       "normalization": "integer",
-      "reason": "Pickup location id of yellow taxi trips against the taxi zone lookup"
+      "reason": "Pickup location id of yellow taxi trips against the taxi zone lookup",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "nyc-tlc-taxi-zone-id-v1",
+      "normalizationVersion": "integer-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "integer",
+      "reviewAuthorization": {
+        "approver": "project-owner",
+        "approvedAt": "2026-10-25",
+        "quote": "Aprobado",
+        "channel": "human review of the U1 relation package (recorded in the project decision log)",
+        "scope": "governance metadata only; no stored run verdict changes",
+        "normalizationNote": "integer mode has no repository convention; minimal values integer-v1 / integer, documented here"
+      }
     },
     {
       "id": "yellow_do_taxi_zones",
@@ -442,7 +456,21 @@
         "column": "LocationID"
       },
       "normalization": "integer",
-      "reason": "Dropoff location id of yellow taxi trips against the taxi zone lookup"
+      "reason": "Dropoff location id of yellow taxi trips against the taxi zone lookup",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "nyc-tlc-taxi-zone-id-v1",
+      "normalizationVersion": "integer-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "integer",
+      "reviewAuthorization": {
+        "approver": "project-owner",
+        "approvedAt": "2026-10-25",
+        "quote": "Aprobado",
+        "channel": "human review of the U1 relation package (recorded in the project decision log)",
+        "scope": "governance metadata only; no stored run verdict changes",
+        "normalizationNote": "integer mode has no repository convention; minimal values integer-v1 / integer, documented here"
+      }
     },
     {
       "id": "green_pu_taxi_zones",
@@ -472,7 +500,21 @@
         "column": "LocationID"
       },
       "normalization": "integer",
-      "reason": "Pickup location id of high-volume for-hire trips against the taxi zone lookup"
+      "reason": "Pickup location id of high-volume for-hire trips against the taxi zone lookup",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "nyc-tlc-taxi-zone-id-v1",
+      "normalizationVersion": "integer-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "integer",
+      "reviewAuthorization": {
+        "approver": "project-owner",
+        "approvedAt": "2026-10-25",
+        "quote": "Aprobado",
+        "channel": "human review of the U1 relation package (recorded in the project decision log)",
+        "scope": "governance metadata only; no stored run verdict changes",
+        "normalizationNote": "integer mode has no repository convention; minimal values integer-v1 / integer, documented here"
+      }
     },
     {
       "id": "trips_pickup_zones",
@@ -487,7 +529,21 @@
         "column": "zone_id"
       },
       "normalization": "integer",
-      "reason": "Pickup zone id of app trips against the zones dimension"
+      "reason": "Pickup zone id of app trips against the zones dimension",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "ny-taxi-ops-zone-id-v1",
+      "normalizationVersion": "integer-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "integer",
+      "reviewAuthorization": {
+        "approver": "project-owner",
+        "approvedAt": "2026-10-25",
+        "quote": "Aprobado",
+        "channel": "human review of the U1 relation package (recorded in the project decision log)",
+        "scope": "governance metadata only; no stored run verdict changes",
+        "normalizationNote": "integer mode has no repository convention; minimal values integer-v1 / integer, documented here"
+      }
     },
     {
       "id": "taxi_zones_zones_trap",

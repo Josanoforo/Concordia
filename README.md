@@ -17,7 +17,8 @@ The agent discovers the configured tables, proposes candidates (deterministic ru
 | MaDI company schemas | `U3` | enrolled |
 | Synthetic orders fixture | `AGENTFX` | enrolled, runs fully offline in tests |
 | Synthetic local-files orders | `AGENTLOCAL` | enrolled, runs over its own local rows, offline |
-| GTFS, Chinook and other fixtures | ... | not enrolled yet; use the historical commands below |
+| GTFS trips + routes (synthetic subset, JSON2 binding) | `GTFSAGENT` | enrolled; live reads go through a binding guard |
+| Chinook and other fixtures | ... | not enrolled yet; use the historical commands below |
 
 Useful options: `--offline` replays the universe's synthetic fixture (no model, no network), `--max-tokens <n>` caps the run's model tokens, and `--memory` reuses relations sustained in earlier runs. Every agent command prints its usage with `--help`.
 

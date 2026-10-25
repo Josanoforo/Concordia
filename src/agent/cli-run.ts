@@ -15,10 +15,17 @@ import { agentFixtures } from '../eval/agent-eval.ts';
 import { fixtureClient } from '../eval/fixture-client.ts';
 import { runAgent } from './engine.ts';
 import { continueAgentExploration } from './continuation.ts';
+import { guardJson2Client } from './json2-guard.ts';
 
 /** The probe-ranking chooser is the exploration chooser only when the run opts in with --probe-model; otherwise probes are all-affordable and cost no generation. */
 export function probeChooserFor<T>(chooser: T | undefined, argv: readonly string[], explicit?: boolean): T | undefined {
   return (explicit ?? argv.includes('--probe-model')) ? chooser : undefined;
+}
+
+/** The live client of a universe: plain Zetaris, or one guarded by its root-reviewed JSON2 binding (fresh schema + typed multiset check before use, bound tables/columns/limits only). */
+export function liveClientFor(universe: string) {
+  const cfg = universeConfig(universe), zetaris = new Zetaris();
+  return typeof cfg.liveBinding === 'string' ? guardJson2Client(cfg, zetaris) : zetaris;
 }
 
 /** `concordia agent --universe <id>`: the product's single agent path for any registered AGENT_EXPLORATION universe. */
@@ -40,7 +47,7 @@ export async function runAgentCommand(universe: string, options: { runId?: strin
   const comaBridge = options.coma && fs.existsSync(python) ? createInstalledComaBridge(python, ROOT) : undefined;
   const sha = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
   const before = readBudget(), beforePrefix = sha(before.attempts);
-  const report = await runAgent(universe, runId, { client: new Zetaris(), chooser, probeChooser: probeChooserFor(chooser, process.argv, options.probeModel), comaBridge, executionMode: 'LIVE', memory: options.memory });
+  const report = await runAgent(universe, runId, { client: liveClientFor(universe), chooser, probeChooser: probeChooserFor(chooser, process.argv, options.probeModel), comaBridge, executionMode: 'LIVE', memory: options.memory });
   const after = readBudget();
   const ledger = { attemptsBefore: before.consumed, attemptsAfter: after.consumed, attemptsAdded: after.consumed - before.consumed, priorAttemptsPreserved: sha(after.attempts.slice(0, before.attempts.length)) === beforePrefix };
   const summary = { status: report.status, runId, universeId: report.universeId, report: `.concordia/agent-runs/${runId}/engine-run.json`, probes: report.phases?.probes?.selected ?? [], probeSelection: report.probeSelection?.mode ?? null, probeModelRanking: report.probeSelection?.modelRanking ?? null,
@@ -58,7 +65,7 @@ export async function continueAgentCommand(universe: string, runId: string, atte
   loadLocalEnv();
   const catalog = catalogOf(universeConfig(universe));
   if (!catalog) throw new SafeError('EXPLORATION_CATALOG_REQUIRED');
-  const record = await continueAgentExploration(universe, runId, { client: new Zetaris(), chooser: new NightshiftChooser(new Nightshift(), runId, catalog, GENERIC_CODE_PREFIX) }, attempt);
+  const record = await continueAgentExploration(universe, runId, { client: liveClientFor(universe), chooser: new NightshiftChooser(new Nightshift(), runId, catalog, GENERIC_CODE_PREFIX) }, attempt);
   console.log(JSON.stringify(record));
   process.exitCode = record.outcome === 'COMPLETED' && record.ledger.priorAttemptsPreserved ? 0 : 1;
   return record;

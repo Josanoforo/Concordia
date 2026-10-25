@@ -1,0 +1,95 @@
+{
+  "alias": "GTFSAGENT",
+  "basis": "SYNTHETIC_FIXTURE: the 11 trips and 5 routes of the pinned synthetic GTFS snapshot (same shape as the JSON2 tables); adjudication left UNKNOWN on purpose",
+  "chooserScript": [
+    "READ_ROUTE_REFERENCE"
+  ],
+  "tables": {
+    "trips": {
+      "columns": [
+        {
+          "name": "trip_id",
+          "type": "string"
+        },
+        {
+          "name": "route_id",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "AB1",
+          "AB"
+        ],
+        [
+          "AB2",
+          "AB"
+        ],
+        [
+          "STBA",
+          "STBA"
+        ],
+        [
+          "CITY1",
+          "CITY"
+        ],
+        [
+          "CITY2",
+          "CITY"
+        ],
+        [
+          "BFC1",
+          "BFC"
+        ],
+        [
+          "BFC2",
+          "BFC"
+        ],
+        [
+          "AAMV1",
+          "AAMV"
+        ],
+        [
+          "AAMV2",
+          "AAMV"
+        ],
+        [
+          "AAMV3",
+          "AAMV"
+        ],
+        [
+          "AAMV4",
+          "AAMV"
+        ]
+      ]
+    },
+    "routes": {
+      "columns": [
+        {
+          "name": "route_id",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "AB"
+        ],
+        [
+          "BFC"
+        ],
+        [
+          "STBA"
+        ],
+        [
+          "CITY"
+        ],
+        [
+          "AAMV"
+        ]
+      ]
+    }
+  },
+  "adjudications": {
+    "gtfsagent_trip_route": "UNKNOWN"
+  }
+}
