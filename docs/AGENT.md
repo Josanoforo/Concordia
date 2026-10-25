@@ -1,4 +1,4 @@
-# Agent loop (any registered universe)
+# Agent loop (enrolled universes)
 
 `npm run agent -- --universe <id-or-alias> [--run-id agent-<id>-<unique>] [--no-model] [--no-coma]`
 

@@ -4,7 +4,7 @@ Concordia helps data teams discover candidate relationships across registered so
 
 ## Use: the agent loop
 
-The product path is one command for any registered universe that declares the `AGENT_EXPLORATION` capability:
+The product path is one command for enrolled universes that declare the `AGENT_EXPLORATION` capability:
 
     npm run agent -- --universe <id-or-alias>
 
