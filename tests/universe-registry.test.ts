@@ -6,7 +6,7 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { ROOT } from '../src/runtime.ts';
-import { assertValidUniverseRegistry, resolveUniverseManifest, universeManifests, validateThirdPartyUniverseManifest, validateUniverseRegistry } from '../src/registry/universes.ts';
+import { assertValidUniverseRegistry, resolveUniverseManifest, universeManifests, validateThirdPartyUniverseManifest, validateUniverseConfig, validateUniverseRegistry } from '../src/registry/universes.ts';
 import { evaluateLocalFixtureUniverse, universeConfig } from '../src/universe-pipeline.ts';
 import { evaluateRelation } from '../src/relations/decision.ts';
 import { resolveUniverseRoute } from '../src/universe-adapters.ts';
@@ -309,4 +309,17 @@ test('C2 external U3 eval replays typed evidence with current policy and never n
   }finally{
     fs.rmSync(scratch,{recursive:true,force:true});
   }
+});
+
+test('F-05 agent-exploration configs must declare a safe db and physicalTable per table', () => {
+  const manifest = universeManifests.find(item => item.capabilities.includes('AGENT_EXPLORATION'))!;
+  const base = JSON.parse(fs.readFileSync(path.join(ROOT, manifest.source.configPath!), 'utf8'));
+  assert.deepEqual(validateUniverseConfig(manifest, base), []);
+  const tableId = Object.keys(base.tables)[0];
+  const without = (field: string) => { const cfg = structuredClone(base); delete cfg.tables[tableId][field]; return cfg; };
+  assert.ok(validateUniverseConfig(manifest, without('physicalTable')).some(issue => issue.code === 'AGENT_TABLE_PHYSICAL_TABLE_MISSING_OR_INVALID'));
+  const noDb = without('db'); delete noDb.database;
+  assert.ok(validateUniverseConfig(manifest, noDb).some(issue => issue.code === 'AGENT_TABLE_DB_MISSING_OR_INVALID'));
+  const unsafe = structuredClone(base); unsafe.tables[tableId].physicalTable = 'orders; DROP TABLE x';
+  assert.ok(validateUniverseConfig(manifest, unsafe).some(issue => issue.code === 'AGENT_TABLE_PHYSICAL_TABLE_MISSING_OR_INVALID'));
 });

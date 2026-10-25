@@ -36,16 +36,36 @@ export function comaInputFromRelations(cfg: any, relations: readonly any[], tabl
       normalizationMode: relation.normalization, allowed: [{ sourceColumn: relation.from.column, targetColumn: relation.to.column, caseIds: [relation.id] }] })) };
 }
 
-export interface ComaPhaseResult { status: 'NOT_CONFIGURED' | 'RAN'; inputHash?: string; input?: ComaSchemaInput; production?: CandidateProductionEnvelope }
+/**
+ * COMA input versions are forward-only. v1 is the implicit legacy input: an entry without a version is read as v1 and its serialization and hash stay
+ * byte-identical (the frozen U2 recovery hash depends on it). Newer entries carry an explicit comaInputVersion that is part of their hash.
+ */
+export type ComaInputVersion = 1 | 2;
+export const COMA_INPUT_VERSIONS: readonly ComaInputVersion[] = [1, 2];
+export const normalizeComaInputVersion = (version?: number): ComaInputVersion => {
+  if (version === undefined) return 1;
+  if (!COMA_INPUT_VERSIONS.includes(version as ComaInputVersion)) throw new SafeError('COMA_INPUT_VERSION_UNSUPPORTED');
+  return version as ComaInputVersion;
+};
+
+/** v1 hashes exactly the legacy payload; v2+ adds the explicit version so versions never collide. */
+export function comaInputHash(input: Pick<ComaSchemaInput, 'tableDatabases' | 'pairs'> & { tables: ComaSchemaInput['tables'] }, version?: number): string {
+  const v = normalizeComaInputVersion(version);
+  const legacy = { tables: input.tables, tableDatabases: input.tableDatabases, pairs: input.pairs };
+  return sha(v === 1 ? legacy : { comaInputVersion: v, ...legacy });
+}
+
+export interface ComaPhaseResult { status: 'NOT_CONFIGURED' | 'RAN'; comaInputVersion?: ComaInputVersion; inputHash?: string; input?: ComaSchemaInput; production?: CandidateProductionEnvelope }
 
 /** Runs COMA as a normal candidate provider for any universe. No bridge means the phase is recorded as not configured. */
 export async function runComaPhase(o: { universeId: string; cfg: any; catalog?: ExplorationCatalog; discovery: any; sourceColumns: Record<string, Column[]>;
-  relations: readonly any[]; bridge?: ComaBridge; expectedInputHash?: string; executionMode: 'LIVE' | 'REPLAY' | 'LOCAL'; dataOrigin: 'SYNTHETIC' | 'PUBLIC' | 'USER' | 'UNKNOWN' }): Promise<ComaPhaseResult> {
+  relations: readonly any[]; bridge?: ComaBridge; expectedInputHash?: string; comaInputVersion?: number; executionMode: 'LIVE' | 'REPLAY' | 'LOCAL'; dataOrigin: 'SYNTHETIC' | 'PUBLIC' | 'USER' | 'UNKNOWN' }): Promise<ComaPhaseResult> {
+  const comaInputVersion = normalizeComaInputVersion(o.comaInputVersion);
   if (!o.bridge) return { status: 'NOT_CONFIGURED' };
   const tables = comaTables(allowlistedColumns(o.cfg, o.catalog, o.discovery, o.sourceColumns));
   const input = comaInputFromRelations(o.cfg, o.relations, tables);
   if (!input.pairs.length) return { status: 'NOT_CONFIGURED' };
-  const inputHash = sha({ tables, tableDatabases: input.tableDatabases, pairs: input.pairs });
+  const inputHash = comaInputHash(input, comaInputVersion);
   if (o.expectedInputHash && inputHash !== o.expectedInputHash) throw new SafeError('U2_COMA_RECOVERY_INPUT_HASH_MISMATCH');
   const provider = createComaProvider({ input, bridge: o.bridge });
   const databases = [...new Set(Object.values(input.tableDatabases ?? {}))];
@@ -57,5 +77,5 @@ export async function runComaPhase(o: { universeId: string; cfg: any; catalog?: 
     evidenceRefs: Object.values<any>(o.discovery.tables).flatMap((table: any) => [table.sourceMetadata?.requestId, table.sample?.requestId].filter(Boolean)),
     metadata: { databases, scope: `${o.universeId} configured relations`, schemaOnly: true } }, [provider]);
   trace({ kind: 'agent-coma', universeId: o.universeId, providerState: production.providerStates, candidates: production.candidates.length, inputHash });
-  return { status: 'RAN', inputHash, input, production };
+  return { status: 'RAN', comaInputVersion, inputHash, input, production };
 }

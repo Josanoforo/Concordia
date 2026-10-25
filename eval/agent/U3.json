@@ -1,0 +1,149 @@
+{
+  "alias": "U3",
+  "basis": "SYNTHETIC_FIXTURE shaped like the U3 metadata schema; no DBpedia, Forbes or FullContact values. U3 declares no relations, so no adjudications exist and the probes stage is empty by construction",
+  "chooserScript": [
+    "READ_FORBES_BY_REGION",
+    "READ_DBPEDIA_BY_SECTOR"
+  ],
+  "tables": {
+    "dbpedia": {
+      "columns": [
+        {
+          "name": "entity_uri",
+          "type": "string"
+        },
+        {
+          "name": "org_name",
+          "type": "string"
+        },
+        {
+          "name": "established",
+          "type": "string"
+        },
+        {
+          "name": "nation",
+          "type": "string"
+        },
+        {
+          "name": "sector",
+          "type": "string"
+        },
+        {
+          "name": "total_assets_val",
+          "type": "string"
+        },
+        {
+          "name": "annual_income",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "synthetic-org-01",
+          "Example Org One",
+          "1990",
+          "Examplia",
+          "Software",
+          "100",
+          "50"
+        ],
+        [
+          "synthetic-org-02",
+          "Example Org Two",
+          "1985",
+          "Testland",
+          "Energy",
+          "200",
+          "80"
+        ],
+        [
+          "synthetic-org-03",
+          "Example Org Three",
+          "2001",
+          "Examplia",
+          "Retail",
+          "300",
+          "90"
+        ]
+      ]
+    },
+    "forbes": {
+      "columns": [
+        {
+          "name": "forbes_url",
+          "type": "string"
+        },
+        {
+          "name": "company",
+          "type": "string"
+        },
+        {
+          "name": "url",
+          "type": "string"
+        },
+        {
+          "name": "region",
+          "type": "string"
+        },
+        {
+          "name": "business_segment",
+          "type": "string"
+        },
+        {
+          "name": "asset_value",
+          "type": "string"
+        },
+        {
+          "name": "sales_figure",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "synthetic-forbes-01",
+          "Example Co One",
+          "example-one",
+          "Examplia",
+          "Software",
+          "110",
+          "55"
+        ],
+        [
+          "synthetic-forbes-02",
+          "Example Co Two",
+          "example-two",
+          "Testland",
+          "Energy",
+          "210",
+          "85"
+        ],
+        [
+          "synthetic-forbes-03",
+          "Example Co Three",
+          "example-three",
+          "Otherland",
+          "Retail",
+          "310",
+          "95"
+        ]
+      ]
+    },
+    "fullcontact": {
+      "columns": [
+        {
+          "name": "opaque_marker",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "synthetic-1"
+        ],
+        [
+          "synthetic-2"
+        ]
+      ]
+    }
+  },
+  "adjudications": {}
+}

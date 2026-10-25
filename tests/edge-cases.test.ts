@@ -77,3 +77,9 @@ test('EC18 contract: partial 429 evidence stays incomplete, preserves request ID
   const result = assessPartialTransport({ fragments: [{ requestId: 'fixture-1', rows: 3 }], error: { status: 429, retryAfter: '60' } });
   assert.deepEqual(result, { evidenceState: 'INCOMPLETA', verdict: 'INDETERMINADA', complete: false, fragmentRequestIds: ['fixture-1'], fragmentRows: 3, errorStatus: 429, retryAfter: '60', automaticRetry: false });
 });
+
+test('E-01: multiplicity reports the maximum rows matching one key (0 when no key is usable)', () => {
+  assert.equal(measureMultiplicity([['1'], ['1'], ['1'], ['2']], 0, 'integer').maxRowsPerKey, 3);
+  assert.equal(measureMultiplicity([['1'], ['2']], 0, 'integer').maxRowsPerKey, 1);
+  assert.equal(measureMultiplicity([[null], [''], ['  ']], 0, 'integer').maxRowsPerKey, 0);
+});

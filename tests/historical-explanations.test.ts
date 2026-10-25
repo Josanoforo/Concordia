@@ -15,16 +15,41 @@ import type { Receipt } from '../src/clients/nightshift.ts';
 
 const receipt: Receipt = { receiptId: 'historical-fixture-receipt', provider: 'anthropic', model: 'fixture', inputTokens: 10, outputTokens: 10, totalTokens: 20, latencyMs: 1, fromCache: false, requestedMode: 'cheap', routedMode: 'cheap', modeCoerced: false, costUsd: 0.001 };
 const response = (ids: string[]) => JSON.stringify({ explanations: ids.map(candidateId => ({ candidateId, explanation: 'La evidencia histórica respalda esta lectura con prudencia.' })) });
-const registry = loadExplanationCaptureRegistry(ROOT);
-const pin = registry.captures[0];
+const realRegistry = loadExplanationCaptureRegistry(ROOT);
+let registry = realRegistry;
+let pin = registry.captures[0];
 const manifest = resolveUniverseManifest('GTFS_SVP1_LIVE')!;
-function fixtureRoot(t: any) {
-  const source = path.join(ROOT, pin.inputRef);
-  if (!fs.existsSync(source)) { t.skip('pinned accepted capture is not installed in this checkout'); return undefined; }
+const sha256 = (bytes: Buffer | string) => createHash('sha256').update(bytes).digest('hex');
+
+/** R-06: a SYNTHETIC capture with its own pin, shaped like the pinned one, so the tests run when the accepted capture is not installed. */
+async function syntheticCapture() {
+  const local = await evaluateLocalFixtureUniverse('GTFS');
+  const item: any = local.results[0], runId = 'synthetic-historical-run-01';
+  const contract = structuredClone(item.contract); contract.universeRef.universeId = manifest.source.profileManifestId;
+  const evidenceBundle = structuredClone(item.evidence); evidenceBundle.runRef = { ...evidenceBundle.runRef, runId, executionMode: 'LIVE' };
+  const decision = structuredClone(item.decision);
+  const payload = {
+    runId, manifestId: manifest.manifestId, version: manifest.version, executionMode: 'LIVE', dataOrigin: 'SYNTHETIC', status: 'EVALUATED',
+    sourceValidation: { status: 'COMPLETE', tables: Array.from({ length: 4 }, () => ({ status: 'VERIFIED', expectedRows: 10, actualRows: 10 })) },
+    sourceBindingId: 'synthetic-binding', sourceBindingVersion: '1', sourceCommit: 'a'.repeat(40), sourcePackage: 'synthetic-package',
+    frozenInputHash: 'b'.repeat(64), adaptedConfigSha256: 'c'.repeat(64), semanticFingerprint: 'd'.repeat(64), candidateCount: 1,
+    decisions: [{ candidateId: 'S01', relationContractRef: contract.id, contractVersion: contract.contractVersion, contract, evidenceBundle, evidenceRef: evidenceBundle.evidenceBundleId, decision }]
+  };
+  const bytes = Buffer.from(JSON.stringify(payload));
+  const synthetic = { ...structuredClone(realRegistry.captures[0]), captureId: 'synthetic-historical-capture', inputRef: '.concordia/live-explanations/inputs/synthetic-historical-capture.json',
+    inputSha256: sha256(bytes), runId, producerCommit: 'a'.repeat(40), sourceValidation: { status: 'COMPLETE' as const, tableStatus: 'VERIFIED' as const, tableCount: 4, totalRows: 40 } };
+  return { bytes, pin: synthetic };
+}
+async function fixtureRoot(t: any) {
+  const real = path.join(ROOT, realRegistry.captures[0].inputRef);
   const root = fs.mkdtempSync(path.join(ROOT, '.concordia', 'historical-explanation-test-'));
+  t.after(() => { registry = realRegistry; pin = realRegistry.captures[0]; fs.rmSync(root, { recursive: true, force: true }); });
+  registry = realRegistry; pin = realRegistry.captures[0];
+  if (fs.existsSync(real)) { const target = path.join(root, pin.inputRef); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.copyFileSync(real, target); return root; }
+  const synthetic = await syntheticCapture();
+  registry = { schemaVersion: 1, captures: [synthetic.pin] }; pin = synthetic.pin;
   const target = path.join(root, pin.inputRef);
-  fs.mkdirSync(path.dirname(target), { recursive: true }); fs.copyFileSync(source, target);
-  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.dirname(target), { recursive: true }); fs.writeFileSync(target, synthetic.bytes);
   return root;
 }
 const taskFile = (root: string, name: string) => path.join(root, '.concordia', 'live-explanations', 'tasks', name);
@@ -55,7 +80,7 @@ test('synthetic historical explanation grounding keeps semantic facts separate a
 });
 
 test('historical explanation prepares, dispatches once through the default factory path, and retries without env loading', async t => {
-  const root = fixtureRoot(t); if (!root) return;
+  const root = await fixtureRoot(t); if (!root) return;
   let clientConstructions = 0, envLoads = 0, sentMessages: any[] = [], sentOptions: any, factoryOrder: string[] = [];
   const taskId = 'historical-' + randomUUID().replaceAll('-', '');
   const capture = JSON.parse(fs.readFileSync(path.join(root, pin.inputRef), 'utf8'));
@@ -104,7 +129,7 @@ test('historical explanation prepares, dispatches once through the default facto
 });
 
 test('truncated historical completion persists the exact response, receipt, and stop metadata', async t => {
-  const root = fixtureRoot(t); if (!root) return;
+  const root = await fixtureRoot(t); if (!root) return;
   const taskId = 'historical-truncated-' + randomUUID().replaceAll('-', '');
   const capture = JSON.parse(fs.readFileSync(path.join(root, pin.inputRef), 'utf8'));
   const firstId = capture.decisions[0].candidateId;
@@ -123,7 +148,7 @@ test('truncated historical completion persists the exact response, receipt, and 
   assert.equal(output.artifact?.responseTruncated, true);
 });
 test('exclusive dispatch reservation prevents duplicate concurrent model calls', async t => {
-  const root = fixtureRoot(t); if (!root) return;
+  const root = await fixtureRoot(t); if (!root) return;
   const taskId = 'historical-race-' + randomUUID().replaceAll('-', '');
   const capture = JSON.parse(fs.readFileSync(path.join(root, pin.inputRef), 'utf8'));
   await explainHistoricalCapture(pin.inputRef, pin.inputSha256, taskId, 'GTFS_SVP1_LIVE', { projectRoot: root, captureRegistry: registry, phase: 'prepare' });
@@ -139,13 +164,13 @@ test('exclusive dispatch reservation prevents duplicate concurrent model calls',
 });
 
 test('historical explanation rejects bad hashes, paths, and DTO links before model construction', async t => {
-  const root = fixtureRoot(t); if (!root) return;
+  const root = await fixtureRoot(t); if (!root) return;
   let calls = 0; const clientFactory = () => { calls++; throw new Error('must reject before model client'); };
   await assert.rejects(explainHistoricalCapture(pin.inputRef, '0'.repeat(64), 'task-hash-mismatch', 'GTFS_SVP1_LIVE', { projectRoot: root, captureRegistry: registry, phase: 'prepare', clientFactory }), /HISTORICAL_CAPTURE_NOT_REGISTERED/);
   await assert.rejects(explainHistoricalCapture('../live-explanations/inputs/capture.json', pin.inputSha256, 'task-path-mismatch', 'GTFS_SVP1_LIVE', { projectRoot: root, captureRegistry: registry, phase: 'prepare', clientFactory }), /HISTORICAL_CAPTURE_NOT_REGISTERED/);
   const inputFile = path.join(root, pin.inputRef); fs.appendFileSync(inputFile, ' ');
   await assert.rejects(explainHistoricalCapture(pin.inputRef, pin.inputSha256, 'task-tampered-input', 'GTFS_SVP1_LIVE', { projectRoot: root, captureRegistry: registry, phase: 'prepare', clientFactory }), /HISTORICAL_CAPTURE_HASH_MISMATCH/);
-  const capture = JSON.parse(fs.readFileSync(path.join(ROOT, pin.inputRef), 'utf8'));
+  const capture = JSON.parse(fs.readFileSync(path.join(root, pin.inputRef), 'utf8'));
   capture.decisions[0].evidenceBundle.contractVersion = '9.9';
   assert.throws(() => validateHistoricalCapturePayload(capture, manifest, pin), /HISTORICAL_EVIDENCE_INVALID/);
   assert.equal(calls, 0);
@@ -169,7 +194,7 @@ test('response schema allows explanations with authorized counts and more than e
 });
 
 test('injected client stub dispatch does not invoke the environment loader', async t => {
-  const root = fixtureRoot(t); if (!root) return;
+  const root = await fixtureRoot(t); if (!root) return;
   const taskId = 'historical-stub-' + randomUUID().replaceAll('-', '');
   const capture = JSON.parse(fs.readFileSync(path.join(root, pin.inputRef), 'utf8'));
   let envLoads = 0, clientCalls = 0;

@@ -9,7 +9,7 @@ import { planProbe, executeProbe, type ProbeAdapter, type ProbeReadRequest } fro
 import { evaluateRelation } from '../src/relations/decision.ts';
 import { ROOT, SafeError } from '../src/runtime.ts';
 import type { RelationPolicy } from '../src/relations/decision.ts';
-import { recordFreshnessAttempt, recordFreshnessPreflightFailure, freshnessHistoryView, readFreshnessHistory, replayFreshnessAttempt, type SourceSchemaFingerprint } from '../src/reconcile/freshness-history.ts';
+import { freshnessRoot, recordFreshnessAttempt, recordFreshnessPreflightFailure, freshnessHistoryView, readFreshnessHistory, replayFreshnessAttempt, type SourceSchemaFingerprint } from '../src/reconcile/freshness-history.ts';
 import { assertFreshnessRelationSupported, resolveFreshnessRelationId } from '../src/reconcile/freshness-scope.ts';
 import { assessConsumerInputVersions, consumerFreshnessSnapshot } from '../src/reconcile/consumer-freshness.ts';
 import { fichasMarkdown, Reconciler } from '../src/reconcile/index.ts';
@@ -210,4 +210,16 @@ test('B5 canonical GTFS alias refreshes persisted consumers after evidence chang
   const currentPlan=compilePublicationPlan({universeId:f.universeId,contract:f.contract,evidence:[second.execution.bundle],decision:second.decision,target:{namespace:'fixture',model:'route_view'},freshnessSnapshot:renderedAfterReload});assert.equal(currentPlan.dependencyAssessment?.state,'CURRENT');const oldPlan=compilePublicationPlan({universeId:f.universeId,contract:f.contract,evidence:[first.execution.bundle],decision:first.decision,target:{namespace:'fixture',model:'route_view'},freshnessSnapshot:renderedAfterReload});assert.equal(oldPlan.dependencyAssessment?.state,'STALE');
   const stalePlan=compilePublicationPlan({universeId:f.universeId,contract:f.contract,evidence:[second.execution.bundle],decision:second.decision,target:{namespace:'fixture',model:'route_view'},freshnessSnapshot:stale});assert.equal(stalePlan.dependencyAssessment?.state,'STALE');
   const svp=setup({universeId:'concordia.universe.gtfs-svp1',relationId:'svp1_G01',token:'svp1-token'});svp.contract={...svp.contract,kind:'FOREIGN_KEY',identifierSpace:{state:'KNOWN',value:'fixture-key'}};const svpAttempt=await capture(svp,'2026-10-23T00:00:00Z','svp1-token');const svpAlias=consumerFreshnessSnapshot('GTFS_SVP1',['G01'],undefined,{now:()=>Date.parse('2026-10-23T00:00:00Z')});assert.equal(svpAlias.universeId,'concordia.universe.gtfs-svp1');assert.equal(svpAlias.dependencies[0].relationId,'svp1_G01');assert.equal(svpAlias.dependencies[0].attemptRef,svpAttempt.record.attemptId);
+});
+test('CONCORDIA_FRESHNESS_DIR redirects the history root inside .concordia; the default path is unchanged', () => {
+  const concordia = path.resolve(ROOT, '.concordia');
+  const saved = process.env.CONCORDIA_FRESHNESS_DIR;
+  try {
+    delete process.env.CONCORDIA_FRESHNESS_DIR;
+    assert.equal(freshnessRoot(concordia), path.join(concordia, 'freshness-v2'));
+    process.env.CONCORDIA_FRESHNESS_DIR = path.join(concordia, 'freshness-override-check');
+    assert.equal(freshnessRoot(concordia), path.join(concordia, 'freshness-override-check'));
+    process.env.CONCORDIA_FRESHNESS_DIR = path.resolve(ROOT, '..', 'outside-freshness');
+    assert.throws(() => freshnessRoot(concordia), /FRESHNESS_ROOT_OUTSIDE_APPROVED_ROOT/);
+  } finally { if (saved === undefined) delete process.env.CONCORDIA_FRESHNESS_DIR; else process.env.CONCORDIA_FRESHNESS_DIR = saved; }
 });

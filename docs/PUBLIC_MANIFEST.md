@@ -1,6 +1,6 @@
 # Public file manifest
 
-Positive path allowlist for the sanitized working tree prepared on 2026-10-22 and refreshed on 2026-10-24 for v1.1-rc3. Public sample data is limited to the explicitly synthetic U3 schema/CSV and the U1 schema-graph fixture; there are no observed source rows, query/request IDs, or MaDI raw/gold files in these sample paths.
+Positive path allowlist for the sanitized working tree prepared on 2026-10-22 and refreshed on 2026-10-25 for v1.1-rc4. Public sample data is limited to the explicitly synthetic U3 schema/CSV and the U1 schema-graph fixture; there are no observed source rows, query/request IDs, or MaDI raw/gold files in these sample paths. Test fixtures under `tests/fixtures/agent-runs/` are sanitized copies of two live agent runs over public sources: bounded result rows only, with receipt and query identifiers replaced by fixture ids.
 
 This describes the current index, not earlier commits. It does not sanitize history; do not publish the existing history without first rebuilding the unpublished commit on the public base.
 
@@ -64,7 +64,9 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `docs/USL_U3.md`
 - `docs/v1_1/OFFLINE_ACCEPTANCE.md`
 - `eval/agent/AGENTFX.json`
+- `eval/agent/U1.json`
 - `eval/agent/U2.json`
+- `eval/agent/U3.json`
 - `eval/cases/U1.json`
 - `eval/cases/U2.json`
 - `eval/cases/critic-U1.json`
@@ -96,14 +98,20 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `scripts/run-tsx.mjs`
 - `src/agent/catalog.ts`
 - `src/agent/chooser.ts`
+- `src/agent/cli-help.ts`
 - `src/agent/cli-run.ts`
 - `src/agent/coma-input.ts`
+- `src/agent/continuation.ts`
 - `src/agent/engine.ts`
 - `src/agent/exploration-policy.ts`
 - `src/agent/exploration.ts`
+- `src/agent/join-compare.ts`
+- `src/agent/memory.ts`
+- `src/agent/post-coma.ts`
 - `src/agent/probe-selector.ts`
 - `src/agent/run-budget.ts`
 - `src/agent/u2.ts`
+- `src/agent/usl-plan.ts`
 - `src/budget.ts`
 - `src/cli.ts`
 - `src/clients/nightshift.ts`
@@ -148,9 +156,11 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `src/madi.ts`
 - `src/probe/evidence-contract.ts`
 - `src/probe/index.ts`
+- `src/probe/key-rules.ts`
 - `src/probe/verdicts.ts`
 - `src/reconcile/consumer-freshness.ts`
 - `src/reconcile/freshness-history.ts`
+- `src/reconcile/freshness-measure.ts`
 - `src/reconcile/freshness-scope.ts`
 - `src/reconcile/freshness.ts`
 - `src/reconcile/index.ts`
@@ -164,11 +174,14 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `src/relations/adapters/zetaris-json2.ts`
 - `src/relations/adapters/zetaris.ts`
 - `src/relations/decision.ts`
+- `src/relations/incompleteness.ts`
 - `src/relations/index.ts`
+- `src/relations/key-contract.ts`
 - `src/relations/legacy.ts`
 - `src/relations/policy.ts`
 - `src/relations/probes.ts`
 - `src/relations/schema-correspondence.ts`
+- `src/report/agent-run-report.ts`
 - `src/report/index.ts`
 - `src/review.ts`
 - `src/route-preview.ts`
@@ -184,12 +197,35 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `src/usl/index.ts`
 - `src/usl/lifecycle-plan.ts`
 - `src/usl/lifecycle-simulator.ts`
+- `src/usl/live-grant.ts`
 - `src/usl/publication-executor.ts`
 - `src/usl/publication-plan.ts`
 - `src/usl/resume.ts`
+- `src/usl/retarget.ts`
+- `src/usl/sealed-binding.ts`
 - `src/usl/zetaris-lifecycle-adapter.ts`
+- `tests/agent-catalog-actions.test.ts`
+- `tests/agent-cli-compare.test.ts`
+- `tests/agent-cli-error-codes.test.ts`
+- `tests/agent-cli-help.test.ts`
+- `tests/agent-cli-max-tokens.test.ts`
+- `tests/agent-cli-memory-flag.test.ts`
+- `tests/agent-cli-memory-wiring.test.ts`
+- `tests/agent-cli-offline.test.ts`
+- `tests/agent-coma-input.test.ts`
+- `tests/agent-continuation.test.ts`
 - `tests/agent-engine.test.ts`
 - `tests/agent-eval.test.ts`
+- `tests/agent-join-compare.test.ts`
+- `tests/agent-join-comparison-stage.test.ts`
+- `tests/agent-local-universe.test.ts`
+- `tests/agent-memory-origin.test.ts`
+- `tests/agent-memory.test.ts`
+- `tests/agent-run-report-real.test.ts`
+- `tests/agent-run-report.test.ts`
+- `tests/agent-token-estimate.test.ts`
+- `tests/agent-u1.test.ts`
+- `tests/agent-u3.test.ts`
 - `tests/candidate-comparison.test.ts`
 - `tests/clients.test.ts`
 - `tests/coma-provider.test.ts`
@@ -201,14 +237,29 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `tests/edge-cases.test.ts`
 - `tests/eval-protocol.test.ts`
 - `tests/fetch-madi.test.ts`
+- `tests/fixtures/agent-runs/agent-u1-live-01/adaptive-decisions.jsonl`
+- `tests/fixtures/agent-runs/agent-u1-live-01/artifacts.json`
+- `tests/fixtures/agent-runs/agent-u1-live-01/engine-run.json`
+- `tests/fixtures/agent-runs/agent-u2-live-02/adaptive-decisions.jsonl`
+- `tests/fixtures/agent-runs/agent-u2-live-02/artifacts.json`
+- `tests/fixtures/agent-runs/agent-u2-live-02/engine-run.json`
+- `tests/fixtures/coma-input/u2-live-02-columns.json`
+- `tests/fixtures/u2/agent-u2-adaptive-20261024-normal-03.alternatives.json`
 - `tests/freshness-history.test.ts`
+- `tests/freshness-measure.test.ts`
+- `tests/helpers/isolated-freshness.ts`
 - `tests/historical-explanations.test.ts`
 - `tests/impact-dossier.test.ts`
+- `tests/incompleteness.test.ts`
 - `tests/json2-live-adapter.test.ts`
+- `tests/key-contract.test.ts`
 - `tests/live-explanations.test.ts`
 - `tests/llm-completion.test.ts`
 - `tests/madi-aliases.test.ts`
 - `tests/nightshift.test.ts`
+- `tests/post-coma-normalization.test.ts`
+- `tests/probe-containment.test.ts`
+- `tests/probe-key-rules.test.ts`
 - `tests/reconcile-concurrency-worker.ts`
 - `tests/reconcile-concurrency.test.ts`
 - `tests/reconcile.test.ts`
@@ -221,6 +272,7 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `tests/run-registry.test.ts`
 - `tests/svp1.test.ts`
 - `tests/u2-adaptive.test.ts`
+- `tests/u2-flow-offline.test.ts`
 - `tests/universe-pipeline.test.ts`
 - `tests/universe-registry.test.ts`
 - `tests/universe.test.ts`
@@ -231,6 +283,7 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `tests/verdicts.test.ts`
 - `tsconfig.json`
 - `universes/AGENT_fixture.json`
+- `universes/AGENT_local.json`
 - `universes/CHINOOK_fixture.json`
 - `universes/GTFS_fixture.json`
 - `universes/U1_ny_taxi.json`

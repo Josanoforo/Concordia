@@ -37,8 +37,8 @@ export async function discoverUniverse(id:string, dependencies:{client?:Pick<Zet
       const metadata=await z.describe(spec.db,spec.physicalTable);
       const projection=spec.columns.map((c:any)=>identifier(c.name));
       if(!spec.baseSql && projection.some((c:string)=>!metadata.rows.some(r=>r[0]===c)))throw new SafeError('U2_ALLOWLIST_COLUMN_MISSING');
-      const sample=await z.runSql(`SELECT ${projection.join(', ')} FROM ${sourceQuery(spec)} LIMIT ${cfg.sampleLimit}`,cfg.sampleLimit);
-      result.tables[name]={columns:projection,schema:spec.columns,sourceMetadata:metadata,derivedSchema:Boolean(spec.baseSql),sample,labels:spec.labels??[],keyColumns:spec.keyColumns,role:spec.role};
+      const sample=await z.runSql(`SELECT ${projection.length?projection.join(', '):'1 AS row_present'} FROM ${sourceQuery(spec)} LIMIT ${cfg.sampleLimit}`,cfg.sampleLimit);
+      result.tables[name]={columns:projection.length?projection:['row_present'],schema:spec.columns,sourceMetadata:metadata,derivedSchema:Boolean(spec.baseSql),sample,labels:spec.labels??[],keyColumns:spec.keyColumns,role:spec.role};
       console.log('PASS discover',id,name,sample.rows.length);
     }catch(error){result.errors.push({table:name,...failure(error)});break;}
   }

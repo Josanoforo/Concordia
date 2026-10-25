@@ -13,7 +13,9 @@ import { decodeLoadedUslModelRows, FileUslClientPointerStore, parseNamespaceCata
 import { canonicalJson2SchemaSha256, canonicalJson2TypedMultisetSha256 } from '../src/relations/adapters/zetaris-json2.ts';
 import { executeAuthorizedUslLifecycle, recoverAuthorizedUslLifecycle } from '../src/usl/lifecycle-simulator.ts';
 import { FilePublicationJournal, readNamespacePublicationEvents, readPublicationJournalHistory } from '../src/usl/publication-executor.ts';
-import { assessUslLifecycleApplyGate, checkUslLifecyclePlan, compileUslLifecyclePlan, verifyLoadedUslModel, verifyObservedRelationRows, verifyPublicationSourceBindingBytes, type PublicationSourceBinding } from '../src/usl/lifecycle-plan.ts';
+import { retargetPublicationInput } from '../src/usl/retarget.ts';
+import { buildLiveUslGrant } from '../src/usl/live-grant.ts';
+import { isApprovedL4Namespace, assessUslLifecycleApplyGate, checkUslLifecyclePlan, compileUslLifecyclePlan, verifyLoadedUslModel, verifyObservedRelationRows, verifyPublicationSourceBindingBytes, type PublicationSourceBinding } from '../src/usl/lifecycle-plan.ts';
 function fixture() {
   const known = <T extends string | boolean>(value: T) => ({ state: 'KNOWN' as const, value });
   const contract: RelationContract = {
@@ -538,4 +540,60 @@ test('publication lifecycle CLI plans, simulates apply/reuse/recovery, and reads
     for (const file of [absoluteInput, guard, statePath, journal, path.join(ROOT, reuseJournalPath), path.join(ROOT, journal2Path), v1PlanPath ? path.join(ROOT, v1PlanPath) : '', v2PlanPath ? path.join(ROOT, v2PlanPath) : '']) if (file && fs.existsSync(file)) fs.rmSync(file);
     for (const directoryPath of [runDir, path.dirname(path.join(ROOT, reuseJournalPath)), path.dirname(path.join(ROOT, journal2Path))]) if (fs.existsSync(directoryPath)) fs.rmdirSync(directoryPath);
   }
+});
+
+test('B1: the approved namespace is an allowlist (sealed v1 or dated agentpub), and anything else still blocks the plan', () => {
+  assert.equal(isApprovedL4Namespace('lightning.metastore.concordia_l4_json2_20261023'), true);
+  assert.equal(isApprovedL4Namespace('lightning.metastore.concordia_l4_agentpub_20261025'), true);
+  for (const bad of ['lightning.metastore.concordia_l4_agentpub_2026', 'lightning.metastore.concordia_l4_agentpub_20261025_x', 'lightning.metastore.concordia_u1', 'other.metastore.concordia_l4_agentpub_20261025', 'lightning.metastore.concordia_l4_json2_20261024', 'lightning.metastore.concordia_l4_agentpub_20261025.extra']) assert.equal(isApprovedL4Namespace(bad), false, bad);
+  const f = fixture();
+  const input = { ...f.input, target: { namespace: 'lightning.metastore.concordia_l4_agentpub_20261025', model: 'concordia_l4_agent_gtfs_route_v1' } };
+  const plan = compileUslLifecyclePlan(compilePublicationPlan(input), input, f.binding);
+  assert.equal(plan.gates.some(gate => gate.code === 'target_namespace_not_approved_candidate'), false);
+  assert.equal(plan.operations.find(item => item.operationId === 'create_target_namespace')?.sql, 'CREATE NAMESPACE IF NOT EXISTS lightning.metastore.concordia_l4_agentpub_20261025');
+  const foreign = { ...f.input, target: { namespace: 'lightning.metastore.concordia_u1', model: 'concordia_l4_agent_gtfs_route_v1' } };
+  assert.ok(compileUslLifecyclePlan(compilePublicationPlan(foreign), foreign, f.binding).gates.some(gate => gate.code === 'target_namespace_not_approved_candidate'));
+});
+
+test('B3: the live grant is built from the plan, self-validated, short-lived, and refuses what the executor would reject', () => {
+  const f = fixture();
+  const mappings = f.binding.mappings.map(mapping => ({ ...mapping, keyColumns: mapping.keyColumns.map(column => ({ ...column, physicalColumn: column.logicalColumn })) }));
+  const tables = mappings.map((mapping, index) => ({ manifestId: 'synthetic.manifest', profileAlias: 'SYNTHETIC', tableId: mapping.logicalObjectId, sourceId: mapping.sourceId, logicalObjectId: mapping.logicalObjectId,
+    physicalDatabase: mapping.physicalDatabase, physicalTable: mapping.physicalTable, columns: mapping.keyColumns.map(column => ({ name: column.logicalColumn, kind: 'string' })), expectedRows: 1, maxRows: 20, readLimit: 50,
+    observedSchemaSha256: String(index + 1).padStart(64, '0'), typedMultisetSha256: String(index + 3).padStart(64, '0'), fingerprintAlgorithm: 'CANONICAL_TYPED_ROWS_MULTISET_V1', dataOrigin: 'SYNTHETIC' }));
+  const payload = { schemaVersion: 1, bindingId: f.binding.bindingId, bindingVersion: '1.0.0', status: 'ROOT_REVIEWED_FOR_BOUNDED_READ_ONLY_CONSUMPTION', reviewedAtUtc: '2026-10-23T12:00:00Z',
+    registrationPlanFingerprint: 'a'.repeat(64), packageSealSha256: 'b'.repeat(64), registrationJournalSha256: 'c'.repeat(64), backendEngineVersion: 'synthetic-json2-1', profileConfigPath: 'synthetic/profile.json',
+    wireEncoding: 'SQL_EDITOR_STRING_CELLS_CANONICAL_INTEGER_V1', wireEvidenceSha256: 'd'.repeat(64), readLimit: 50, maxRowsPerTable: 20, requiresFreshSchemaAndTypedMultisetCheckBeforeUse: true, sqlMutationAllowed: false, uslAllowed: false, tables };
+  const raw = Buffer.from(JSON.stringify(payload), 'utf8');
+  const binding = { ...f.binding, bindingVersion: '1.0.0', mappings, bindingSha256: createHash('sha256').update(raw).digest('hex') };
+  const plan = compileUslLifecyclePlan(f.manifest, f.input, binding);
+  const dialect = Buffer.from(JSON.stringify({ schemaVersion: 1, status: 'CONFIRMED', dialectId: 'synthetic-dialect', backendEngineVersion: 'x', reviewedBy: 'human', reviewedAt: '2026-10-23T00:00:00Z',
+    supportedOperationIds: plan.operations.filter(operation => operation.sql).map(operation => operation.operationId) }), 'utf8');
+  const base = { plan, manifest: f.manifest, input: f.input, binding, rawBindingBytes: raw, dialectBytes: dialect, approvedBy: 'synthetic-test', now: Date.parse('2026-10-25T12:00:00Z') };
+  const grant = buildLiveUslGrant(base);
+  assert.equal(grant.scope, 'LIVE_USL_PUBLICATION');
+  assert.equal(grant.planFingerprint, plan.fingerprint);
+  assert.deepEqual(grant.operationSqlSha256s, plan.operations.flatMap(operation => operation.sqlSha256 ? [operation.sqlSha256] : []));
+  assert.equal(grant.dialectEvidenceSha256, createHash('sha256').update(dialect).digest('hex'));
+  assert.equal(Date.parse(grant.expiresAt) - Date.parse(grant.approvedAt), 30 * 60_000 + 1000);
+  assert.throws(() => buildLiveUslGrant({ ...base, approvedBy: ' ' }), /LIVE_GRANT_APPROVER_REQUIRED/);
+  assert.throws(() => buildLiveUslGrant({ ...base, ttlMinutes: 61 }), /LIVE_GRANT_TTL_INVALID/);
+  assert.throws(() => buildLiveUslGrant({ ...base, dialectBytes: Buffer.from('{') }), /BACKEND_DIALECT_EVIDENCE_INVALID/);
+  assert.throws(() => buildLiveUslGrant({ ...base, rawBindingBytes: Buffer.from(raw.toString('utf8') + ' ') }), /SEALED_SOURCE_BINDING_BYTES_REQUIRED/);
+  assert.throws(() => buildLiveUslGrant({ ...base, dialectBytes: Buffer.from(JSON.stringify({ schemaVersion: 1, status: 'CONFIRMED', dialectId: 'd', backendEngineVersion: 'x', reviewedBy: 'h', reviewedAt: '2026-10-23T00:00:00Z', supportedOperationIds: [] })) }), /BACKEND_DIALECT_EVIDENCE_INVALID/);
+});
+
+test('B5: retargeting keeps contract, evidence and decision, drops the old target state, and changes the plan fingerprint', () => {
+  const f = fixture();
+  const target = { namespace: 'lightning.metastore.concordia_l4_agentpub_20261025', model: 'concordia_l4_agent_gtfs_route_v1' };
+  const bare = retargetPublicationInput(f.input, target);
+  assert.equal(bare.targetState, undefined, 'the old namespace fingerprint is never carried over');
+  assert.deepEqual([bare.contract, bare.evidence, bare.decision], [f.input.contract, f.input.evidence, f.input.decision]);
+  const snapshot = { fingerprint: 'c'.repeat(64), observedAt: '2026-10-25T12:00:00Z' };
+  const input = retargetPublicationInput(f.input, target, snapshot);
+  assert.deepEqual(input.targetState, snapshot);
+  assert.notEqual(compilePublicationPlan(input).fingerprint, f.manifest.fingerprint);
+  assert.throws(() => retargetPublicationInput(f.input, { ...target, namespace: 'lightning.metastore.concordia_u1' }), /RETARGET_NAMESPACE_NOT_APPROVED/);
+  assert.throws(() => retargetPublicationInput(f.input, { ...target, model: 'bad model' }), /RETARGET_MODEL_INVALID/);
+  assert.throws(() => retargetPublicationInput(f.input, f.input.target), /RETARGET_SAME_TARGET/);
 });

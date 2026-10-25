@@ -13,17 +13,21 @@ import { addSampleQualitySignals, executeProbe } from '../relations/probes.ts';
 import { ZetarisProbeAdapter, zetarisTableSpecs } from '../relations/adapters/zetaris.ts';
 import { evaluateRelation } from '../relations/decision.ts';
 import { relationPolicyFromConfig } from '../relations/policy.ts';
+import { evaluateKeyRules, type KeyRules } from './key-rules.ts';
+import { checkKeyContract, type KeyContractResult } from '../relations/key-contract.ts';
 import { classify } from './verdicts.ts';
+import { incompletenessOfDecision, type Incompleteness } from '../relations/incompleteness.ts';
 export type Probe = {
   relation: Candidate; utc: string; status: string; queries: SqlResult[]; error?: object;
   overlap: { matched: number; probed: number; ratio: number | null; sampleKeys: string[] };
   multiplicity?: { from: RowMultiplicity; to: RowMultiplicity; sharedRowPairs: number; pairCounts: { key: string; fromRows: number; toRows: number; pairs: number }[]; manyToManyKeys: string[]; bounded: { from: boolean; to: boolean } };
+  containment?: Containment; keyRules?: KeyRules; keyContracts?: { from: KeyContractResult; to: KeyContractResult };
   labelAgreement?: { agree: number; compared: number; ratio: number; examples: { key: string; fromLabel: string[]; toLabel: string[]; agrees: boolean }[] };
   typeCompat: { from: string; to: string; castable: boolean; normalization: string };
   nullRate: { from: number | null; to: number | null; denominatorFrom: number; denominatorTo: number };
-  alerts: string[]; durationMs: number; freshness?: any; decision?: Decision; relationContract?: RelationContract; typedEvidence?: EvidenceBundle;
+  alerts: string[]; durationMs: number; freshness?: any; decision?: Decision; incompleteness?: Incompleteness; relationContract?: RelationContract; typedEvidence?: EvidenceBundle;
 };
-export type RowMultiplicity = { rows: number; nonNullRows: number; nullRows: number; emptyRows: number; distinctKeys: number; duplicateKeys: { key: string; rows: number }[] };
+export type RowMultiplicity = { rows: number; nonNullRows: number; nullRows: number; emptyRows: number; distinctKeys: number; duplicateKeys: { key: string; rows: number }[]; maxRowsPerKey: number };
 function keyValues(t: LiveTable, e: Endpoint) { return t.sample.rows.map(row => row[t.columns.indexOf(e.column)]); }
 export function measureMultiplicity(rows: any[][], columnIndex: number, mode: NormalizationMode): RowMultiplicity {
   const counts = new Map<string, number>(); let nullRows = 0, emptyRows = 0;
@@ -36,7 +40,7 @@ export function measureMultiplicity(rows: any[][], columnIndex: number, mode: No
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   const duplicateKeys = [...counts].filter(([, count]) => count > 1).map(([key, count]) => ({ key, rows: count }));
-  return { rows: rows.length, nonNullRows: rows.length - nullRows - emptyRows, nullRows, emptyRows, distinctKeys: counts.size, duplicateKeys };
+  return { rows: rows.length, nonNullRows: rows.length - nullRows - emptyRows, nullRows, emptyRows, distinctKeys: counts.size, duplicateKeys, maxRowsPerKey: Math.max(0, ...counts.values()) };
 }
 export function sharedRowPairs(leftRows: any[][], leftIndex: number, rightRows: any[][], rightIndex: number, mode: NormalizationMode) {
   const counts = (rows: any[][], index: number) => {
@@ -49,6 +53,19 @@ export function sharedRowPairs(leftRows: any[][], leftIndex: number, rightRows: 
   const pairCounts = sharedKeys.map(key => ({ key, fromRows: left.get(key)!, toRows: right.get(key)!, pairs: left.get(key)! * right.get(key)! }));
   return { sharedRowPairs: pairCounts.reduce((sum, item) => sum + item.pairs, 0), pairCounts,
     manyToManyKeys: sharedKeys.filter(key => left.get(key)! > 1 && right.get(key)! > 1) };
+}
+export type ContainmentRatio = { shared: number; of: number; ratio: number | null };
+/** Directional containment of two key samples. B->A and Jaccard are null when B was fetched by A's keys, because B is then already filtered by A and the inverse is not a measurement. */
+export type Containment = { distinctFrom: number; distinctTo: number; sharedKeys: number; aToB: ContainmentRatio; bToA: ContainmentRatio | null; jaccard: number | null; comparable: boolean; reason?: 'TARGET_FILTERED_BY_SOURCE_KEYS' };
+export function measureContainment(fromRows: any[][], fromIndex: number, toRows: any[][], toIndex: number, mode: NormalizationMode, options: { targetFilteredBySource: boolean }): Containment {
+  const distinct = (rows: any[][], index: number) => new Set(rows.map(row => normalizeKey(row[index], mode)).filter((key): key is string => key !== null));
+  const from = distinct(fromRows, fromIndex), to = distinct(toRows, toIndex);
+  const shared = [...from].filter(key => to.has(key)).length;
+  const ratio = (of: number): ContainmentRatio => ({ shared, of, ratio: of ? shared / of : null });
+  const aToB = ratio(from.size);
+  if (options.targetFilteredBySource) return { distinctFrom: from.size, distinctTo: to.size, sharedKeys: shared, aToB, bToA: null, jaccard: null, comparable: false, reason: 'TARGET_FILTERED_BY_SOURCE_KEYS' };
+  const union = from.size + to.size - shared;
+  return { distinctFrom: from.size, distinctTo: to.size, sharedKeys: shared, aToB, bToA: ratio(to.size), jaccard: union ? shared / union : null, comparable: true };
 }
 function nullRate(t: LiveTable, e: Endpoint, mode: NormalizationMode) {
   const values = keyValues(t, e); return values.length ? values.filter(v => normalizeKey(v, mode) === null).length / values.length : null;
@@ -126,6 +143,10 @@ export async function probe(options?: { candidateIds: string[]; append?: boolean
     const fromMultiplicity=measureMultiplicity(fromRows as any[][],0,mode),toMultiplicity=measureMultiplicity(toRows as any[][],0,mode);
     const rowPairs=sharedRowPairs(fromRows as any[][],0,toRows as any[][],0,mode);
     result.multiplicity={from:fromMultiplicity,to:toMultiplicity,sharedRowPairs:rowPairs.sharedRowPairs,pairCounts:rowPairs.pairCounts,manyToManyKeys:rowPairs.manyToManyKeys,bounded:{from:fromRows.length>=plan.limit,to:toRows.length>=plan.limit}};
+    result.keyRules=evaluateKeyRules(fromRows as any[][],toRows as any[][],mode,{targetBounded:result.multiplicity.bounded.to});
+    const declared=(endpoint:Endpoint)=>universeConfig.tables[endpoint.table]?.keyContract?.[endpoint.column];
+    if(declared(relation.from)||declared(relation.to))result.keyContracts={from:checkKeyContract(relation.from.column,declared(relation.from),fromMultiplicity),to:checkKeyContract(relation.to.column,declared(relation.to),toMultiplicity)};
+    result.containment=measureContainment(fromRows as any[][],0,toRows as any[][],0,mode,{targetFilteredBySource:filterValues.length>0});
     if(toMultiplicity.duplicateKeys.length)result.alerts.push('DUPLICATE_REFERENCED_KEYS_OBSERVED_IN_BOUNDED_RESPONSE');
     if(rowPairs.manyToManyKeys.length)result.alerts.push('MANY_TO_MANY_MULTIPLICITY_OBSERVED_IN_BOUNDED_RESPONSES');
     const targetKeys=new Set(toRows.map(row=>normalizeKey(row[0],mode)).filter((value):value is string=>value!==null));
@@ -147,6 +168,7 @@ export async function probe(options?: { candidateIds: string[]; append?: boolean
     addSampleQualitySignals(execution.bundle,qualitySignals,currentAt);
     const contract=legacyRelationContract(relation,'concordia.universe.ny-taxi',contractVersion,mode,config.minDistinctKeys);
     result.decision=evaluateRelation(contract,[execution.bundle],relationPolicy);
+    const incompleteness=incompletenessOfDecision(result.decision,contract,[execution.bundle]);if(incompleteness)result.incompleteness=incompleteness;
     result.relationContract=contract;result.typedEvidence=execution.bundle;
     const stamp=currentAt,complete=execution.status==='COMPLETE';
     const attempt=dependencies.persist===false&&!dependencies.recordFreshness?null:recordFreshnessAttempt({universeId:manifest.manifestId,relationId:relation.id,contract,evidence:execution.bundle,decision:result.decision!,policy:relationPolicy,reads:execution.reads,errors:execution.errors,sourceSchemaFingerprints:[sourceSchemaFingerprintFromDescription(`${relation.from.db}:${relation.from.table}:from`,`${relation.from.db}.${relation.from.table}`,a.schema,'LEGACY_DESCRIBE_CAPTURE',inventory.utc),sourceSchemaFingerprintFromDescription(`${relation.to.db}:${relation.to.table}:to`,`${relation.to.db}.${relation.to.table}`,b.schema,'LEGACY_DESCRIBE_CAPTURE',inventory.utc)],checkedAt:stamp});

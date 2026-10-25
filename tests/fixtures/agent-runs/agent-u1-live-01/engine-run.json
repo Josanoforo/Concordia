@@ -1,0 +1,890 @@
+{
+ "schemaVersion": 1,
+ "runId": "agent-u1-live-01",
+ "universeId": "U1",
+ "manifestId": "concordia.universe.ny-taxi",
+ "executionMode": "LIVE",
+ "dataOrigin": "UNKNOWN",
+ "utc": "2026-10-25T02:02:51.194Z",
+ "phases": {
+  "discovery": {
+   "status": "PASS",
+   "tables": [
+    "taxi_zones",
+    "zones",
+    "yellow_taxi",
+    "green_taxi",
+    "for_hire_vehicles",
+    "hvv",
+    "taxi_trips",
+    "trips",
+    "weather_data",
+    "surge_pricing"
+   ],
+   "relations": [
+    "yellow_pu_taxi_zones",
+    "yellow_do_taxi_zones",
+    "green_pu_taxi_zones",
+    "hvv_pu_taxi_zones",
+    "trips_pickup_zones",
+    "taxi_zones_zones_trap"
+   ]
+  },
+  "coma": {
+   "status": "RAN",
+   "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+   "providerStates": [
+    {
+     "providerId": "valentine.coma",
+     "status": "PARTIAL"
+    }
+   ],
+   "candidates": 4,
+   "outOfScopeProposals": [
+    {
+     "providerId": "valentine.coma",
+     "providerVersion": "1.1.0",
+     "method": "COMA",
+     "from": {
+      "db": "NY_TAXI",
+      "table": "yellow_taxi",
+      "column": "PULocationID"
+     },
+     "to": {
+      "db": "NY_TAXI",
+      "table": "taxi_zones",
+      "column": "LocationID"
+     },
+     "rawScore": 0.8888888888888888,
+     "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+     "verificationStatus": "NO VERIFICADO/UNKNOWN",
+     "reviewState": "PENDING",
+     "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+     "configHash": "76a7e5eeae4305bbd473d21f44b550f6e12225d998a3daf50baa8a00eccc0123",
+     "evidenceRefs": [
+      "query_fixture_031",
+      "query_fixture_032",
+      "query_fixture_033",
+      "query_fixture_034",
+      "query_fixture_035",
+      "query_fixture_036",
+      "query_fixture_037",
+      "query_fixture_038",
+      "query_fixture_039",
+      "query_fixture_040",
+      "query_fixture_041",
+      "query_fixture_042",
+      "query_fixture_043",
+      "query_fixture_044",
+      "query_fixture_045",
+      "query_fixture_046",
+      "query_fixture_047",
+      "query_fixture_048",
+      "query_fixture_049",
+      "query_fixture_050"
+     ]
+    },
+    {
+     "providerId": "valentine.coma",
+     "providerVersion": "1.1.0",
+     "method": "COMA",
+     "from": {
+      "db": "NY_TAXI",
+      "table": "yellow_taxi",
+      "column": "PULocationID"
+     },
+     "to": {
+      "db": "NY_TAXI",
+      "table": "taxi_zones",
+      "column": "LocationID"
+     },
+     "rawScore": 0.8888888888888888,
+     "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+     "verificationStatus": "NO VERIFICADO/UNKNOWN",
+     "reviewState": "PENDING",
+     "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+     "configHash": "76a7e5eeae4305bbd473d21f44b550f6e12225d998a3daf50baa8a00eccc0123",
+     "evidenceRefs": [
+      "query_fixture_031",
+      "query_fixture_032",
+      "query_fixture_033",
+      "query_fixture_034",
+      "query_fixture_035",
+      "query_fixture_036",
+      "query_fixture_037",
+      "query_fixture_038",
+      "query_fixture_039",
+      "query_fixture_040",
+      "query_fixture_041",
+      "query_fixture_042",
+      "query_fixture_043",
+      "query_fixture_044",
+      "query_fixture_045",
+      "query_fixture_046",
+      "query_fixture_047",
+      "query_fixture_048",
+      "query_fixture_049",
+      "query_fixture_050"
+     ]
+    },
+    {
+     "providerId": "valentine.coma",
+     "providerVersion": "1.1.0",
+     "method": "COMA",
+     "from": {
+      "db": "NY_TAXI",
+      "table": "green_taxi",
+      "column": "DOLocationID"
+     },
+     "to": {
+      "db": "NY_TAXI",
+      "table": "taxi_zones",
+      "column": "LocationID"
+     },
+     "rawScore": 0.8888888888888888,
+     "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+     "verificationStatus": "NO VERIFICADO/UNKNOWN",
+     "reviewState": "PENDING",
+     "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+     "configHash": "76a7e5eeae4305bbd473d21f44b550f6e12225d998a3daf50baa8a00eccc0123",
+     "evidenceRefs": [
+      "query_fixture_031",
+      "query_fixture_032",
+      "query_fixture_033",
+      "query_fixture_034",
+      "query_fixture_035",
+      "query_fixture_036",
+      "query_fixture_037",
+      "query_fixture_038",
+      "query_fixture_039",
+      "query_fixture_040",
+      "query_fixture_041",
+      "query_fixture_042",
+      "query_fixture_043",
+      "query_fixture_044",
+      "query_fixture_045",
+      "query_fixture_046",
+      "query_fixture_047",
+      "query_fixture_048",
+      "query_fixture_049",
+      "query_fixture_050"
+     ]
+    },
+    {
+     "providerId": "valentine.coma",
+     "providerVersion": "1.1.0",
+     "method": "COMA",
+     "from": {
+      "db": "NY_TAXI",
+      "table": "hvv",
+      "column": "DOLocationID"
+     },
+     "to": {
+      "db": "NY_TAXI",
+      "table": "taxi_zones",
+      "column": "LocationID"
+     },
+     "rawScore": 0.8888888888888888,
+     "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+     "verificationStatus": "NO VERIFICADO/UNKNOWN",
+     "reviewState": "PENDING",
+     "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+     "configHash": "76a7e5eeae4305bbd473d21f44b550f6e12225d998a3daf50baa8a00eccc0123",
+     "evidenceRefs": [
+      "query_fixture_031",
+      "query_fixture_032",
+      "query_fixture_033",
+      "query_fixture_034",
+      "query_fixture_035",
+      "query_fixture_036",
+      "query_fixture_037",
+      "query_fixture_038",
+      "query_fixture_039",
+      "query_fixture_040",
+      "query_fixture_041",
+      "query_fixture_042",
+      "query_fixture_043",
+      "query_fixture_044",
+      "query_fixture_045",
+      "query_fixture_046",
+      "query_fixture_047",
+      "query_fixture_048",
+      "query_fixture_049",
+      "query_fixture_050"
+     ]
+    },
+    {
+     "providerId": "valentine.coma",
+     "providerVersion": "1.1.0",
+     "method": "COMA",
+     "from": {
+      "db": "NY_TAXI",
+      "table": "trips",
+      "column": "created_at"
+     },
+     "to": {
+      "db": "NY_TAXI",
+      "table": "zones",
+      "column": "created_at"
+     },
+     "rawScore": 1,
+     "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+     "verificationStatus": "NO VERIFICADO/UNKNOWN",
+     "reviewState": "PENDING",
+     "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+     "configHash": "76a7e5eeae4305bbd473d21f44b550f6e12225d998a3daf50baa8a00eccc0123",
+     "evidenceRefs": [
+      "query_fixture_031",
+      "query_fixture_032",
+      "query_fixture_033",
+      "query_fixture_034",
+      "query_fixture_035",
+      "query_fixture_036",
+      "query_fixture_037",
+      "query_fixture_038",
+      "query_fixture_039",
+      "query_fixture_040",
+      "query_fixture_041",
+      "query_fixture_042",
+      "query_fixture_043",
+      "query_fixture_044",
+      "query_fixture_045",
+      "query_fixture_046",
+      "query_fixture_047",
+      "query_fixture_048",
+      "query_fixture_049",
+      "query_fixture_050"
+     ]
+    },
+    {
+     "providerId": "valentine.coma",
+     "providerVersion": "1.1.0",
+     "method": "COMA",
+     "from": {
+      "db": "NY_TAXI",
+      "table": "trips",
+      "column": "dropoff_zone_id"
+     },
+     "to": {
+      "db": "NY_TAXI",
+      "table": "zones",
+      "column": "zone_id"
+     },
+     "rawScore": 0.8,
+     "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+     "verificationStatus": "NO VERIFICADO/UNKNOWN",
+     "reviewState": "PENDING",
+     "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+     "configHash": "76a7e5eeae4305bbd473d21f44b550f6e12225d998a3daf50baa8a00eccc0123",
+     "evidenceRefs": [
+      "query_fixture_031",
+      "query_fixture_032",
+      "query_fixture_033",
+      "query_fixture_034",
+      "query_fixture_035",
+      "query_fixture_036",
+      "query_fixture_037",
+      "query_fixture_038",
+      "query_fixture_039",
+      "query_fixture_040",
+      "query_fixture_041",
+      "query_fixture_042",
+      "query_fixture_043",
+      "query_fixture_044",
+      "query_fixture_045",
+      "query_fixture_046",
+      "query_fixture_047",
+      "query_fixture_048",
+      "query_fixture_049",
+      "query_fixture_050"
+     ]
+    },
+    {
+     "providerId": "valentine.coma",
+     "providerVersion": "1.1.0",
+     "method": "COMA",
+     "from": {
+      "db": "NY_TAXI",
+      "table": "taxi_zones",
+      "column": "borough"
+     },
+     "to": {
+      "db": "NY_TAXI",
+      "table": "zones",
+      "column": "borough"
+     },
+     "rawScore": 1,
+     "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+     "verificationStatus": "NO VERIFICADO/UNKNOWN",
+     "reviewState": "PENDING",
+     "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+     "configHash": "76a7e5eeae4305bbd473d21f44b550f6e12225d998a3daf50baa8a00eccc0123",
+     "evidenceRefs": [
+      "query_fixture_031",
+      "query_fixture_032",
+      "query_fixture_033",
+      "query_fixture_034",
+      "query_fixture_035",
+      "query_fixture_036",
+      "query_fixture_037",
+      "query_fixture_038",
+      "query_fixture_039",
+      "query_fixture_040",
+      "query_fixture_041",
+      "query_fixture_042",
+      "query_fixture_043",
+      "query_fixture_044",
+      "query_fixture_045",
+      "query_fixture_046",
+      "query_fixture_047",
+      "query_fixture_048",
+      "query_fixture_049",
+      "query_fixture_050"
+     ]
+    },
+    {
+     "providerId": "valentine.coma",
+     "providerVersion": "1.1.0",
+     "method": "COMA",
+     "from": {
+      "db": "NY_TAXI",
+      "table": "taxi_zones",
+      "column": "zone"
+     },
+     "to": {
+      "db": "NY_TAXI",
+      "table": "zones",
+      "column": "zone_id"
+     },
+     "rawScore": 0.6666666666666666,
+     "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+     "verificationStatus": "NO VERIFICADO/UNKNOWN",
+     "reviewState": "PENDING",
+     "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+     "configHash": "76a7e5eeae4305bbd473d21f44b550f6e12225d998a3daf50baa8a00eccc0123",
+     "evidenceRefs": [
+      "query_fixture_031",
+      "query_fixture_032",
+      "query_fixture_033",
+      "query_fixture_034",
+      "query_fixture_035",
+      "query_fixture_036",
+      "query_fixture_037",
+      "query_fixture_038",
+      "query_fixture_039",
+      "query_fixture_040",
+      "query_fixture_041",
+      "query_fixture_042",
+      "query_fixture_043",
+      "query_fixture_044",
+      "query_fixture_045",
+      "query_fixture_046",
+      "query_fixture_047",
+      "query_fixture_048",
+      "query_fixture_049",
+      "query_fixture_050"
+     ]
+    },
+    {
+     "providerId": "valentine.coma",
+     "providerVersion": "1.1.0",
+     "method": "COMA",
+     "from": {
+      "db": "NY_TAXI",
+      "table": "taxi_zones",
+      "column": "zone"
+     },
+     "to": {
+      "db": "NY_TAXI",
+      "table": "zones",
+      "column": "zone_name"
+     },
+     "rawScore": 0.6666666666666666,
+     "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+     "verificationStatus": "NO VERIFICADO/UNKNOWN",
+     "reviewState": "PENDING",
+     "inputHash": "4f04a34231882efb46a83b259ba00d5ee7a604a7c739c28c4cb6a01c6fff744d",
+     "configHash": "76a7e5eeae4305bbd473d21f44b550f6e12225d998a3daf50baa8a00eccc0123",
+     "evidenceRefs": [
+      "query_fixture_031",
+      "query_fixture_032",
+      "query_fixture_033",
+      "query_fixture_034",
+      "query_fixture_035",
+      "query_fixture_036",
+      "query_fixture_037",
+      "query_fixture_038",
+      "query_fixture_039",
+      "query_fixture_040",
+      "query_fixture_041",
+      "query_fixture_042",
+      "query_fixture_043",
+      "query_fixture_044",
+      "query_fixture_045",
+      "query_fixture_046",
+      "query_fixture_047",
+      "query_fixture_048",
+      "query_fixture_049",
+      "query_fixture_050"
+     ]
+    }
+   ]
+  },
+  "exploration": {
+   "actions": [
+    {
+     "step": 1,
+     "action": "READ_TAXI_ZONE_LOOKUP",
+     "reason": "observedTaxiZoneIds (e.g., 162,48,142,233,262) match PULocationID values seen in yellow_taxi samples but are not yet confirmed against taxi_zones.LocationID rows; a bounded lookup validates this join before considering zones/zone_id mapping.",
+     "execution": "PASS",
+     "observation": {
+      "queryId": "query_fixture_051",
+      "requestId": "query_fixture_052",
+      "rows": 20,
+      "columns": [
+       "LocationID",
+       "zone",
+       "borough"
+      ],
+      "observedAfter": {
+       "observedTaxiZoneIds": [
+        "162",
+        "48",
+        "142",
+        "233",
+        "262",
+        "137",
+        "230",
+        "229",
+        "211",
+        "161",
+        "132",
+        "239",
+        "247"
+       ],
+       "observedZoneIds": [
+        "4597",
+        "4023",
+        "5427",
+        "9681",
+        "1899",
+        "5837",
+        "7559",
+        "3898",
+        "8661",
+        "3473",
+        "5283",
+        "2374",
+        "9205",
+        "1239",
+        "1587",
+        "6259",
+        "6682",
+        "3138",
+        "2383",
+        "158"
+       ]
+      }
+     },
+     "sql": "SELECT `LocationID`, `zone`, `borough` FROM NY_TAXI.taxi_zones WHERE LocationID IN ('162', '48', '142', '233', '262', '137', '230', '229', '211', '161', '132', '239', '247') LIMIT 20",
+     "adaptedFromObservedState": true
+    }
+   ],
+   "calls": [
+    {
+     "stage": "select_bounded_read_1",
+     "status": "PASS",
+     "requestedModel": "meterless/cheap",
+     "promptHash": "c95b2f1d5dbcb0376ea94a7ba25e51d585d588a30d3bd33e7935a1cb7070e35f",
+     "utc": "2026-10-25T02:03:50.550Z",
+     "receipt": {
+      "receiptId": "rcpt_fixture_1",
+      "provider": "anthropic",
+      "model": "claude-sonnet-5",
+      "inputTokens": 11835,
+      "outputTokens": 127,
+      "totalTokens": 11962,
+      "latencyMs": 2262,
+      "fromCache": false,
+      "requestedMode": "cheap",
+      "routedMode": "cheap",
+      "modeCoerced": false,
+      "predicted": "claude-sonnet-5",
+      "winner": "claude-sonnet-5",
+      "routingReason": "leaning",
+      "routingPolicy": "learned-router"
+     },
+     "decisionStatus": "VALID",
+     "selected": "READ_TAXI_ZONE_LOOKUP",
+     "reason": "observedTaxiZoneIds (e.g., 162,48,142,233,262) match PULocationID values seen in yellow_taxi samples but are not yet confirmed against taxi_zones.LocationID rows; a bounded lookup validates this join before considering zones/zone_id mapping."
+    },
+    {
+     "stage": "select_bounded_read_2",
+     "status": "PASS",
+     "requestedModel": "meterless/cheap",
+     "promptHash": "1f356b234e93e536c240f4c7c16a57aa1759e768e91e6ff04be284a70bd0ba30",
+     "utc": "2026-10-25T02:04:01.065Z",
+     "receipt": {
+      "receiptId": "rcpt_fixture_2",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-5-20250929",
+      "inputTokens": 10303,
+      "outputTokens": 500,
+      "totalTokens": 10803,
+      "latencyMs": 18190,
+      "fromCache": false,
+      "requestedMode": "cheap",
+      "routedMode": "cheap",
+      "modeCoerced": false,
+      "predicted": "claude-sonnet-5",
+      "winner": "claude-sonnet-4-5-20250929",
+      "routingReason": "latency-hedge",
+      "routingPolicy": "learned-router"
+     },
+     "decisionStatus": "INVALID_RESPONSE",
+     "error": {
+      "code": "U2_ADAPTIVE_RESPONSE_NOT_JSON"
+     }
+    }
+   ],
+   "plannerError": {
+    "code": "U2_ADAPTIVE_RESPONSE_NOT_JSON"
+   },
+   "reads": {
+    "READ_TAXI_ZONE_LOOKUP": {
+     "source": "NY_TAXI.taxi_zones",
+     "columns": [
+      "LocationID",
+      "zone",
+      "borough"
+     ],
+     "rows": 20,
+     "queryId": "query_fixture_051"
+    }
+   }
+  },
+  "probes": {
+   "mode": "ALL_AFFORDABLE",
+   "selected": [
+    "yellow_pu_taxi_zones",
+    "yellow_do_taxi_zones",
+    "green_pu_taxi_zones",
+    "hvv_pu_taxi_zones",
+    "trips_pickup_zones",
+    "taxi_zones_zones_trap"
+   ],
+   "skipped": [],
+   "error": null
+  },
+  "critic": {
+   "status": "EVALUATED",
+   "eligible": 0,
+   "summary": {
+    "confirmed": 0,
+    "degraded": 0,
+    "insufficient": 0,
+    "errors": 0,
+    "skipped": 0
+   }
+  }
+ },
+ "probeSelection": {
+  "mode": "ALL_AFFORDABLE",
+  "modelRanking": "NOT_USED",
+  "fallback": null,
+  "selected": [
+   "yellow_pu_taxi_zones",
+   "yellow_do_taxi_zones",
+   "green_pu_taxi_zones",
+   "hvv_pu_taxi_zones",
+   "trips_pickup_zones",
+   "taxi_zones_zones_trap"
+  ],
+  "skipped": [],
+  "calls": []
+ },
+ "postComa": {
+  "status": "EXECUTED",
+  "policy": {
+   "maxProbes": 2,
+   "ranking": "rawScore desc, then proposalId",
+   "costPerProbe": 1,
+   "equality": "literal text equality of sampled values"
+  },
+  "proposals": [
+   {
+    "proposalId": "taxi_zones.borough__zones.borough",
+    "from": {
+     "db": "NY_TAXI",
+     "table": "taxi_zones",
+     "column": "borough"
+    },
+    "to": {
+     "db": "NY_TAXI",
+     "table": "zones",
+     "column": "borough"
+    },
+    "rawScore": 1,
+    "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+    "verificationStatus": "NO VERIFICADO/UNKNOWN",
+    "reviewState": "PENDING",
+    "coverageProbe": {
+     "kind": "COVERAGE_PROBE",
+     "status": "EXECUTED",
+     "sql": "SELECT borough FROM (SELECT zone_id, zone_name, borough, area_type, avg_demand_score, created_at FROM NY_TAXI.zones) concordia_source WHERE borough IN ('EWR', 'Queens', 'Bronx', 'Manhattan', 'Brooklyn') LIMIT 20",
+     "result": {
+      "sampledSourceValues": 6,
+      "probedValues": 5,
+      "targetMatches": 4,
+      "ratio": 0.8,
+      "rows": 20,
+      "queryId": "query_fixture_053",
+      "requestId": "query_fixture_054"
+     }
+    }
+   },
+   {
+    "proposalId": "trips.created_at__zones.created_at",
+    "from": {
+     "db": "NY_TAXI",
+     "table": "trips",
+     "column": "created_at"
+    },
+    "to": {
+     "db": "NY_TAXI",
+     "table": "zones",
+     "column": "created_at"
+    },
+    "rawScore": 1,
+    "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+    "verificationStatus": "NO VERIFICADO/UNKNOWN",
+    "reviewState": "PENDING",
+    "coverageProbe": {
+     "kind": "COVERAGE_PROBE",
+     "status": "NOT_EXECUTABLE",
+     "reason": "NO_SAFE_SAMPLED_VALUES"
+    }
+   },
+   {
+    "proposalId": "green_taxi.DOLocationID__taxi_zones.LocationID",
+    "from": {
+     "db": "NY_TAXI",
+     "table": "green_taxi",
+     "column": "DOLocationID"
+    },
+    "to": {
+     "db": "NY_TAXI",
+     "table": "taxi_zones",
+     "column": "LocationID"
+    },
+    "rawScore": 0.8888888888888888,
+    "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+    "verificationStatus": "NO VERIFICADO/UNKNOWN",
+    "reviewState": "PENDING",
+    "coverageProbe": {
+     "kind": "COVERAGE_PROBE",
+     "status": "EXECUTED",
+     "sql": "SELECT LocationID FROM (SELECT LocationID, zone, borough FROM NY_TAXI.taxi_zones) concordia_source WHERE LocationID IN ('74', '75', '166', '82', '127', '134', '244', '41', '260', '130', '145', '116') LIMIT 20",
+     "result": {
+      "sampledSourceValues": 12,
+      "probedValues": 12,
+      "targetMatches": 12,
+      "ratio": 1,
+      "rows": 20,
+      "queryId": "query_fixture_055",
+      "requestId": "query_fixture_056"
+     }
+    }
+   },
+   {
+    "proposalId": "hvv.DOLocationID__taxi_zones.LocationID",
+    "from": {
+     "db": "NY_TAXI",
+     "table": "hvv",
+     "column": "DOLocationID"
+    },
+    "to": {
+     "db": "NY_TAXI",
+     "table": "taxi_zones",
+     "column": "LocationID"
+    },
+    "rawScore": 0.8888888888888888,
+    "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+    "verificationStatus": "NO VERIFICADO/UNKNOWN",
+    "reviewState": "PENDING",
+    "coverageProbe": {
+     "kind": "COVERAGE_PROBE",
+     "status": "SUGGESTED",
+     "reason": "NOT_SELECTED_MAX_PROBES"
+    }
+   },
+   {
+    "proposalId": "yellow_taxi.PULocationID__taxi_zones.LocationID",
+    "from": {
+     "db": "NY_TAXI",
+     "table": "yellow_taxi",
+     "column": "PULocationID"
+    },
+    "to": {
+     "db": "NY_TAXI",
+     "table": "taxi_zones",
+     "column": "LocationID"
+    },
+    "rawScore": 0.8888888888888888,
+    "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+    "verificationStatus": "NO VERIFICADO/UNKNOWN",
+    "reviewState": "PENDING",
+    "coverageProbe": {
+     "kind": "COVERAGE_PROBE",
+     "status": "SUGGESTED",
+     "reason": "NOT_SELECTED_MAX_PROBES"
+    }
+   },
+   {
+    "proposalId": "trips.dropoff_zone_id__zones.zone_id",
+    "from": {
+     "db": "NY_TAXI",
+     "table": "trips",
+     "column": "dropoff_zone_id"
+    },
+    "to": {
+     "db": "NY_TAXI",
+     "table": "zones",
+     "column": "zone_id"
+    },
+    "rawScore": 0.8,
+    "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+    "verificationStatus": "NO VERIFICADO/UNKNOWN",
+    "reviewState": "PENDING",
+    "coverageProbe": {
+     "kind": "COVERAGE_PROBE",
+     "status": "SUGGESTED",
+     "reason": "NOT_SELECTED_MAX_PROBES"
+    }
+   },
+   {
+    "proposalId": "taxi_zones.zone__zones.zone_id",
+    "from": {
+     "db": "NY_TAXI",
+     "table": "taxi_zones",
+     "column": "zone"
+    },
+    "to": {
+     "db": "NY_TAXI",
+     "table": "zones",
+     "column": "zone_id"
+    },
+    "rawScore": 0.6666666666666666,
+    "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+    "verificationStatus": "NO VERIFICADO/UNKNOWN",
+    "reviewState": "PENDING",
+    "coverageProbe": {
+     "kind": "COVERAGE_PROBE",
+     "status": "SUGGESTED",
+     "reason": "NOT_SELECTED_MAX_PROBES"
+    }
+   },
+   {
+    "proposalId": "taxi_zones.zone__zones.zone_name",
+    "from": {
+     "db": "NY_TAXI",
+     "table": "taxi_zones",
+     "column": "zone"
+    },
+    "to": {
+     "db": "NY_TAXI",
+     "table": "zones",
+     "column": "zone_name"
+    },
+    "rawScore": 0.6666666666666666,
+    "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+    "verificationStatus": "NO VERIFICADO/UNKNOWN",
+    "reviewState": "PENDING",
+    "coverageProbe": {
+     "kind": "COVERAGE_PROBE",
+     "status": "SUGGESTED",
+     "reason": "NOT_SELECTED_MAX_PROBES"
+    }
+   }
+  ],
+  "counts": {
+   "proposals": 8,
+   "executed": 2,
+   "suggested": 5,
+   "notExecutable": 1,
+   "skippedBudget": 0,
+   "failed": 0
+  },
+  "limitations": [
+   "Coverage compares literal text of bounded sampled values; it does not apply normalization and says nothing about the whole table.",
+   "A coverage probe is a diagnostic: the proposal stays NO VERIFICADO/UNKNOWN and PENDING, and no verdict is produced or changed."
+  ]
+ },
+ "decisions": [
+  {
+   "relationId": "yellow_pu_taxi_zones",
+   "verdict": "INDETERMINADA",
+   "reasonCodes": [
+    "evidence_incomplete_or_truncated"
+   ]
+  },
+  {
+   "relationId": "yellow_do_taxi_zones",
+   "verdict": "INDETERMINADA",
+   "reasonCodes": [
+    "evidence_incomplete_or_truncated"
+   ]
+  },
+  {
+   "relationId": "green_pu_taxi_zones",
+   "verdict": "INDETERMINADA",
+   "reasonCodes": [
+    "evidence_incomplete_or_truncated"
+   ]
+  },
+  {
+   "relationId": "hvv_pu_taxi_zones",
+   "verdict": "INDETERMINADA",
+   "reasonCodes": [
+    "evidence_incomplete_or_truncated"
+   ]
+  },
+  {
+   "relationId": "trips_pickup_zones",
+   "verdict": "INDETERMINADA",
+   "reasonCodes": [
+    "evidence_incomplete_or_truncated"
+   ]
+  },
+  {
+   "relationId": "taxi_zones_zones_trap",
+   "verdict": "INDETERMINADA",
+   "reasonCodes": [
+    "evidence_incomplete_or_truncated"
+   ]
+  }
+ ],
+ "artifactsFile": "artifacts.json",
+ "status": "COMPLETED",
+ "budget": {
+  "limits": {
+   "maxQueriesPerRun": 50,
+   "readLimit": 20,
+   "maxTokensPerRun": 15000,
+   "maxSteps": 3
+  },
+  "used": {
+   "queries": 25,
+   "tokens": 22765,
+   "steps": 2
+  },
+  "exhausted": [
+   "tokens"
+  ]
+ },
+ "limitations": [
+  "Read-only: bounded SELECT templates and configured probes only; no DDL, no gold, no model-written SQL.",
+  "Verdicts come from the deterministic relation policy; COMA proposals and model choices never change them.",
+  "Bounded samples are not table-wide claims."
+ ]
+}

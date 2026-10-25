@@ -1,0 +1,822 @@
+{
+  "alias": "U1",
+  "basis": "SYNTHETIC_FIXTURE shaped like the U1 schema; no NY taxi values. The zone dimensions share key values 1-4 but carry different zone names; the real-data relations are left UNKNOWN (no gold), only the control taxi_zones_zones_trap is declared NONAPPROVABLE by construction",
+  "chooserScript": [
+    "READ_TAXI_ZONE_LOOKUP",
+    "READ_ZONES_REFERENCE"
+  ],
+  "tables": {
+    "taxi_zones": {
+      "columns": [
+        {
+          "name": "LocationID",
+          "type": "string"
+        },
+        {
+          "name": "zone",
+          "type": "string"
+        },
+        {
+          "name": "borough",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "1",
+          "Alpha Zone",
+          "North"
+        ],
+        [
+          "2",
+          "Beta Zone",
+          "South"
+        ],
+        [
+          "3",
+          "Gamma Zone",
+          "East"
+        ],
+        [
+          "4",
+          "Delta Zone",
+          "West"
+        ]
+      ]
+    },
+    "zones": {
+      "columns": [
+        {
+          "name": "zone_id",
+          "type": "string"
+        },
+        {
+          "name": "zone_name",
+          "type": "string"
+        },
+        {
+          "name": "borough",
+          "type": "string"
+        },
+        {
+          "name": "area_type",
+          "type": "string"
+        },
+        {
+          "name": "avg_demand_score",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "1",
+          "Zeta Area",
+          "North",
+          "residential",
+          "10",
+          "2026-01-01"
+        ],
+        [
+          "2",
+          "Eta Area",
+          "South",
+          "residential",
+          "11",
+          "2026-01-01"
+        ],
+        [
+          "3",
+          "Theta Area",
+          "East",
+          "residential",
+          "12",
+          "2026-01-01"
+        ],
+        [
+          "4",
+          "Iota Area",
+          "West",
+          "residential",
+          "13",
+          "2026-01-01"
+        ]
+      ]
+    },
+    "yellow_taxi": {
+      "columns": [
+        {
+          "name": "PULocationID",
+          "type": "string"
+        },
+        {
+          "name": "DOLocationID",
+          "type": "string"
+        },
+        {
+          "name": "tpep_pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "tpep_dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "passenger_count",
+          "type": "string"
+        },
+        {
+          "name": "trip_distance",
+          "type": "string"
+        },
+        {
+          "name": "RatecodeID",
+          "type": "string"
+        },
+        {
+          "name": "fare_amount",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "1",
+          "2",
+          "tpep_pickup_datetime_0",
+          "tpep_dropoff_datetime_0",
+          "passenger_count_0",
+          "trip_distance_0",
+          "RatecodeID_0",
+          "fare_amount_0"
+        ],
+        [
+          "2",
+          "3",
+          "tpep_pickup_datetime_1",
+          "tpep_dropoff_datetime_1",
+          "passenger_count_1",
+          "trip_distance_1",
+          "RatecodeID_1",
+          "fare_amount_1"
+        ],
+        [
+          "3",
+          "4",
+          "tpep_pickup_datetime_2",
+          "tpep_dropoff_datetime_2",
+          "passenger_count_2",
+          "trip_distance_2",
+          "RatecodeID_2",
+          "fare_amount_2"
+        ],
+        [
+          "4",
+          "1",
+          "tpep_pickup_datetime_3",
+          "tpep_dropoff_datetime_3",
+          "passenger_count_3",
+          "trip_distance_3",
+          "RatecodeID_3",
+          "fare_amount_3"
+        ],
+        [
+          "1",
+          "2",
+          "tpep_pickup_datetime_4",
+          "tpep_dropoff_datetime_4",
+          "passenger_count_4",
+          "trip_distance_4",
+          "RatecodeID_4",
+          "fare_amount_4"
+        ],
+        [
+          "2",
+          "3",
+          "tpep_pickup_datetime_5",
+          "tpep_dropoff_datetime_5",
+          "passenger_count_5",
+          "trip_distance_5",
+          "RatecodeID_5",
+          "fare_amount_5"
+        ]
+      ]
+    },
+    "green_taxi": {
+      "columns": [
+        {
+          "name": "PULocationID",
+          "type": "string"
+        },
+        {
+          "name": "DOLocationID",
+          "type": "string"
+        },
+        {
+          "name": "lpep_pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "lpep_dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "passenger_count",
+          "type": "string"
+        },
+        {
+          "name": "trip_distance",
+          "type": "string"
+        },
+        {
+          "name": "fare_amount",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "1",
+          "2",
+          "lpep_pickup_datetime_0",
+          "lpep_dropoff_datetime_0",
+          "passenger_count_0",
+          "trip_distance_0",
+          "fare_amount_0"
+        ],
+        [
+          "2",
+          "3",
+          "lpep_pickup_datetime_1",
+          "lpep_dropoff_datetime_1",
+          "passenger_count_1",
+          "trip_distance_1",
+          "fare_amount_1"
+        ],
+        [
+          "3",
+          "4",
+          "lpep_pickup_datetime_2",
+          "lpep_dropoff_datetime_2",
+          "passenger_count_2",
+          "trip_distance_2",
+          "fare_amount_2"
+        ],
+        [
+          "4",
+          "1",
+          "lpep_pickup_datetime_3",
+          "lpep_dropoff_datetime_3",
+          "passenger_count_3",
+          "trip_distance_3",
+          "fare_amount_3"
+        ],
+        [
+          "1",
+          "2",
+          "lpep_pickup_datetime_4",
+          "lpep_dropoff_datetime_4",
+          "passenger_count_4",
+          "trip_distance_4",
+          "fare_amount_4"
+        ],
+        [
+          "2",
+          "3",
+          "lpep_pickup_datetime_5",
+          "lpep_dropoff_datetime_5",
+          "passenger_count_5",
+          "trip_distance_5",
+          "fare_amount_5"
+        ]
+      ]
+    },
+    "for_hire_vehicles": {
+      "columns": [
+        {
+          "name": "PUlocationID",
+          "type": "string"
+        },
+        {
+          "name": "DOlocationID",
+          "type": "string"
+        },
+        {
+          "name": "pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "dropOff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "SR_Flag",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "1",
+          "2",
+          "pickup_datetime_0",
+          "dropOff_datetime_0",
+          "SR_Flag_0"
+        ],
+        [
+          "2",
+          "3",
+          "pickup_datetime_1",
+          "dropOff_datetime_1",
+          "SR_Flag_1"
+        ],
+        [
+          "3",
+          "4",
+          "pickup_datetime_2",
+          "dropOff_datetime_2",
+          "SR_Flag_2"
+        ],
+        [
+          "4",
+          "1",
+          "pickup_datetime_3",
+          "dropOff_datetime_3",
+          "SR_Flag_3"
+        ],
+        [
+          "1",
+          "2",
+          "pickup_datetime_4",
+          "dropOff_datetime_4",
+          "SR_Flag_4"
+        ],
+        [
+          "2",
+          "3",
+          "pickup_datetime_5",
+          "dropOff_datetime_5",
+          "SR_Flag_5"
+        ]
+      ]
+    },
+    "hvv": {
+      "columns": [
+        {
+          "name": "PULocationID",
+          "type": "string"
+        },
+        {
+          "name": "DOLocationID",
+          "type": "string"
+        },
+        {
+          "name": "pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "trip_miles",
+          "type": "string"
+        },
+        {
+          "name": "trip_time",
+          "type": "string"
+        },
+        {
+          "name": "base_passenger_fare",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "1",
+          "2",
+          "pickup_datetime_0",
+          "dropoff_datetime_0",
+          "trip_miles_0",
+          "trip_time_0",
+          "base_passenger_fare_0"
+        ],
+        [
+          "2",
+          "3",
+          "pickup_datetime_1",
+          "dropoff_datetime_1",
+          "trip_miles_1",
+          "trip_time_1",
+          "base_passenger_fare_1"
+        ],
+        [
+          "3",
+          "4",
+          "pickup_datetime_2",
+          "dropoff_datetime_2",
+          "trip_miles_2",
+          "trip_time_2",
+          "base_passenger_fare_2"
+        ],
+        [
+          "4",
+          "1",
+          "pickup_datetime_3",
+          "dropoff_datetime_3",
+          "trip_miles_3",
+          "trip_time_3",
+          "base_passenger_fare_3"
+        ],
+        [
+          "1",
+          "2",
+          "pickup_datetime_4",
+          "dropoff_datetime_4",
+          "trip_miles_4",
+          "trip_time_4",
+          "base_passenger_fare_4"
+        ],
+        [
+          "2",
+          "3",
+          "pickup_datetime_5",
+          "dropoff_datetime_5",
+          "trip_miles_5",
+          "trip_time_5",
+          "base_passenger_fare_5"
+        ]
+      ]
+    },
+    "taxi_trips": {
+      "columns": [
+        {
+          "name": "trip_id",
+          "type": "string"
+        },
+        {
+          "name": "pickup_location_id",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_location_id",
+          "type": "string"
+        },
+        {
+          "name": "pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "passenger_count",
+          "type": "string"
+        },
+        {
+          "name": "trip_distance",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "trip_id_0",
+          "1",
+          "2",
+          "pickup_datetime_0",
+          "dropoff_datetime_0",
+          "passenger_count_0",
+          "trip_distance_0"
+        ],
+        [
+          "trip_id_1",
+          "2",
+          "3",
+          "pickup_datetime_1",
+          "dropoff_datetime_1",
+          "passenger_count_1",
+          "trip_distance_1"
+        ],
+        [
+          "trip_id_2",
+          "3",
+          "4",
+          "pickup_datetime_2",
+          "dropoff_datetime_2",
+          "passenger_count_2",
+          "trip_distance_2"
+        ],
+        [
+          "trip_id_3",
+          "4",
+          "1",
+          "pickup_datetime_3",
+          "dropoff_datetime_3",
+          "passenger_count_3",
+          "trip_distance_3"
+        ],
+        [
+          "trip_id_4",
+          "1",
+          "2",
+          "pickup_datetime_4",
+          "dropoff_datetime_4",
+          "passenger_count_4",
+          "trip_distance_4"
+        ],
+        [
+          "trip_id_5",
+          "2",
+          "3",
+          "pickup_datetime_5",
+          "dropoff_datetime_5",
+          "passenger_count_5",
+          "trip_distance_5"
+        ]
+      ]
+    },
+    "trips": {
+      "columns": [
+        {
+          "name": "trip_id",
+          "type": "string"
+        },
+        {
+          "name": "pickup_zone_id",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_zone_id",
+          "type": "string"
+        },
+        {
+          "name": "pickup_datetime",
+          "type": "string"
+        },
+        {
+          "name": "dropoff_datetime",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "trip_id_0",
+          "1",
+          "2",
+          "pickup_datetime_0",
+          "dropoff_datetime_0",
+          "created_at_0",
+          "updated_at_0"
+        ],
+        [
+          "trip_id_1",
+          "2",
+          "3",
+          "pickup_datetime_1",
+          "dropoff_datetime_1",
+          "created_at_1",
+          "updated_at_1"
+        ],
+        [
+          "trip_id_2",
+          "3",
+          "4",
+          "pickup_datetime_2",
+          "dropoff_datetime_2",
+          "created_at_2",
+          "updated_at_2"
+        ],
+        [
+          "trip_id_3",
+          "4",
+          "1",
+          "pickup_datetime_3",
+          "dropoff_datetime_3",
+          "created_at_3",
+          "updated_at_3"
+        ],
+        [
+          "trip_id_4",
+          "1",
+          "2",
+          "pickup_datetime_4",
+          "dropoff_datetime_4",
+          "created_at_4",
+          "updated_at_4"
+        ],
+        [
+          "trip_id_5",
+          "2",
+          "3",
+          "pickup_datetime_5",
+          "dropoff_datetime_5",
+          "created_at_5",
+          "updated_at_5"
+        ]
+      ]
+    },
+    "weather_data": {
+      "columns": [
+        {
+          "name": "zone_id",
+          "type": "string"
+        },
+        {
+          "name": "datetime",
+          "type": "string"
+        },
+        {
+          "name": "temperature",
+          "type": "string"
+        },
+        {
+          "name": "precipitation",
+          "type": "string"
+        },
+        {
+          "name": "wind_speed",
+          "type": "string"
+        },
+        {
+          "name": "visibility",
+          "type": "string"
+        },
+        {
+          "name": "weather_condition",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "1",
+          "datetime_0",
+          "temperature_0",
+          "precipitation_0",
+          "wind_speed_0",
+          "visibility_0",
+          "weather_condition_0",
+          "created_at_0"
+        ],
+        [
+          "2",
+          "datetime_1",
+          "temperature_1",
+          "precipitation_1",
+          "wind_speed_1",
+          "visibility_1",
+          "weather_condition_1",
+          "created_at_1"
+        ],
+        [
+          "3",
+          "datetime_2",
+          "temperature_2",
+          "precipitation_2",
+          "wind_speed_2",
+          "visibility_2",
+          "weather_condition_2",
+          "created_at_2"
+        ],
+        [
+          "4",
+          "datetime_3",
+          "temperature_3",
+          "precipitation_3",
+          "wind_speed_3",
+          "visibility_3",
+          "weather_condition_3",
+          "created_at_3"
+        ],
+        [
+          "1",
+          "datetime_4",
+          "temperature_4",
+          "precipitation_4",
+          "wind_speed_4",
+          "visibility_4",
+          "weather_condition_4",
+          "created_at_4"
+        ],
+        [
+          "2",
+          "datetime_5",
+          "temperature_5",
+          "precipitation_5",
+          "wind_speed_5",
+          "visibility_5",
+          "weather_condition_5",
+          "created_at_5"
+        ]
+      ]
+    },
+    "surge_pricing": {
+      "columns": [
+        {
+          "name": "zone_id",
+          "type": "string"
+        },
+        {
+          "name": "surge_multiplier",
+          "type": "string"
+        },
+        {
+          "name": "start_time",
+          "type": "string"
+        },
+        {
+          "name": "end_time",
+          "type": "string"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        },
+        {
+          "name": "active",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        }
+      ],
+      "rows": [
+        [
+          "1",
+          "surge_multiplier_0",
+          "start_time_0",
+          "end_time_0",
+          "reason_0",
+          "active_0",
+          "created_at_0"
+        ],
+        [
+          "2",
+          "surge_multiplier_1",
+          "start_time_1",
+          "end_time_1",
+          "reason_1",
+          "active_1",
+          "created_at_1"
+        ],
+        [
+          "3",
+          "surge_multiplier_2",
+          "start_time_2",
+          "end_time_2",
+          "reason_2",
+          "active_2",
+          "created_at_2"
+        ],
+        [
+          "4",
+          "surge_multiplier_3",
+          "start_time_3",
+          "end_time_3",
+          "reason_3",
+          "active_3",
+          "created_at_3"
+        ],
+        [
+          "1",
+          "surge_multiplier_4",
+          "start_time_4",
+          "end_time_4",
+          "reason_4",
+          "active_4",
+          "created_at_4"
+        ],
+        [
+          "2",
+          "surge_multiplier_5",
+          "start_time_5",
+          "end_time_5",
+          "reason_5",
+          "active_5",
+          "created_at_5"
+        ]
+      ]
+    }
+  },
+  "adjudications": {
+    "yellow_pu_taxi_zones": "UNKNOWN",
+    "yellow_do_taxi_zones": "UNKNOWN",
+    "green_pu_taxi_zones": "UNKNOWN",
+    "hvv_pu_taxi_zones": "UNKNOWN",
+    "trips_pickup_zones": "UNKNOWN",
+    "taxi_zones_zones_trap": "NONAPPROVABLE"
+  }
+}

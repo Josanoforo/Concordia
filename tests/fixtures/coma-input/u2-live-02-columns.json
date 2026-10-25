@@ -1,0 +1,159 @@
+{
+ "source": "agent-u2-live-02 discovery.json (sanitized: columns and types only)",
+ "columnsByTable": {
+  "apple_revenue_facts": [
+   {
+    "name": "cik",
+    "type": "\"long\""
+   },
+   {
+    "name": "description",
+    "type": "\"string\""
+   },
+   {
+    "name": "entityName",
+    "type": "\"string\""
+   },
+   {
+    "name": "label",
+    "type": "\"string\""
+   },
+   {
+    "name": "tag",
+    "type": "\"string\""
+   },
+   {
+    "name": "taxonomy",
+    "type": "\"string\""
+   },
+   {
+    "name": "units",
+    "type": "{\"type\":\"struct\",\"fields\":[{\"name\":\"USD\",\"type\":{\"type\":\"array\",\"elementType\":{\"type\":\"struct\",\"fields\":[{\"name\":\"accn\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"end\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"filed\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"form\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"fp\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"frame\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"fy\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}},{\"name\":\"start\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"val\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}}]},\"containsNull\":true},\"nullable\":true,\"metadata\":{}}]}"
+   }
+  ],
+  "apple_submissions_raw": [
+   {
+    "name": "addresses",
+    "type": "{\"type\":\"struct\",\"fields\":[{\"name\":\"business\",\"type\":{\"type\":\"struct\",\"fields\":[{\"name\":\"city\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"country\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"countryCode\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"foreignStateTerritory\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"isForeignLocation\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"stateOrCountry\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"stateOrCountryDescription\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"street1\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"street2\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"zipCode\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}}]},\"nullable\":true,\"metadata\":{}},{\"name\":\"mailing\",\"type\":{\"type\":\"struct\",\"fields\":[{\"name\":\"city\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"country\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"countryCode\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"foreignStateTerritory\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"isForeignLocation\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}},{\"name\":\"stateOrCountry\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"stateOrCountryDescription\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"street1\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"street2\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"zipCode\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}}]},\"nullable\":true,\"metadata\":{}}]}"
+   },
+   {
+    "name": "category",
+    "type": "\"string\""
+   },
+   {
+    "name": "cik",
+    "type": "\"string\""
+   },
+   {
+    "name": "description",
+    "type": "\"string\""
+   },
+   {
+    "name": "ein",
+    "type": "\"string\""
+   },
+   {
+    "name": "entityType",
+    "type": "\"string\""
+   },
+   {
+    "name": "exchanges",
+    "type": "{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true}"
+   },
+   {
+    "name": "filings",
+    "type": "{\"type\":\"struct\",\"fields\":[{\"name\":\"files\",\"type\":{\"type\":\"array\",\"elementType\":{\"type\":\"struct\",\"fields\":[{\"name\":\"filingCount\",\"type\":\"long\",\"nullable\":true,\"metadata\":{}},{\"name\":\"filingFrom\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"filingTo\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"name\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}}]},\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"recent\",\"type\":{\"type\":\"struct\",\"fields\":[{\"name\":\"acceptanceDateTime\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"accessionNumber\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"act\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"core_type\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"fileNumber\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"filingDate\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"filmNumber\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"form\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"isInlineXBRL\",\"type\":{\"type\":\"array\",\"elementType\":\"long\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"isXBRL\",\"type\":{\"type\":\"array\",\"elementType\":\"long\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"isXBRLNumeric\",\"type\":{\"type\":\"array\",\"elementType\":\"long\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"items\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"primaryDocDescription\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"primaryDocument\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"reportDate\",\"type\":{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}},{\"name\":\"size\",\"type\":{\"type\":\"array\",\"elementType\":\"long\",\"containsNull\":true},\"nullable\":true,\"metadata\":{}}]},\"nullable\":true,\"metadata\":{}}]}"
+   },
+   {
+    "name": "fiscalYearEnd",
+    "type": "\"string\""
+   },
+   {
+    "name": "flags",
+    "type": "\"string\""
+   },
+   {
+    "name": "formerNames",
+    "type": "{\"type\":\"array\",\"elementType\":{\"type\":\"struct\",\"fields\":[{\"name\":\"from\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"name\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"to\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}}]},\"containsNull\":true}"
+   },
+   {
+    "name": "insiderTransactionForIssuerExists",
+    "type": "\"long\""
+   },
+   {
+    "name": "insiderTransactionForOwnerExists",
+    "type": "\"long\""
+   },
+   {
+    "name": "investorWebsite",
+    "type": "\"string\""
+   },
+   {
+    "name": "lei",
+    "type": "\"string\""
+   },
+   {
+    "name": "name",
+    "type": "\"string\""
+   },
+   {
+    "name": "ownerOrg",
+    "type": "\"string\""
+   },
+   {
+    "name": "phone",
+    "type": "\"string\""
+   },
+   {
+    "name": "sic",
+    "type": "\"string\""
+   },
+   {
+    "name": "sicDescription",
+    "type": "\"string\""
+   },
+   {
+    "name": "stateOfIncorporation",
+    "type": "\"string\""
+   },
+   {
+    "name": "stateOfIncorporationDescription",
+    "type": "\"string\""
+   },
+   {
+    "name": "tickers",
+    "type": "{\"type\":\"array\",\"elementType\":\"string\",\"containsNull\":true}"
+   },
+   {
+    "name": "website",
+    "type": "\"string\""
+   }
+  ],
+  "sic_reference": [
+   {
+    "name": "code",
+    "type": "\"long\""
+   },
+   {
+    "name": "data",
+    "type": "{\"type\":\"array\",\"elementType\":{\"type\":\"struct\",\"fields\":[{\"name\":\"class_desc\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"class_id\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"division_desc\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"division_id\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"group_desc\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"group_id\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"section_desc\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}},{\"name\":\"section_id\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}}]},\"containsNull\":true}"
+   },
+   {
+    "name": "dependencies",
+    "type": "{\"type\":\"struct\",\"fields\":[{\"name\":\"modules\",\"type\":{\"type\":\"struct\",\"fields\":[{\"name\":\"company_dns_v4\",\"type\":\"string\",\"nullable\":true,\"metadata\":{}}]},\"nullable\":true,\"metadata\":{}}]}"
+   },
+   {
+    "name": "message",
+    "type": "\"string\""
+   },
+   {
+    "name": "module",
+    "type": "\"string\""
+   },
+   {
+    "name": "total",
+    "type": "\"long\""
+   }
+  ]
+ }
+}

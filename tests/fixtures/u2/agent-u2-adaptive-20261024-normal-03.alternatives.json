@@ -1,0 +1,361 @@
+{
+ "source": "agent-u2-adaptive-20261024-normal-03 (LIVE, public SEC/DNS bounded sample), sanitized: only the inputs and the alternatives of the ficha",
+ "discovery": {
+  "tables": {
+   "apple_revenue_facts": {
+    "columns": [
+     "cik"
+    ],
+    "sample": {
+     "queryId": "query_fixture_001",
+     "rows": [
+      [
+       "320193"
+      ]
+     ]
+    }
+   },
+   "apple_submissions_raw": {
+    "columns": [
+     "cik",
+     "sic"
+    ],
+    "sample": {
+     "queryId": "query_fixture_002",
+     "rows": [
+      [
+       "0000320193",
+       "3571"
+      ]
+     ]
+    }
+   },
+   "sic_reference": {
+    "columns": [
+     "sic_code",
+     "description"
+    ],
+    "sample": {
+     "queryId": "query_fixture_003",
+     "rows": [
+      [
+       "0111",
+       "Wheat"
+      ],
+      [
+       "0112",
+       "Rice"
+      ],
+      [
+       "0115",
+       "Corn"
+      ],
+      [
+       "0116",
+       "Soybeans"
+      ],
+      [
+       "0119",
+       "Cash Grains, Not Elsewhere Classified"
+      ],
+      [
+       "0131",
+       "Cotton"
+      ],
+      [
+       "0132",
+       "Tobacco"
+      ],
+      [
+       "0133",
+       "Sugarcane and Sugar Beets"
+      ],
+      [
+       "0134",
+       "Irish Potatoes"
+      ],
+      [
+       "0139",
+       "Field Crops, Except Cash Grains, Not Elsewhere Classified"
+      ],
+      [
+       "0161",
+       "Vegetables and Melons"
+      ],
+      [
+       "0171",
+       "Berry Crops"
+      ],
+      [
+       "0172",
+       "Grapes"
+      ],
+      [
+       "0173",
+       "Tree Nuts"
+      ],
+      [
+       "0174",
+       "Citrus Fruits"
+      ],
+      [
+       "0175",
+       "Deciduous Tree Fruits"
+      ],
+      [
+       "0179",
+       "Fruits and Tree Nuts, Not Elsewhere Classified"
+      ],
+      [
+       "0181",
+       "Ornamental Floriculture and Nursery Products"
+      ],
+      [
+       "0182",
+       "Food Crops Grown Under Cover"
+      ],
+      [
+       "0191",
+       "General Farms, Primarily Crop"
+      ]
+     ]
+    }
+   }
+  }
+ },
+ "secRead": {
+  "columns": [
+   "cik",
+   "sic",
+   "name",
+   "sicDescription"
+  ],
+  "rows": [
+   [
+    "0000320193",
+    "3571",
+    "Apple Inc.",
+    "Electronic Computers"
+   ]
+  ],
+  "queryId": "query_fixture_004"
+ },
+ "dnsRead": {
+  "columns": [
+   "sic_code",
+   "description"
+  ],
+  "rows": [
+   [
+    "3571",
+    "Electronic Computers"
+   ]
+  ],
+  "queryId": "query_fixture_005"
+ },
+ "alternatives": [
+  {
+   "choice": "CIK_TEXT",
+   "from": "SEC_DATA.apple_revenue_facts.cik",
+   "to": "SEC_DATA.apple_submissions_raw.cik",
+   "normalization": "text",
+   "nSource": 1,
+   "nTarget": 1,
+   "sourceNulls": 0,
+   "targetNulls": 0,
+   "matchedSourceRows": 0,
+   "unmatchedSourceRows": 1,
+   "matchPairs": 0,
+   "ambiguousSourceRows": 0,
+   "duplicateTargetValues": 0,
+   "sampleBounded": true,
+   "fieldAvailability": "AVAILABLE",
+   "sourceEvidenceRefs": [
+    "query_fixture_001"
+   ],
+   "targetEvidenceRefs": [
+    "query_fixture_004"
+   ],
+   "matches": []
+  },
+  {
+   "choice": "CIK_NORMALIZED",
+   "from": "SEC_DATA.apple_revenue_facts.cik",
+   "to": "SEC_DATA.apple_submissions_raw.cik",
+   "normalization": "integer-pad10",
+   "nSource": 1,
+   "nTarget": 1,
+   "sourceNulls": 0,
+   "targetNulls": 0,
+   "matchedSourceRows": 1,
+   "unmatchedSourceRows": 0,
+   "matchPairs": 1,
+   "ambiguousSourceRows": 0,
+   "duplicateTargetValues": 0,
+   "sampleBounded": true,
+   "fieldAvailability": "AVAILABLE",
+   "sourceEvidenceRefs": [
+    "query_fixture_001"
+   ],
+   "targetEvidenceRefs": [
+    "query_fixture_004"
+   ],
+   "matches": [
+    {
+     "sourceRow": [
+      "320193"
+     ],
+     "targetRow": [
+      "0000320193",
+      "3571",
+      "Apple Inc.",
+      "Electronic Computers"
+     ],
+     "sourceEvidence": "query_fixture_001",
+     "targetEvidence": "query_fixture_004"
+    }
+   ]
+  },
+  {
+   "choice": "SIC_CODE",
+   "from": "SEC_DATA.apple_submissions_raw.sic",
+   "to": "COMPANY_DNS.sic_reference.sic_code",
+   "normalization": "integer",
+   "nSource": 1,
+   "nTarget": 1,
+   "sourceNulls": 0,
+   "targetNulls": 0,
+   "matchedSourceRows": 1,
+   "unmatchedSourceRows": 0,
+   "matchPairs": 1,
+   "ambiguousSourceRows": 0,
+   "duplicateTargetValues": 0,
+   "sampleBounded": true,
+   "fieldAvailability": "AVAILABLE",
+   "sourceEvidenceRefs": [
+    "query_fixture_004"
+   ],
+   "targetEvidenceRefs": [
+    "query_fixture_005"
+   ],
+   "matches": [
+    {
+     "sourceRow": [
+      "0000320193",
+      "3571",
+      "Apple Inc.",
+      "Electronic Computers"
+     ],
+     "targetRow": [
+      "3571",
+      "Electronic Computers"
+     ],
+     "sourceEvidence": "query_fixture_004",
+     "targetEvidence": "query_fixture_005"
+    }
+   ]
+  },
+  {
+   "choice": "SIC_DESCRIPTION",
+   "from": "SEC_DATA.apple_submissions_raw.sicDescription",
+   "to": "COMPANY_DNS.sic_reference.description",
+   "normalization": "text",
+   "nSource": 1,
+   "nTarget": 1,
+   "sourceNulls": 0,
+   "targetNulls": 0,
+   "matchedSourceRows": 1,
+   "unmatchedSourceRows": 0,
+   "matchPairs": 1,
+   "ambiguousSourceRows": 0,
+   "duplicateTargetValues": 0,
+   "sampleBounded": true,
+   "fieldAvailability": "AVAILABLE",
+   "sourceEvidenceRefs": [
+    "query_fixture_004"
+   ],
+   "targetEvidenceRefs": [
+    "query_fixture_005"
+   ],
+   "matches": [
+    {
+     "sourceRow": [
+      "0000320193",
+      "3571",
+      "Apple Inc.",
+      "Electronic Computers"
+     ],
+     "targetRow": [
+      "3571",
+      "Electronic Computers"
+     ],
+     "sourceEvidence": "query_fixture_004",
+     "targetEvidence": "query_fixture_005"
+    }
+   ]
+  },
+  {
+   "choice": "SIC_CODE_AND_DESCRIPTION",
+   "from": "SEC_DATA.apple_submissions_raw.(sic,sicDescription)",
+   "to": "COMPANY_DNS.sic_reference.(sic_code,description)",
+   "normalization": "integer(sic)+literal(text)",
+   "sampleBounded": true,
+   "sourceEvidenceRefs": [
+    "query_fixture_004"
+   ],
+   "targetEvidenceRefs": [
+    "query_fixture_005"
+   ],
+   "nSource": 1,
+   "nTarget": 1,
+   "sourceNulls": 0,
+   "targetNulls": 0,
+   "matchedSourceRows": 1,
+   "unmatchedSourceRows": 0,
+   "matchPairs": 1,
+   "ambiguousSourceRows": 0,
+   "duplicateTargetValues": 0,
+   "fieldAvailability": "AVAILABLE",
+   "matches": [
+    {
+     "sourceRow": [
+      "0000320193",
+      "3571",
+      "Apple Inc.",
+      "Electronic Computers"
+     ],
+     "targetRow": [
+      "3571",
+      "Electronic Computers"
+     ],
+     "sourceEvidence": "query_fixture_004",
+     "targetEvidence": "query_fixture_005"
+    }
+   ]
+  },
+  {
+   "choice": "NO_JOIN",
+   "from": "none",
+   "to": "none",
+   "normalization": "none",
+   "nSource": 1,
+   "nTarget": 1,
+   "sourceNulls": null,
+   "targetNulls": null,
+   "matchedSourceRows": null,
+   "unmatchedSourceRows": null,
+   "matchPairs": null,
+   "ambiguousSourceRows": null,
+   "duplicateTargetValues": null,
+   "sampleBounded": true,
+   "fieldAvailability": "NOT_APPLICABLE",
+   "sourceEvidenceRefs": [
+    "query_fixture_001"
+   ],
+   "targetEvidenceRefs": [
+    "query_fixture_005"
+   ],
+   "matches": []
+  }
+ ]
+}

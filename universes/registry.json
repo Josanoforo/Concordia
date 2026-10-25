@@ -16,9 +16,17 @@
       "DISCOVERY",
       "BOUNDED_RELATION_PROBE",
       "RELATION_EVALUATION",
-      "USL"
+      "USL",
+      "AGENT_EXPLORATION"
     ],
-    "relationIds": [],
+    "relationIds": [
+      "yellow_pu_taxi_zones",
+      "yellow_do_taxi_zones",
+      "green_pu_taxi_zones",
+      "hvv_pu_taxi_zones",
+      "trips_pickup_zones",
+      "taxi_zones_zones_trap"
+    ],
     "capabilityBounds": {
       "DISCOVERY": {
         "sampleLimit": 20
@@ -27,6 +35,12 @@
         "probeLimit": 50,
         "maxRelationsPerRun": 100,
         "maxKeyColumns": 1
+      },
+      "AGENT_EXPLORATION": {
+        "maxQueriesPerRun": 50,
+        "readLimit": 20,
+        "maxTokensPerRun": 15000,
+        "maxSteps": 3
       }
     }
   },
@@ -90,7 +104,8 @@
       "BOUNDED_RELATION_PROBE",
       "RELATION_EVALUATION",
       "SCHEMA_MATCHING",
-      "LOCAL_EVALUATION"
+      "LOCAL_EVALUATION",
+      "AGENT_EXPLORATION"
     ],
     "relationIds": [],
     "capabilityBounds": {
@@ -112,6 +127,12 @@
         "probeLimit": 50,
         "maxRelationsPerRun": 100,
         "maxKeyColumns": 1
+      },
+      "AGENT_EXPLORATION": {
+        "maxQueriesPerRun": 25,
+        "readLimit": 20,
+        "maxTokensPerRun": 15000,
+        "maxSteps": 3
       }
     }
   },
@@ -429,6 +450,42 @@
       "BOUNDED_RELATION_PROBE": {
         "probeLimit": 50,
         "maxRelationsPerRun": 5,
+        "maxKeyColumns": 1
+      },
+      "AGENT_EXPLORATION": {
+        "maxQueriesPerRun": 25,
+        "readLimit": 50,
+        "maxTokensPerRun": 15000,
+        "maxSteps": 3
+      }
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.agent-local",
+    "version": "1.0.0",
+    "aliases": [
+      "AGENTLOCAL"
+    ],
+    "source": {
+      "sourceId": "agent-local-fixture",
+      "adapterId": "local-files",
+      "configPath": "universes/AGENT_local.json",
+      "dataOrigin": "SYNTHETIC"
+    },
+    "capabilities": [
+      "LOCAL_EVALUATION",
+      "RELATION_EVALUATION",
+      "AGENT_EXPLORATION"
+    ],
+    "relationIds": [
+      "agentlocal_orders_customer"
+    ],
+    "capabilityBounds": {
+      "LOCAL_EVALUATION": {
+        "sampleLimit": 20,
+        "probeLimit": 50,
+        "maxRelationsPerRun": 1,
         "maxKeyColumns": 1
       },
       "AGENT_EXPLORATION": {

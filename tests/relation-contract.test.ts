@@ -9,7 +9,8 @@ test('A1 migrates only declared U1/U2/U3 edges and preserves unknown semantics',
   const u1 = migrateLegacyUniverseConfig(legacy('U1'));
   const u2 = migrateLegacyUniverseConfig(legacy('U2'));
   const u3 = migrateLegacyUniverseConfig(legacy('U3'));
-  assert.equal(u1.value.length, 0);
+  assert.equal(u1.value.length, 6);
+  assert.ok(u1.value.every(edge => edge.kind === 'UNKNOWN'));
   assert.equal(u3.value.length, 0);
   assert.equal(u2.value.length, 3);
   assert.equal(u2.compatibility, 'MIGRATED');

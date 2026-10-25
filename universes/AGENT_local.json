@@ -1,0 +1,167 @@
+{
+  "id": "AGENTLOCAL",
+  "namespace": "agent_local_fixture",
+  "fixtureCapturedAt": "2026-10-24T00:00:00.000Z",
+  "scope": "Synthetic orders and customers kept as local rows: the generic agent loop runs over them offline (R-03); no real data",
+  "normalizationContract": {
+    "defaultMode": "text",
+    "modes": {
+      "text": {
+        "meaning": "exact text"
+      }
+    }
+  },
+  "tables": {
+    "orders": {
+      "db": "agent_local_fixture",
+      "physicalTable": "orders",
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "string"
+        },
+        {
+          "name": "customer_id",
+          "type": "string"
+        },
+        {
+          "name": "region_code",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "customer_id",
+        "region_code",
+        "order_id"
+      ],
+      "role": "fact",
+      "labels": [],
+      "fixtureRows": [
+        [
+          "o1",
+          "c1",
+          "r1"
+        ],
+        [
+          "o2",
+          "c2",
+          "r2"
+        ],
+        [
+          "o3",
+          "c3",
+          "r3"
+        ],
+        [
+          "o4",
+          "c1",
+          "r1"
+        ]
+      ]
+    },
+    "customers": {
+      "db": "agent_local_fixture",
+      "physicalTable": "customers",
+      "columns": [
+        {
+          "name": "customer_id",
+          "type": "string"
+        },
+        {
+          "name": "customer_name",
+          "type": "string"
+        },
+        {
+          "name": "segment_code",
+          "type": "string"
+        }
+      ],
+      "keyColumns": [
+        "customer_id"
+      ],
+      "role": "dimension",
+      "labels": [
+        "customer_name"
+      ],
+      "fixtureRows": [
+        [
+          "c1",
+          "Ana",
+          "s1"
+        ],
+        [
+          "c2",
+          "Beto",
+          "s2"
+        ],
+        [
+          "c3",
+          "Carla",
+          "s3"
+        ],
+        [
+          "c9",
+          "Extra",
+          "s9"
+        ]
+      ]
+    }
+  },
+  "relations": [
+    {
+      "id": "agentlocal_orders_customer",
+      "from": {
+        "db": "agent_local_fixture",
+        "table": "orders",
+        "column": "customer_id"
+      },
+      "to": {
+        "db": "agent_local_fixture",
+        "table": "customers",
+        "column": "customer_id"
+      },
+      "normalization": "text",
+      "minDistinctKeys": 1,
+      "reason": "Literal text equality of the customer key",
+      "kind": "FOREIGN_KEY",
+      "reviewState": "REVIEWED",
+      "identifierSpace": "agentlocal-key-v1",
+      "normalizationVersion": "text-exact-v1",
+      "normalizationLossless": true,
+      "normalizationAdapterCapability": "exact-text"
+    }
+  ],
+  "explorationCatalog": {
+    "productLabel": "AGENTLOCAL",
+    "plannerTask": "local synthetic order fixture exploration",
+    "safeOptionalColumns": {
+      "customers": [
+        "segment_code"
+      ]
+    },
+    "observations": {
+      "observedCustomers": {
+        "fromTable": "orders",
+        "column": "customer_id",
+        "pattern": "^[A-Za-z0-9_-]+$",
+        "max": 20
+      }
+    },
+    "actions": [
+      {
+        "id": "READ_CUSTOMER_PROFILE",
+        "kind": "KEYED_READ",
+        "table": "customers",
+        "filterColumn": "customer_id",
+        "observation": "observedCustomers",
+        "requiredColumns": [
+          "customer_id"
+        ],
+        "description": "Bounded customer rows for observed order customers"
+      }
+    ]
+  },
+  "sampleLimit": 20,
+  "probeLimit": 50,
+  "relationPolicyVersion": "1.1"
+}

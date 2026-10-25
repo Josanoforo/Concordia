@@ -9,8 +9,8 @@ import { acquireReconcileWriterLock, atomicWriteFile, buildReconcileSnapshot, re
 import type { LedgerEntry } from '../hmem/types.ts';
 import { assessConsumerInputVersions, consumerFreshnessSnapshot, type ConsumerFreshnessSnapshot } from './consumer-freshness.ts';
 
-export type ClaimObservation = { source: string; sourceVersion: string; observedAt: string; rule: string; requestIds: string[] };
-export type Claim = { id: string; entity: string; attribute: string; value: string; source: string; confidence: number; entities: {name:string;type:string}[]; domain: string; requestIds: string[]; sourceVersion?: string; observedAt?: string; rule?: string; observations?: ClaimObservation[] };
+export type ClaimObservation = { source: string; sourceVersion: string; observedAt: string; rule: string; requestIds: string[]; /** Agent run that produced the observation; absent for legacy pipeline claims. */ runId?: string };
+export type Claim = { id: string; entity: string; attribute: string; value: string; source: string; confidence: number; entities: {name:string;type:string}[]; domain: string; requestIds: string[]; sourceVersion?: string; observedAt?: string; rule?: string; runId?: string; observations?: ClaimObservation[] };
 export type Conflict = { id: string; entity: string; attribute: string; claimIds: string[]; status: 'queued'|'auto_resolved'|'human_resolved'; winner?: string; correction?: string; strategy: string; ledgerRef: number; note?: string; version: number; versionFingerprint: string; decisionHistory?: { version: number; winner: string; correction?: string; actor: string; reason: string; at: number }[] };
 const fingerprint = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const pathWithinScope=(file:string,scope:string)=>{const relative=path.relative(path.resolve(scope),path.resolve(file));return relative!==''&&relative!=='..'&&!relative.startsWith(`..${path.sep}`)&&!path.isAbsolute(relative);};
@@ -164,11 +164,11 @@ export class Reconciler {
   addClaim(input: Omit<Claim,'id'|'domain'|'entities'>, correction = false, derivedFrom?: string[], provenanceLabel?:string) { return this.mutate(()=>this.addClaimUnlocked(input,correction,derivedFrom,provenanceLabel)); }
   private addClaimUnlocked(input: Omit<Claim,'id'|'domain'|'entities'>, correction = false, derivedFrom?: string[], provenanceLabel?:string) {
     const observedAt=input.observedAt??new Date().toISOString(),sourceVersion=input.sourceVersion??'unspecified',rule=input.rule??(correction?'human-correction':'bounded-evidence');
-    const observation:ClaimObservation={source:input.source,sourceVersion,observedAt,rule,requestIds:[...input.requestIds]};
+    const observation:ClaimObservation={source:input.source,sourceVersion,observedAt,rule,requestIds:[...input.requestIds],...(input.runId?{runId:input.runId}:{})};
     const found = this.claims.find(c => c.entity === input.entity && c.attribute === input.attribute && c.value === input.value && c.source === input.source);
     if (found && !correction) {
       const observations=found.observations??[{source:found.source,sourceVersion:found.sourceVersion??'unspecified',observedAt:found.observedAt??new Date(0).toISOString(),rule:found.rule??'bounded-evidence',requestIds:[...found.requestIds]}];
-      const key=(o:ClaimObservation)=>JSON.stringify([o.source,o.sourceVersion,o.rule,[...o.requestIds].sort()]);
+      const key=(o:ClaimObservation)=>JSON.stringify(o.runId===undefined?[o.source,o.sourceVersion,o.rule,[...o.requestIds].sort()]:[o.source,o.sourceVersion,o.rule,[...o.requestIds].sort(),o.runId]);
       if(!observations.some(o=>key(o)===key(observation))){
         found.observations=[...observations,observation];
         this.hmem.ledger.log(found.id,'update',this.actor,{details:{event:'additional_observation_preserved_without_new_vote',...observation}});
@@ -178,40 +178,53 @@ export class Reconciler {
     const entities = [{name:input.entity,type:input.entity.startsWith('relation:')?'relationship':this.universeId==='U1'?'candidate-zone':'source-company'}];
     const memory = this.hmem.add({content:`${input.entity}.${input.attribute} = ${input.value}`,type:'factual',layer:'long_term',source:input.source,confidence:input.confidence,
       tags:['project:'+this.universeId,'tabular-claim'],derivedFrom,
-      provenance:{origin:correction?'user_correction':'document',learnedAt:Date.now(),label:provenanceLabel??(correction?'Explicit review decision: '+this.actor:'Bounded SQL evidence; candidate entity alignment'),refs:input.requestIds}});
+      provenance:{origin:correction?'user_correction':'document',learnedAt:Date.now(),label:(provenanceLabel??(correction?'Explicit review decision: '+this.actor:'Bounded SQL evidence; candidate entity alignment'))+(input.runId?` [run ${input.runId}]`:''),refs:input.requestIds}});
     // Upstream stores entity names as strings; typed entity metadata stays in
     // this adapter, without changing or falsely attributing the vendor code.
     this.hmem.store.update(memory.id,{domain:this.universeId,namespace:this.universeId+'/claims',entities:entities.map(e=>e.name)});
     const claim: Claim = {...input,sourceVersion,observedAt,rule,observations:[observation],id:memory.id,entities,domain:this.universeId}; this.claims.push(claim); return claim;
   }
-  ingest(inventory: any, relations: any) { return this.mutate(()=>this.ingestUnlocked(inventory,relations)); }
-  private ingestUnlocked(inventory: any, relations: any) {
-    const cfg = readJson('config/reconcile.json');
+  /** With `runId` (the agent path) every claim is stamped with the run that observed it, verdict drift supersedes earlier claims, and only relation claims are written. */
+  ingest(inventory: any, relations: any, options: { runId?: string } = {}) { return this.mutate(()=>this.ingestUnlocked(inventory,relations,options)); }
+  private ingestUnlocked(inventory: any, relations: any, options: { runId?: string } = {}) {
+    const cfg = readJson('config/reconcile.json'), runId = options.runId;
+    const add = (input: Omit<Claim,'id'|'domain'|'entities'>, correction = false, derivedFrom?: string[], label?: string) => this.addClaimUnlocked(runId?{...input,runId}:input,correction,derivedFrom,label);
     for (const r of relations.relations.filter((r:any)=>r.verdict==='SOSTENIDA')) {
       const confidence = cfg.relationBase+cfg.relationOverlapWeight*r.evidence.overlap.ratio+cfg.compatibleTypeWeight*Number(r.evidence.typeCompat.castable);
-      this.addClaimUnlocked({entity:'relation:'+r.relationId,attribute:'status',value:'SOSTENIDA',source:r.from.db+'.'+r.from.table,confidence,requestIds:r.evidence.queries.map((q:any)=>q.requestId),sourceVersion:r.evidence.sourceVersion??inventory.tables[r.from.table]?.sourceVersion??'unversioned',observedAt:r.evidence.utc,rule:r.rule??'bounded_key_overlap_and_compatible_types_labels'});
+      add({entity:'relation:'+r.relationId,attribute:'status',value:'SOSTENIDA',source:r.from.db+'.'+r.from.table,confidence,requestIds:r.evidence.queries.map((q:any)=>q.requestId),sourceVersion:r.evidence.sourceVersion??inventory.tables[r.from.table]?.sourceVersion??'unversioned',observedAt:r.evidence.utc,rule:r.rule??'bounded_key_overlap_and_compatible_types_labels'});
     }
     for(const r of relations.relations.filter((r:any)=>r.critic?.status==='DEGRADED')){
       const prior=this.claims.filter(c=>c.entity==='relation:'+r.relationId&&c.attribute==='status'&&c.value==='SOSTENIDA'&&!this.hmem.store.get(c.id)?.supersededBy);
       if(!prior.length)continue;
       const counter=r.critic.counterprobes?.[0];
-      const next=this.addClaimUnlocked({entity:'relation:'+r.relationId,attribute:'status',value:'INDETERMINADA',source:r.from.db+'.'+r.from.table,confidence:0,requestIds:counter?.requestId?[counter.requestId]:[],sourceVersion:r.evidence?.sourceVersion??inventory.tables[r.from.table]?.sourceVersion??'unversioned',observedAt:counter?.utc??r.evidence?.utc,rule:'critic_downgrade: '+r.critic.reason},false,prior.map(c=>c.id),'critic');
+      const next=add({entity:'relation:'+r.relationId,attribute:'status',value:'INDETERMINADA',source:r.from.db+'.'+r.from.table,confidence:0,requestIds:counter?.requestId?[counter.requestId]:[],sourceVersion:r.evidence?.sourceVersion??inventory.tables[r.from.table]?.sourceVersion??'unversioned',observedAt:counter?.utc??r.evidence?.utc,rule:'critic_downgrade: '+r.critic.reason},false,prior.map(c=>c.id),'critic');
       for(const old of prior){const prev=structuredClone(this.hmem.store.get(old.id)!);this.hmem.store.update(old.id,{supersededBy:next.id});this.hmem.ledger.log(old.id,'update',this.actor,{previousState:prev,newState:structuredClone(this.hmem.store.get(old.id)!),details:{event:'critic_downgrade',from:'SOSTENIDA',to:'INDETERMINADA',reason:r.critic.reason,supersededBy:next.id}});}
     }
     for(const r of relations.relations.filter((r:any)=>r.freshness?.state==='DEGRADADA')){
       const prior=this.claims.filter(c=>c.entity==='relation:'+r.relationId&&c.attribute==='status'&&c.value==='SOSTENIDA'&&!this.hmem.store.get(c.id)?.supersededBy);
       if(!prior.length)continue;
       const requestIds=(r.evidence?.queries??[]).map((q:any)=>q.requestId).filter(Boolean);
-      const next=this.addClaimUnlocked({entity:'relation:'+r.relationId,attribute:'status',value:'INDETERMINADA',source:r.from.db+'.'+r.from.table,confidence:0,requestIds,sourceVersion:r.evidence?.freshness?.sourceVersion??r.evidence?.sourceVersion??'unversioned',observedAt:r.evidence?.freshness?.sourceObservedAt??r.evidence?.utc,rule:'freshness_changed_requires_review'},false,prior.map(c=>c.id),'freshness-watcher');
+      const next=add({entity:'relation:'+r.relationId,attribute:'status',value:'INDETERMINADA',source:r.from.db+'.'+r.from.table,confidence:0,requestIds,sourceVersion:r.evidence?.freshness?.sourceVersion??r.evidence?.sourceVersion??'unversioned',observedAt:r.evidence?.freshness?.sourceObservedAt??r.evidence?.utc,rule:'freshness_changed_requires_review'},false,prior.map(c=>c.id),'freshness-watcher');
       for(const old of prior){const prev=structuredClone(this.hmem.store.get(old.id)!);this.hmem.store.update(old.id,{supersededBy:next.id});this.hmem.ledger.log(old.id,'update',this.actor,{previousState:prev,newState:structuredClone(this.hmem.store.get(old.id)!),details:{event:'freshness_degraded',from:'SOSTENIDA',to:'INDETERMINADA',preservedHistoricalClaim:old.id,supersededBy:next.id,requestIds}});}
+    }
+    if(runId){
+      // A run that no longer sustains a relation retires the earlier SOSTENIDA claim; the superseded claim and its run stay in the history.
+      const handled=new Set<string>(relations.relations.filter((r:any)=>r.critic?.status==='DEGRADED'||r.freshness?.state==='DEGRADADA').map((r:any)=>r.relationId));
+      for(const r of relations.relations.filter((r:any)=>r.verdict!=='SOSTENIDA'&&!handled.has(r.relationId))){
+        const prior=this.claims.filter(c=>c.entity==='relation:'+r.relationId&&c.attribute==='status'&&c.value==='SOSTENIDA'&&!this.hmem.store.get(c.id)?.supersededBy);
+        if(!prior.length)continue;
+        const requestIds=(r.evidence?.queries??[]).map((q:any)=>q.requestId).filter(Boolean);
+        const next=add({entity:'relation:'+r.relationId,attribute:'status',value:String(r.verdict??'INDETERMINADA'),source:r.from.db+'.'+r.from.table,confidence:0,requestIds,sourceVersion:r.evidence?.sourceVersion??inventory.tables[r.from.table]?.sourceVersion??'unversioned',observedAt:r.evidence?.utc,rule:'verdict_changed_in_run: '+(r.rule??'unspecified')},false,prior.map(c=>c.id),'run-verdict-change');
+        for(const old of prior){const prev=structuredClone(this.hmem.store.get(old.id)!);this.hmem.store.update(old.id,{supersededBy:next.id});this.hmem.ledger.log(old.id,'update',this.actor,{previousState:prev,newState:structuredClone(this.hmem.store.get(old.id)!),details:{event:'verdict_changed_in_run',from:'SOSTENIDA',to:String(r.verdict??'INDETERMINADA'),runId,supersededBy:next.id,requestIds}});}
+      }
     }
     // The misleading catalog relation is intentionally retained as competing
     // claims about a candidate identity, never accepted as a verified join.
-    const entitySources:any[]=this.universeId==='U1'?
+    const entitySources:any[]=runId?[]:this.universeId==='U1'?
       [['taxi_zones','LocationID',{zone:'name',borough:'borough'},'NY_TAXI','zone','integer'],['zones','zone_id',{zone_name:'name',borough:'borough'},'NY_TAXI','zone','integer']]:[];
-    if(this.universeId==='U2')entitySources.push(['apple_submissions_raw','cik',{sic:'sic'},'SEC_DATA','company-cik','integer-pad10']);
+    if(!runId&&this.universeId==='U2')entitySources.push(['apple_submissions_raw','cik',{sic:'sic'},'SEC_DATA','company-cik','integer-pad10']);
     // Schema matching does not establish company identity: source-scoped only.
-    if(this.universeId==='U3')for(const [table,t] of Object.entries<any>(inventory.tables)) {
+    if(!runId&&this.universeId==='U3')for(const [table,t] of Object.entries<any>(inventory.tables)) {
       if(t.keyColumns?.[0])entitySources.push([table,t.keyColumns[0],Object.fromEntries(t.columns.filter((c:string)=>c!==t.keyColumns[0]).map((c:string)=>[c,c])),'MADI_COMPANIES','company-'+table,'text']);
     }
     for (const [table,key,fields,db,prefix,normalization] of entitySources) {
@@ -224,7 +237,7 @@ export class Reconciler {
           const value = row[t.columns.indexOf(column)]; if (value === null || value === undefined || value === '') continue;
           const nulls = t.sample.rows.filter((r:any[])=>r[t.columns.indexOf(column)] == null).length;
           const confidence = cfg.attributeBase+cfg.sampleQualityWeight*(1-nulls/t.sample.rows.length);
-          this.addClaimUnlocked({entity:prefix+':'+id,attribute,value:String(value),source:db+'.'+table,confidence,requestIds:[t.sample.requestId],sourceVersion:t.sourceVersion??'unversioned',observedAt:t.sample.utc??t.sampleUtc??new Date().toISOString(),rule:'bounded-sample-attribute-evidence'});
+          add({entity:prefix+':'+id,attribute,value:String(value),source:db+'.'+table,confidence,requestIds:[t.sample.requestId],sourceVersion:t.sourceVersion??'unversioned',observedAt:t.sample.utc??t.sampleUtc??new Date().toISOString(),rule:'bounded-sample-attribute-evidence'});
         }
       }
     }

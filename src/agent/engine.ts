@@ -8,8 +8,11 @@ import { failure, readJson, ROOT, SafeError, setTraceRun, trace, writeJson } fro
 import { discoverUniverse, probeUniverse, universeConfig } from '../universe-pipeline.ts';
 import { catalogOf, type ExplorationCatalog } from './catalog.ts';
 import type { ActionChooser } from './chooser.ts';
-import { runComaPhase, type ComaPhaseResult } from './coma-input.ts';
+import { compareDeclaredAlternatives, type TableRowsView } from './join-compare.ts';
+import { normalizeComaInputVersion, runComaPhase, type ComaPhaseResult } from './coma-input.ts';
+import { agentMemoryDir, planWarmStart, recordRunMemory, type WarmStartReport } from './memory.ts';
 import { runExploration, type ExplorationResult } from './exploration.ts';
+import { runPostComa } from './post-coma.ts';
 import { selectProbes, type ProbeSelection } from './probe-selector.ts';
 import { budgetedClient, limitsFromBounds, RunBudget } from './run-budget.ts';
 
@@ -24,12 +27,16 @@ export interface AgentDeps {
   /** Optional model-driven probe ranking; absent means every affordable configured relation is probed. */
   probeChooser?: ActionChooser;
   comaBridge?: ComaBridge;
+  /** Explicit COMA input version; absent means the implicit legacy v1 (hash-compatible with historic runs). */
+  comaInputVersion?: 1 | 2;
   executionMode?: Mode;
   /** Label for the data actually read (e.g. SYNTHETIC for offline fixtures); defaults to the manifest's origin. */
   dataOrigin?: AgentContext['dataOrigin'];
   now?: () => string;
   critic?: boolean;
   persist?: boolean;
+  /** Opt-in memory (Reconciler/H-MEM): REUSED relations skip their probes and the run's claims are written with its run id. */
+  memory?: boolean | { dir?: string; ttlMs?: number };
 }
 
 /** Everything a phase needs; built once per run from the registry manifest, never from the model. */
@@ -63,9 +70,27 @@ export async function runDiscoveryPhase(ctx: AgentContext, replay?: any): Promis
     relations: ctx.cfg.relations.filter((relation: any) => available.has(relation.from.table) && available.has(relation.to.table)) };
 }
 
-export function runComaStage(ctx: AgentContext, phase: DiscoveryPhase, bridge?: ComaBridge): Promise<ComaPhaseResult> {
+export function runComaStage(ctx: AgentContext, phase: DiscoveryPhase, bridge?: ComaBridge, comaInputVersion?: number): Promise<ComaPhaseResult> {
   return runComaPhase({ universeId: ctx.universeId, cfg: ctx.cfg, catalog: ctx.catalog, discovery: phase.discovery, sourceColumns: phase.sourceColumns, relations: phase.relations,
-    bridge, executionMode: ctx.executionMode, dataOrigin: ctx.dataOrigin });
+    bridge, comaInputVersion, executionMode: ctx.executionMode, dataOrigin: ctx.dataOrigin });
+}
+
+/**
+ * Join comparison for universes that declare joinAlternatives. The comparator reads nothing: it measures rows already observed
+ * (a bounded exploration read of the table, else the discovery sample). It runs only while the SQL budget still has room;
+ * otherwise it is recorded as not executed. Universes without joinAlternatives are untouched (returns undefined).
+ */
+export function runJoinComparisonStage(ctx: AgentContext, phase: DiscoveryPhase, exploration: ExplorationResult) {
+  const specs = ctx.catalog?.joinAlternatives;
+  if (!specs?.length) return undefined;
+  if (!ctx.budget.canQuery()) return { status: 'NOT_EXECUTED_BUDGET', reason: 'AGENT_QUERY_BUDGET_EXHAUSTED', alternatives: [] };
+  const readOf = (table: string) => Object.values(exploration.reads).find(read => ctx.catalog.actions?.some((action: any) => action.id === read.actionId && action.table === table));
+  const view = (table: string): TableRowsView => {
+    const read = readOf(table), sample = phase.discovery.tables[table], useRead = Boolean(read?.rows.length);
+    return { rows: useRead ? read!.rows : sample?.sample?.rows ?? [], columns: useRead ? read!.columns : sample?.columns ?? [], evidenceRefs: [useRead ? read!.queryId : sample?.sample?.queryId].filter(Boolean) };
+  };
+  try { return { status: 'COMPARED', queriesCharged: 0, alternatives: compareDeclaredAlternatives(ctx.cfg, specs, view) }; }
+  catch (error) { return { status: 'ERROR', error: failure(error), alternatives: [] }; }
 }
 
 export function runExplorationStage(ctx: AgentContext, phase: DiscoveryPhase, chooser: ActionChooser | undefined, coma: ComaPhaseResult): Promise<ExplorationResult> {
@@ -116,18 +141,37 @@ export async function runAgent(universe: string, runId: string, deps: AgentDeps)
   try { phase = await runDiscoveryPhase(ctx); report.phases.discovery = { status: 'PASS', tables: Object.keys(phase.discovery.tables), relations: phase.relations.map((relation: any) => relation.id) }; }
   catch (error) { report.phases.discovery = { status: 'ERROR', error: failure(error) }; report.status = 'DISCOVERY_FAILED'; return finish(); }
   if (deps.persist !== false) writeJson(`${ctx.prefix}discovery.json`, phase.discovery);
-  const coma = await runComaStage(ctx, phase, deps.comaBridge);
-  report.phases.coma = { status: coma.status, inputHash: coma.inputHash ?? null, providerStates: coma.production?.providerStates ?? [], candidates: coma.production?.candidates.length ?? 0,
+  const coma = await runComaStage(ctx, phase, deps.comaBridge, deps.comaInputVersion);
+  report.phases.coma = { status: coma.status, comaInputVersion: coma.comaInputVersion ?? normalizeComaInputVersion(deps.comaInputVersion), comaInputVersionExplicit: deps.comaInputVersion !== undefined, inputHash: coma.inputHash ?? null, providerStates: coma.production?.providerStates ?? [], candidates: coma.production?.candidates.length ?? 0,
     outOfScopeProposals: coma.production?.outOfScopeProposals ?? [] };
   const exploration = await runExplorationStage(ctx, phase, deps.chooser, coma);
   report.phases.exploration = { actions: exploration.actions, calls: exploration.calls.map(({ responseText: _text, ...call }) => call), plannerError: exploration.plannerError ?? null,
     reads: Object.fromEntries(Object.entries(exploration.reads).map(([id, read]) => [id, { source: read.source, columns: read.columns, rows: read.rows.length, queryId: read.queryId }])) };
-  const probes = await runProbeStage(ctx, phase, deps.probeChooser, deps.now);
+  const joinComparison = runJoinComparisonStage(ctx, phase, exploration);
+  if (joinComparison) report.phases.joinComparison = joinComparison;
+  const requestedMemory = deps.memory ? (deps.memory === true ? {} : deps.memory) : undefined;
+  // Memory is scoped per execution mode and data origin unless the caller pins a directory.
+  const memoryOptions = requestedMemory ? { ...requestedMemory, dir: requestedMemory.dir ?? agentMemoryDir(ctx.universeId, { executionMode: ctx.executionMode, dataOrigin: ctx.dataOrigin }) } : undefined;
+  let warmStart: WarmStartReport | undefined, memoryError: object | undefined;
+  if (memoryOptions) { try { warmStart = planWarmStart({ universeId: ctx.universeId, discovery: phase.discovery, relations: phase.relations, ...memoryOptions }); } catch (error) { memoryError = failure(error); } }
+  const reusedIds = new Set(warmStart?.reused.map(item => item.relationId) ?? []);
+  const probes = await runProbeStage(ctx, reusedIds.size ? { ...phase, relations: phase.relations.filter((relation: any) => !reusedIds.has(relation.id)) } : phase, deps.probeChooser, deps.now);
+  report.probeSelection = { mode: probes.selection.mode, modelRanking: deps.probeChooser ? 'USED' : 'NOT_USED', fallback: probes.selection.fallback ?? null, selected: probes.selection.selected, skipped: probes.selection.skipped,
+    calls: probes.selection.calls.map(({ responseText: _text, ...call }) => call) };
   report.phases.probes = { mode: probes.selection.mode, selected: probes.selection.selected, skipped: probes.selection.skipped, error: probes.error ?? null };
   report.phases.critic = deps.critic === false ? { status: 'DISABLED' } : await runCriticStage(ctx, phase, probes);
-  report.decisions = decisionsOf(probes.relations);
-  // Full typed probe results stay in memory for evaluation; they are not persisted in engine-run.json.
+  // Post-COMA runs last, on whatever budget is left: out-of-scope proposals become coverage diagnostics, never verdicts.
+  report.postComa = await runPostComa({ cfg: ctx.cfg, catalog: ctx.catalog, discovery: phase.discovery, proposals: coma.production?.outOfScopeProposals ?? [], client: ctx.client, budget: ctx.budget });
+  report.decisions = [...decisionsOf(probes.relations), ...(warmStart?.reused ?? []).map(item => ({ relationId: item.relationId, verdict: 'SOSTENIDA', reasonCodes: ['REUSED_FROM_MEMORY'], reused: { claimId: item.claimId, version: item.version, fromRunId: item.reusedFromRunId } }))];
+  if (memoryOptions) report.memory = memoryError ? { schemaVersion: 1, status: 'ERROR', runId, universeId: ctx.universeId, error: memoryError }
+    : recordRunMemory({ universeId: ctx.universeId, runId, discovery: phase.discovery, probes: probes.relations, warmStart, dir: memoryOptions.dir });
+  // Full typed probe results (relation contract, typed evidence, freshness) are kept in memory as report.artifacts and
+  // persisted next to the run as artifacts.json, so a run can be re-evaluated offline without new reads.
   Object.defineProperty(report, 'artifacts', { value: { discovery: phase.discovery, probes: probes.relations }, enumerable: false });
+  if (deps.persist !== false) {
+    writeJson(`${ctx.prefix}artifacts.json`, { schemaVersion: 1, runId, universeId: ctx.universeId, executionMode: ctx.executionMode, dataOrigin: ctx.dataOrigin, utc: report.utc, probes: probes.relations });
+    report.artifactsFile = `${ctx.prefix}artifacts.json`;
+  }
   report.status = probes.error ? 'PARTIAL' : 'COMPLETED';
   return finish();
 }

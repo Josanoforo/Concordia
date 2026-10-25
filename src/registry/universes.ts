@@ -25,9 +25,9 @@ const capabilitySet = new Set<UniverseCapability>(['DISCOVERY', 'BOUNDED_RELATIO
 const adapterCapabilities: Record<UniverseManifest['source']['adapterId'], ReadonlySet<UniverseCapability>> = {
   zetaris: new Set(['DISCOVERY', 'BOUNDED_RELATION_PROBE', 'RELATION_EVALUATION', 'USL', 'SCHEMA_MATCHING', 'METADATA_ONLY', 'AGENT_EXPLORATION']),
   'zetaris-json2-live': new Set(['BOUNDED_RELATION_PROBE', 'LIVE_RELATION_PROBE', 'RELATION_EVALUATION']),
-  'local-files': new Set(['RELATION_EVALUATION', 'SCHEMA_MATCHING', 'LOCAL_EVALUATION', 'METADATA_ONLY']),
+  'local-files': new Set(['RELATION_EVALUATION', 'SCHEMA_MATCHING', 'LOCAL_EVALUATION', 'METADATA_ONLY', 'AGENT_EXPLORATION']),
   'local-snapshot': new Set(['RELATION_EVALUATION', 'LOCAL_EVALUATION']),
-  'madi-schema': new Set(['DISCOVERY', 'BOUNDED_RELATION_PROBE', 'RELATION_EVALUATION', 'SCHEMA_MATCHING', 'LOCAL_EVALUATION']),
+  'madi-schema': new Set(['DISCOVERY', 'BOUNDED_RELATION_PROBE', 'RELATION_EVALUATION', 'SCHEMA_MATCHING', 'LOCAL_EVALUATION', 'AGENT_EXPLORATION']),
   'manifest-only': new Set(['METADATA_ONLY'])
 };
 const normalizedIdentity = (value: string) => value.toLowerCase();
@@ -177,7 +177,17 @@ export function validateUniverseConfig(manifest: UniverseManifest, config: unkno
   }
   if (capabilities.has('AGENT_EXPLORATION')) {
     issues.push(...validateExplorationCatalog(cfg, `${path}.explorationCatalog`));
-    if (!capabilities.has('DISCOVERY') || !capabilities.has('BOUNDED_RELATION_PROBE')) issues.push({ path: `${path}.capabilities`, code: 'AGENT_EXPLORATION_REQUIRES_DISCOVERY_AND_PROBE' });
+    // R-01: the generic loop never reads a gold mapping; a catalog that names one is rejected so a universe cannot route the agent to it.
+    if (/gold/i.test(JSON.stringify(cfg.explorationCatalog ?? null))) issues.push({ path: `${path}.explorationCatalog`, code: 'AGENT_CATALOG_REFERENCES_GOLD' });
+    // R-03: a local-files universe replays its own fixtureRows, so LOCAL_EVALUATION stands in for the live DISCOVERY and probe capabilities.
+    const localReplay = manifest.source.adapterId === 'local-files' && capabilities.has('LOCAL_EVALUATION');
+    if (!localReplay && (!capabilities.has('DISCOVERY') || !capabilities.has('BOUNDED_RELATION_PROBE'))) issues.push({ path: `${path}.capabilities`, code: 'AGENT_EXPLORATION_REQUIRES_DISCOVERY_AND_PROBE' });
+    // The generic loop reads each table through db + physicalTable; there is no fallback to the catalog, so both must be declared and safe (F-05).
+    for (const [tableId, table] of tableEntries) {
+      if (!table || typeof table !== 'object' || Array.isArray(table)) continue;
+      if (!safeId(table.db ?? cfg.database)) issues.push({ path: `${path}.tables.${tableId}.db`, code: 'AGENT_TABLE_DB_MISSING_OR_INVALID' });
+      if (!safeId(table.physicalTable)) issues.push({ path: `${path}.tables.${tableId}.physicalTable`, code: 'AGENT_TABLE_PHYSICAL_TABLE_MISSING_OR_INVALID' });
+    }
   }
   if (capabilities.has('SCHEMA_MATCHING')) {
     const maxCandidates = bounds.SCHEMA_MATCHING?.maxCandidatesPerRun;

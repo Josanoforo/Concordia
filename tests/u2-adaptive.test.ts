@@ -30,7 +30,7 @@ test('adaptive U2 accepts only enumerated actions and measures configured key an
   assert.equal(description.sampleBounded, true);
 });
 
-test('compact adaptive retry accepts a short bounded reason and rejects an overlong response', () => {
+test('compact adaptive retry accepts a short bounded reason; strict mode still rejects an overlong one', () => {
   assert.deepEqual(parseAdaptiveChoice('{"action":"SIC_CODE_AND_DESCRIPTION","reason":"1/1 observed pair; no sampled duplicates."}',
     ['SIC_CODE_AND_DESCRIPTION', 'NO_JOIN'], 60),
   { action: 'SIC_CODE_AND_DESCRIPTION', reason: '1/1 observed pair; no sampled duplicates.' });
@@ -48,4 +48,20 @@ test('normal U2 integrity capture is independent of historical assessment and ru
   ]);
   assert.ok(paths.includes('evidence/trace.jsonl'));
   assert.ok(paths.every(path => !path.includes('assessments') && !path.includes('agent-runs')));
+});
+
+test('compact mode truncates an over-long reason but still validates the action strictly and keeps the original text', () => {
+  const reason = 'SEC profile confirms Apple Inc, CIK 320193, SIC 3571; DNS unrelated';
+  const long = `${reason}, and the remaining reference read would add nothing to the bounded brief.`;
+  const parsed = parseAdaptiveChoice(JSON.stringify({ action: 'STOP_EXPLORATION', reason: long }), ['READ_DNS_REFERENCE', 'STOP_EXPLORATION'], 60, true);
+  assert.equal(parsed.action, 'STOP_EXPLORATION');
+  assert.equal(parsed.reason.length, 60);
+  assert.equal(parsed.reason, long.slice(0, 60));
+  assert.equal(parsed.reasonOriginal, long);
+  assert.equal(parseAdaptiveChoice(JSON.stringify({ action: 'STOP_EXPLORATION', reason }), ['STOP_EXPLORATION'], 80, true).reasonOriginal, undefined, 'nothing is truncated when the reason fits');
+  const bad = (payload: unknown) => () => parseAdaptiveChoice(JSON.stringify(payload), ['READ_DNS_REFERENCE', 'STOP_EXPLORATION'], 60, true);
+  assert.throws(bad({ action: 'SELECT * FROM x', reason: long }), /U2_ADAPTIVE_RESPONSE_INVALID/, 'an action outside the closed list is never accepted');
+  assert.throws(bad({ action: 'STOP_EXPLORATION', reason: 'short' }), /U2_ADAPTIVE_RESPONSE_INVALID/);
+  assert.throws(bad({ action: 'STOP_EXPLORATION', reason: long, sql: 'SELECT 1' }), /U2_ADAPTIVE_RESPONSE_INVALID/);
+  assert.throws(() => parseAdaptiveChoice('not json', ['STOP_EXPLORATION'], 60, true), /U2_ADAPTIVE_RESPONSE_NOT_JSON/);
 });

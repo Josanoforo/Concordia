@@ -12,9 +12,14 @@ The agent discovers the configured tables, proposes candidates (deterministic ru
 
 | Universe | Alias | Agent loop |
 |---|---|---|
+| NY taxi trips + zones | `U1` | enrolled |
 | SEC companies + SIC reference | `U2` | enrolled (company brief: [docs/AGENT_U2.md](docs/AGENT_U2.md)) |
+| MaDI company schemas | `U3` | enrolled |
 | Synthetic orders fixture | `AGENTFX` | enrolled, runs fully offline in tests |
-| NY taxi, MaDI, GTFS, Chinook and other fixtures | `U1`, `U3`, ... | not enrolled yet; use the historical commands below |
+| Synthetic local-files orders | `AGENTLOCAL` | enrolled, runs over its own local rows, offline |
+| GTFS, Chinook and other fixtures | ... | not enrolled yet; use the historical commands below |
+
+Useful options: `--offline` replays the universe's synthetic fixture (no model, no network), `--max-tokens <n>` caps the run's model tokens, and `--memory` reuses relations sustained in earlier runs. Every agent command prints its usage with `--help`.
 
 Details, how to enroll a universe, and the offline regression evaluation (`npm run eval-agent`): [docs/AGENT.md](docs/AGENT.md).
 

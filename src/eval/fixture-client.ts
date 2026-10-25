@@ -33,3 +33,8 @@ export function fixtureClient(cfg: any, tables: Record<string, FixtureTable>, lo
     }
   };
 }
+
+/** R-03: the offline fixture of a local-files universe is its own config rows; nothing is read from outside the config. */
+export function fixtureTablesFromConfig(cfg: any): Record<string, FixtureTable> {
+  return Object.fromEntries(Object.entries<any>(cfg.tables ?? {}).map(([id, table]) => [id, { columns: table.columns.map((column: any) => ({ name: column.name, type: column.type ?? 'string' })), rows: table.fixtureRows ?? [] }]));
+}

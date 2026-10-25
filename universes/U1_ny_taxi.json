@@ -29,9 +29,10 @@
     "driver_shifts",
     "trip_payments"
   ],
-  "sampleLimit": 20,
   "tables": {
     "taxi_zones": {
+      "db": "NY_TAXI",
+      "physicalTable": "taxi_zones",
       "columns": [
         {
           "name": "LocationID",
@@ -56,6 +57,8 @@
       "role": "dimension"
     },
     "zones": {
+      "db": "NY_TAXI",
+      "physicalTable": "zones",
       "columns": [
         {
           "name": "zone_id",
@@ -92,6 +95,8 @@
       "role": "dimension"
     },
     "yellow_taxi": {
+      "db": "NY_TAXI",
+      "physicalTable": "yellow_taxi",
       "columns": [
         {
           "name": "PULocationID",
@@ -134,6 +139,8 @@
       "role": "fact"
     },
     "green_taxi": {
+      "db": "NY_TAXI",
+      "physicalTable": "green_taxi",
       "columns": [
         {
           "name": "PULocationID",
@@ -172,6 +179,8 @@
       "role": "fact"
     },
     "for_hire_vehicles": {
+      "db": "NY_TAXI",
+      "physicalTable": "for_hire_vehicles",
       "columns": [
         {
           "name": "PUlocationID",
@@ -202,6 +211,8 @@
       "role": "fact"
     },
     "hvv": {
+      "db": "NY_TAXI",
+      "physicalTable": "hvv",
       "columns": [
         {
           "name": "PULocationID",
@@ -240,6 +251,8 @@
       "role": "fact"
     },
     "taxi_trips": {
+      "db": "NY_TAXI",
+      "physicalTable": "taxi_trips",
       "columns": [
         {
           "name": "trip_id",
@@ -278,6 +291,8 @@
       "role": "fact"
     },
     "trips": {
+      "db": "NY_TAXI",
+      "physicalTable": "trips",
       "columns": [
         {
           "name": "trip_id",
@@ -316,6 +331,8 @@
       "role": "fact"
     },
     "weather_data": {
+      "db": "NY_TAXI",
+      "physicalTable": "weather_data",
       "columns": [
         {
           "name": "zone_id",
@@ -357,6 +374,8 @@
       "role": "fact"
     },
     "surge_pricing": {
+      "db": "NY_TAXI",
+      "physicalTable": "surge_pricing",
       "columns": [
         {
           "name": "zone_id",
@@ -394,5 +413,140 @@
       "role": "fact"
     }
   },
-  "probeLimit": 50
+  "relations": [
+    {
+      "id": "yellow_pu_taxi_zones",
+      "from": {
+        "db": "NY_TAXI",
+        "table": "yellow_taxi",
+        "column": "PULocationID"
+      },
+      "to": {
+        "db": "NY_TAXI",
+        "table": "taxi_zones",
+        "column": "LocationID"
+      },
+      "normalization": "integer",
+      "reason": "Pickup location id of yellow taxi trips against the taxi zone lookup"
+    },
+    {
+      "id": "yellow_do_taxi_zones",
+      "from": {
+        "db": "NY_TAXI",
+        "table": "yellow_taxi",
+        "column": "DOLocationID"
+      },
+      "to": {
+        "db": "NY_TAXI",
+        "table": "taxi_zones",
+        "column": "LocationID"
+      },
+      "normalization": "integer",
+      "reason": "Dropoff location id of yellow taxi trips against the taxi zone lookup"
+    },
+    {
+      "id": "green_pu_taxi_zones",
+      "from": {
+        "db": "NY_TAXI",
+        "table": "green_taxi",
+        "column": "PULocationID"
+      },
+      "to": {
+        "db": "NY_TAXI",
+        "table": "taxi_zones",
+        "column": "LocationID"
+      },
+      "normalization": "integer",
+      "reason": "Pickup location id of green taxi trips against the taxi zone lookup"
+    },
+    {
+      "id": "hvv_pu_taxi_zones",
+      "from": {
+        "db": "NY_TAXI",
+        "table": "hvv",
+        "column": "PULocationID"
+      },
+      "to": {
+        "db": "NY_TAXI",
+        "table": "taxi_zones",
+        "column": "LocationID"
+      },
+      "normalization": "integer",
+      "reason": "Pickup location id of high-volume for-hire trips against the taxi zone lookup"
+    },
+    {
+      "id": "trips_pickup_zones",
+      "from": {
+        "db": "NY_TAXI",
+        "table": "trips",
+        "column": "pickup_zone_id"
+      },
+      "to": {
+        "db": "NY_TAXI",
+        "table": "zones",
+        "column": "zone_id"
+      },
+      "normalization": "integer",
+      "reason": "Pickup zone id of app trips against the zones dimension"
+    },
+    {
+      "id": "taxi_zones_zones_trap",
+      "from": {
+        "db": "NY_TAXI",
+        "table": "taxi_zones",
+        "column": "LocationID"
+      },
+      "to": {
+        "db": "NY_TAXI",
+        "table": "zones",
+        "column": "zone_id"
+      },
+      "normalization": "integer",
+      "reason": "Control: the two zone catalogs share key values but not zone names; equality alone must not be accepted"
+    }
+  ],
+  "sampleLimit": 20,
+  "probeLimit": 50,
+  "explorationCatalog": {
+    "productLabel": "U1",
+    "plannerTask": "bounded NY taxi zone lookup exploration",
+    "observations": {
+      "observedTaxiZoneIds": {
+        "fromTable": "yellow_taxi",
+        "column": "PULocationID",
+        "pattern": "^\\d{1,4}(?:\\.0)?$",
+        "max": 20
+      },
+      "observedZoneIds": {
+        "fromTable": "trips",
+        "column": "pickup_zone_id",
+        "pattern": "^[A-Za-z0-9_-]{1,36}$",
+        "max": 20
+      }
+    },
+    "actions": [
+      {
+        "id": "READ_TAXI_ZONE_LOOKUP",
+        "kind": "KEYED_READ",
+        "table": "taxi_zones",
+        "filterColumn": "LocationID",
+        "observation": "observedTaxiZoneIds",
+        "requiredColumns": [
+          "LocationID"
+        ],
+        "description": "Bounded taxi zone rows for observed yellow taxi pickup ids"
+      },
+      {
+        "id": "READ_ZONES_REFERENCE",
+        "kind": "KEYED_READ",
+        "table": "zones",
+        "filterColumn": "zone_id",
+        "observation": "observedZoneIds",
+        "requiredColumns": [
+          "zone_id"
+        ],
+        "description": "Bounded zones rows for observed trip pickup zone ids"
+      }
+    ]
+  }
 }

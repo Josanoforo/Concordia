@@ -46,7 +46,8 @@ class ScriptedChooser implements ActionChooser {
 
 test('registry validates every AGENT_EXPLORATION universe catalog and rejects catalogs outside the allowlist', () => {
   const agentManifests = universeManifests.filter(manifest => manifest.capabilities.includes('AGENT_EXPLORATION'));
-  assert.deepEqual(agentManifests.map(manifest => manifest.aliases[0]).sort(), ['AGENTFX', 'U2']);
+  const enrolled = agentManifests.map(manifest => manifest.aliases[0]);
+  for (const alias of ['AGENTFX', 'U2']) assert.ok(enrolled.includes(alias), `${alias} stays enrolled`);
   for (const manifest of agentManifests) assert.deepEqual(validateUniverseConfig(manifest, readJson(manifest.source.configPath!)), []);
   const cfg = readJson('universes/AGENT_fixture.json');
   const bad = (mutate: (copy: any) => void) => { const copy = structuredClone(cfg); mutate(copy); return validateExplorationCatalog(copy, 'x').map(issue => issue.code); };
@@ -80,9 +81,17 @@ test('probe selector spends the remaining budget in config order, or lets a choo
   assert.deepEqual(all.skipped, [{ relationId: 'c', reason: 'QUERY_BUDGET_INSUFFICIENT' }]);
   const chooser = new ScriptedChooser(['PROBE:c', 'PROBE:injected; DROP', 'STOP_EXPLORATION']);
   const chosen = await selectProbes({ relations, budget: new RunBudget(limitsFromBounds()), chooser });
-  assert.deepEqual(chosen.selected, ['c']);
-  assert.equal(chosen.mode, 'CHOSEN');
-  assert.deepEqual(chosen.skipped.map(item => item.relationId).sort(), ['a', 'b']);
+  assert.equal(chosen.mode, 'CHOSEN_WITH_FALLBACK', 'an unusable decision falls back instead of silently dropping probes');
+  assert.deepEqual(chosen.fallback, { reason: 'DECISION_UNUSABLE' });
+  assert.deepEqual(chosen.selected, ['c', 'a', 'b']);
+  const stopped = await selectProbes({ relations, budget: new RunBudget(limitsFromBounds()), chooser: new ScriptedChooser(['PROBE:b', 'STOP_EXPLORATION']) });
+  assert.equal(stopped.mode, 'CHOSEN');
+  assert.deepEqual(stopped.selected, ['b']);
+  assert.deepEqual(stopped.skipped.map(item => item.relationId).sort(), ['a', 'c'], 'a valid STOP is honored');
+  const starved = new RunBudget(limitsFromBounds()); starved.chargeTokens(starved.limits.maxTokensPerRun);
+  const noTokens = await selectProbes({ relations, budget: starved, chooser: new ScriptedChooser(['PROBE:a']) });
+  assert.equal(noTokens.fallback?.reason, 'TOKEN_BUDGET_EXHAUSTED');
+  assert.deepEqual(noTokens.selected, ['a', 'b', 'c']);
   assert.ok(chooser.seen[0].allowed.every(item => item === 'STOP_EXPLORATION' || /^PROBE:[a-c]$/.test(item)));
 });
 
@@ -142,8 +151,115 @@ test('generic agent loop stops exploration at the step cap, records an unavailab
   const loopy = new ScriptedChooser(['READ_CUSTOMER_PROFILE', 'READ_REGION_REFERENCE', 'READ_CUSTOMER_PROFILE', 'READ_REGION_REFERENCE']);
   const capped = await runAgent('AGENTFX', 'agent-agentfx-offline-3', { client: fakeClient() as any, chooser: loopy, executionMode: 'LOCAL', persist: false, critic: false });
   assert.equal(capped.budget.used.steps <= 3, true);
-  assert.throws(() => prepareAgentContext('U1', 'agent-u1-x', { client: fakeClient() as any }), /UNIVERSE_LACKS_AGENT_EXPLORATION/);
+  assert.throws(() => prepareAgentContext('GTFS', 'agent-gtfs-x', { client: fakeClient() as any }), /UNIVERSE_LACKS_AGENT_EXPLORATION/);
   assert.throws(() => prepareAgentContext('AGENTFX', 'not-an-agent-run', { client: fakeClient() as any }), /AGENT_RUN_ID_INVALID/);
   const deterministic = await runAgent('AGENTFX', 'agent-agentfx-offline-4', { client: fakeClient() as any, chooser: new DeterministicChooser(), executionMode: 'LOCAL', persist: false, critic: false });
   assert.equal(deterministic.phases.exploration.actions[0].action, 'READ_CUSTOMER_PROFILE');
+});
+
+test('the engine labels how probes were selected: probeSelection with mode, fallback, selected and the model calls', async () => {
+  const probeChooser = new ScriptedChooser(['PROBE:orders_region', 'PROBE:orders_customer', 'STOP_EXPLORATION']);
+  const report = await runAgent('AGENTFX', 'agent-agentfx-offline-5', { client: fakeClient() as any, chooser: new DeterministicChooser(), probeChooser, executionMode: 'LOCAL', persist: false, critic: false });
+  assert.equal(report.probeSelection.mode, 'CHOSEN');
+  assert.equal(report.probeSelection.modelRanking, 'USED');
+  assert.deepEqual(report.probeSelection.selected, ['orders_region', 'orders_customer']);
+  assert.deepEqual(report.probeSelection.skipped, [{ relationId: 'orders_order_trap', reason: 'NOT_SELECTED' }]);
+  assert.equal(report.probeSelection.calls.length, 3);
+  assert.deepEqual(report.phases.probes.selected, report.probeSelection.selected);
+  assert.deepEqual(report.decisions.map((item: any) => item.relationId), ['orders_customer', 'orders_region'], 'the chosen subset runs in config order');
+  const plain = await runAgent('AGENTFX', 'agent-agentfx-offline-6', { client: fakeClient() as any, executionMode: 'LOCAL', persist: false, critic: false });
+  assert.equal(plain.probeSelection.mode, 'ALL_AFFORDABLE');
+  assert.equal(plain.probeSelection.fallback, null);
+  assert.equal(plain.probeSelection.modelRanking, 'NOT_USED', 'no probe chooser: the model ranking is labeled as not used');
+});
+
+test('a persisted run keeps its typed probe artifacts so it can be re-evaluated offline with the same verdicts', async () => {
+  const fs = await import('node:fs'), path = await import('node:path');
+  const { evaluateRelation } = await import('../src/relations/decision.ts');
+  const { relationPolicyFromConfig } = await import('../src/relations/policy.ts');
+  const { readJson, ROOT } = await import('../src/runtime.ts');
+  const runId = 'agent-agentfx-artifacts-test-1', dir = path.join(ROOT, '.concordia', 'agent-runs', runId);
+  fs.rmSync(dir, { recursive: true, force: true });
+  try {
+    const report = await runAgent('AGENTFX', runId, { client: fakeClient() as any, chooser: new DeterministicChooser(), executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', critic: false, now: () => '2026-10-24T00:00:00.000Z' });
+    assert.equal(report.artifactsFile, `.concordia/agent-runs/${runId}/artifacts.json`);
+    const saved = JSON.parse(fs.readFileSync(path.join(dir, 'engine-run.json'), 'utf8'));
+    assert.equal(saved.artifactsFile, report.artifactsFile, 'engine-run.json points to the artifacts');
+    assert.equal(Object.prototype.hasOwnProperty.call(saved, 'artifacts'), false, 'artifacts are not embedded in engine-run.json');
+    const artifacts = JSON.parse(fs.readFileSync(path.join(dir, 'artifacts.json'), 'utf8'));
+    assert.equal(artifacts.executionMode, 'LOCAL'); assert.equal(artifacts.dataOrigin, 'SYNTHETIC');
+    assert.deepEqual(artifacts.probes.map((item: any) => item.relationId), saved.decisions.map((item: any) => item.relationId));
+    const policy = relationPolicyFromConfig(readJson('config/thresholds.json'));
+    for (const [index, item] of artifacts.probes.entries()) {
+      const again = evaluateRelation(item.evidence.relationContract, [item.evidence.typedEvidence], policy);
+      assert.equal(again.verdict, saved.decisions[index].verdict, `offline re-evaluation of ${item.relationId} matches the recorded verdict`);
+    }
+    const quiet = await runAgent('AGENTFX', 'agent-agentfx-artifacts-test-2', { client: fakeClient() as any, executionMode: 'LOCAL', persist: false, critic: false });
+    assert.equal(quiet.artifactsFile, undefined, 'nothing is written or referenced without persistence');
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('post-COMA turns out-of-scope proposals into budgeted coverage probes that never produce a verdict', async () => {
+  const log: string[] = [];
+  const bridge: any = (input: any) => ({ schemaVersion: 1 as const, provider: 'valentine.Coma' as const, version: '1.1.0' as const, configuration: { max_n: 0, use_instances: false, use_schema: true, delta: 0.15, threshold: 0.0, instance_weight: 1.0 },
+    matches: [...input.pairs.map((pair: any) => ({ source: pair.source, target: pair.target, matches: [
+      { sourceColumn: pair.allowed[0].sourceColumn, targetColumn: pair.allowed[0].targetColumn, rawScore: 0.9 }, { sourceColumn: 'order_id', targetColumn: pair.allowed[0].targetColumn, rawScore: 0.4 }] })),
+      { source: 'customers', target: 'orders', matches: [{ sourceColumn: 'customer_id', targetColumn: 'customer_id', rawScore: 0.95 }] }] });
+  const report = await runAgent('AGENTFX', 'agent-agentfx-offline-7', { client: fakeClient(log) as any, chooser: new DeterministicChooser(), comaBridge: bridge, executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', persist: false, critic: false });
+  const post = report.postComa;
+  assert.equal(post.status, 'EXECUTED');
+  assert.deepEqual(post.policy, { maxProbes: 2, ranking: 'rawScore desc, then proposalId', costPerProbe: 1, equality: 'literal text equality of sampled values' });
+  assert.deepEqual(post.proposals.map((item: any) => item.proposalId), ['customers.customer_id__orders.customer_id', 'orders.customer_id__customers.customer_id', 'orders.order_id__regions.region_code']);
+  const [top, second, third] = post.proposals;
+  assert.equal(top.coverageProbe.status, 'EXECUTED');
+  assert.deepEqual({ probed: top.coverageProbe.result.probedValues, matches: top.coverageProbe.result.targetMatches, ratio: top.coverageProbe.result.ratio }, { probed: 3, matches: 2, ratio: 2 / 3 });
+  assert.match(top.coverageProbe.sql, /^SELECT customer_id FROM \(SELECT .* FROM AGENT_FIXTURE\.orders\) concordia_source WHERE customer_id IN \(.*\) LIMIT 50$/);
+  assert.equal(second.coverageProbe.status, 'EXECUTED'); assert.deepEqual({ probed: second.coverageProbe.result.probedValues, matches: second.coverageProbe.result.targetMatches }, { probed: 2, matches: 2 });
+  assert.equal(third.coverageProbe.status, 'SUGGESTED'); assert.equal(third.coverageProbe.reason, 'NOT_SELECTED_MAX_PROBES');
+  assert.deepEqual(post.counts, { proposals: 3, executed: 2, suggested: 1, notExecutable: 0, skippedBudget: 0, failed: 0 });
+  assert.ok(post.proposals.every((item: any) => item.verificationStatus === 'NO VERIFICADO/UNKNOWN' && item.reviewState === 'PENDING'));
+  assert.deepEqual(report.decisions.map((item: any) => item.relationId), ['orders_customer', 'orders_region', 'orders_order_trap'], 'verdicts cover only the configured relations');
+  assert.ok(report.budget.used.queries === log.length && report.budget.used.queries <= 25, 'coverage probes are charged to the run budget');
+  assert.ok(log.filter(sql => /AGENT_FIXTURE\.orders\) concordia_source WHERE customer_id IN/.test(sql)).length >= 1);
+  const none = await runAgent('AGENTFX', 'agent-agentfx-offline-8', { client: fakeClient() as any, executionMode: 'LOCAL', persist: false, critic: false });
+  assert.equal(none.postComa.status, 'NONE', 'without COMA proposals there is nothing to probe');
+  assert.deepEqual(none.postComa.counts, { proposals: 0, executed: 0, suggested: 0, notExecutable: 0, skippedBudget: 0, failed: 0 });
+});
+
+test('post-COMA respects the catalog policy, the query budget and the allowlist, and reports why a proposal is not executable', async () => {
+  const { runPostComa } = await import('../src/agent/post-coma.ts');
+  const cfg = readJson('universes/AGENT_fixture.json');
+  const discovery = { tables: { orders: { columns: ['order_id', 'customer_id'], sample: { rows: [['o1', 'c1'], ['o2', "c'2"], ['o3', 'c3']] } }, customers: { columns: ['customer_id'], sample: { rows: [['c1']] } } } };
+  const proposal = (fromTable: string, fromColumn: string, toTable: string, toColumn: string, rawScore: number) => ({ providerId: 'valentine.coma', providerVersion: '1.1.0', method: 'COMA', from: { db: 'AGENT_FIXTURE', table: fromTable, column: fromColumn },
+    to: { db: 'AGENT_FIXTURE', table: toTable, column: toColumn }, rawScore, reason: 'COMA_COLUMN_PAIR_OUT_OF_SCOPE', verificationStatus: 'NO VERIFICADO/UNKNOWN' as const, reviewState: 'PENDING' as const, inputHash: 'h', configHash: 'c', evidenceRefs: [] });
+  const proposals = [proposal('orders', 'customer_id', 'customers', 'customer_id', 0.8), proposal('orders', 'customer_id', 'secrets', 'x', 0.7), proposal('orders', 'region_code', 'customers', 'customer_id', 0.6), proposal('orders', 'order_id', 'customers', 'customer_id', 0.5)];
+  const seen: string[] = [];
+  const client = { async runSql(sql: string) { seen.push(sql); return { sql, rows: [['c1']], requestId: 'r', queryId: 'q', durationMs: 0, utc: 'x' }; } } as any;
+  const off = await runPostComa({ cfg, catalog: { ...cfg.explorationCatalog, postComa: { maxProbes: 0 } }, discovery, proposals, client, budget: new RunBudget(limitsFromBounds()) });
+  assert.equal(seen.length, 0, 'maxProbes 0 disables execution');
+  assert.equal(off.status, 'SUGGESTED_ONLY');
+  const budget = new RunBudget(limitsFromBounds({ maxQueriesPerRun: 1 })); budget.queries = 1;
+  const starved = await runPostComa({ cfg, catalog: cfg.explorationCatalog, discovery, proposals, client, budget });
+  assert.equal(seen.length, 0, 'no budget, no query');
+  assert.equal(starved.proposals[0].coverageProbe.status, 'SKIPPED_BUDGET');
+  assert.equal(starved.status, 'PARTIAL');
+  const normal = await runPostComa({ cfg, catalog: cfg.explorationCatalog, discovery, proposals, client, budget: new RunBudget(limitsFromBounds()) });
+  const byId = Object.fromEntries(normal.proposals.map((item: any) => [item.proposalId, item.coverageProbe]));
+  assert.equal(byId['orders.customer_id__customers.customer_id'].status, 'EXECUTED');
+  assert.match(seen[0], /IN \('c1', 'c3'\)/, 'values that are not safe literals are never sent');
+  assert.equal(byId['orders.customer_id__secrets.x'].reason, 'ENDPOINT_OUTSIDE_ALLOWLIST_OR_UNDISCOVERED');
+  assert.equal(byId['orders.region_code__customers.customer_id'].reason, 'SOURCE_COLUMN_NOT_SAMPLED');
+  assert.equal(byId['orders.order_id__customers.customer_id'].status, 'EXECUTED');
+  const { validateExplorationCatalog } = await import('../src/agent/catalog.ts');
+  for (const bad of [{ maxProbes: -1 }, { maxProbes: 9 }, { maxProbes: 1.5 }, null]) assert.ok(validateExplorationCatalog({ ...cfg, explorationCatalog: { ...cfg.explorationCatalog, postComa: bad } }, 'x').some(issue => issue.code === 'INVALID_POST_COMA_POLICY'));
+  assert.deepEqual(validateExplorationCatalog({ ...cfg, explorationCatalog: { ...cfg.explorationCatalog, postComa: { maxProbes: 3 } } }, 'x'), []);
+});
+
+test('the agent command ranks probes with the model only when --probe-model is given', async () => {
+  const { probeChooserFor } = await import('../src/agent/cli-run.ts');
+  const chooser = new DeterministicChooser();
+  assert.equal(probeChooserFor(chooser, ['agent', '--universe', 'U1']), undefined, 'off by default');
+  assert.equal(probeChooserFor(chooser, ['agent', '--universe', 'U1', '--probe-model']), chooser);
+  assert.equal(probeChooserFor(chooser, ['agent', '--probe-model'], false), undefined, 'an explicit option wins');
+  assert.equal(probeChooserFor(undefined, ['agent', '--probe-model']), undefined, 'no model, no ranking');
 });

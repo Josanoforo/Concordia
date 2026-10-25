@@ -16,6 +16,7 @@ import { NightshiftChooser, parseAdaptiveChoice, type ChoiceCall } from './choos
 import { runComaPhase } from './coma-input.ts';
 import { describedColumns, prepareAgentContext, runCriticStage, runDiscoveryPhase, runExplorationStage, runProbeStage, type AgentContext, type DiscoveryPhase } from './engine.ts';
 import type { BoundedTableRows } from './exploration.ts';
+import { compareBoundedRows, compareDeclaredAlternatives, type JoinAlternative, type JoinAlternativeSpec, type TableRowsView } from './join-compare.ts';
 import { readBudget } from '../budget.ts';
 
 const U2_CATALOG = catalogOf(universeConfig('U2'))!;
@@ -26,7 +27,7 @@ const sha = (value: unknown) => createHash('sha256').update(JSON.stringify(value
 
 type U2JoinChoice = 'CIK_TEXT' | 'CIK_NORMALIZED' | 'SIC_CODE' | 'SIC_DESCRIPTION' | 'SIC_CODE_AND_DESCRIPTION' | 'NO_JOIN';
 type AdaptiveModelCall = ChoiceCall;
-export { parseAdaptiveChoice };
+export { parseAdaptiveChoice, compareBoundedRows };
 
 function askU2Model(nightshift: Nightshift, runId: string, stage: string, observation: unknown, allowed: readonly string[], compact = false): Promise<AdaptiveModelCall> {
   return new NightshiftChooser(nightshift, runId, U2_CATALOG).choose(stage, observation, allowed, { compact });
@@ -112,89 +113,28 @@ async function resumeAdaptiveDnsChoice(runId: string) {
   return result;
 }
 
-type JoinMatch = { sourceRow: unknown[]; targetRow: unknown[]; sourceEvidence: string; targetEvidence: string };
-type JoinAlternative = { choice: U2JoinChoice; from: string; to: string; normalization: string; nSource: number; nTarget: number; sourceNulls: number | null; targetNulls: number | null;
-  matchedSourceRows: number | null; unmatchedSourceRows: number | null; matchPairs: number | null; ambiguousSourceRows: number | null; duplicateTargetValues: number | null; sampleBounded: true;
-  fieldAvailability: 'AVAILABLE' | 'NOT_PROJECTED' | 'NOT_APPLICABLE'; sourceEvidenceRefs: string[]; targetEvidenceRefs: string[]; matches: JoinMatch[] };
+/** U2's declared join alternatives, measured by the generic comparator (join-compare.ts). */
+export const U2_JOIN_ALTERNATIVES: JoinAlternativeSpec[] = [
+  { choice: 'CIK_TEXT', family: 'identity', source: { table: 'apple_revenue_facts', columns: ['cik'] }, target: { table: 'apple_submissions_raw', columns: ['cik'] }, normalization: ['text'],
+    fromLabel: 'SEC_DATA.apple_revenue_facts.cik', toLabel: 'SEC_DATA.apple_submissions_raw.cik' },
+  { choice: 'CIK_NORMALIZED', family: 'identity', source: { table: 'apple_revenue_facts', columns: ['cik'] }, target: { table: 'apple_submissions_raw', columns: ['cik'] }, normalization: ['integer-pad10'],
+    fromLabel: 'SEC_DATA.apple_revenue_facts.cik', toLabel: 'SEC_DATA.apple_submissions_raw.cik' },
+  { choice: 'SIC_CODE', family: 'dns', source: { table: 'apple_submissions_raw', columns: ['sic'] }, target: { table: 'sic_reference', columns: ['sic_code'] }, normalization: ['integer'],
+    fromLabel: 'SEC_DATA.apple_submissions_raw.sic', toLabel: 'COMPANY_DNS.sic_reference.sic_code' },
+  { choice: 'SIC_DESCRIPTION', family: 'dns', source: { table: 'apple_submissions_raw', columns: ['sicDescription'] }, target: { table: 'sic_reference', columns: ['description'] }, normalization: ['text'],
+    fromLabel: 'SEC_DATA.apple_submissions_raw.sicDescription', toLabel: 'COMPANY_DNS.sic_reference.description' },
+  { choice: 'SIC_CODE_AND_DESCRIPTION', family: 'dns', source: { table: 'apple_submissions_raw', columns: ['sic', 'sicDescription'] }, target: { table: 'sic_reference', columns: ['sic_code', 'description'] },
+    normalization: ['integer', 'literal'], fromLabel: 'SEC_DATA.apple_submissions_raw.(sic,sicDescription)', toLabel: 'COMPANY_DNS.sic_reference.(sic_code,description)', normalizationLabel: 'integer(sic)+literal(text)' }
+];
 
-export function compareBoundedRows(input: { choice: U2JoinChoice; from: string; to: string; normalization: 'text' | 'integer' | 'integer-pad10';
-  sourceRows: readonly unknown[][]; sourceColumns: readonly string[]; targetRows: readonly unknown[][]; targetColumns: readonly string[];
-  sourceColumn: string; targetColumn: string; sourceEvidence: string[]; targetEvidence: string[]; cfg: any }): JoinAlternative {
-  const sourceIndex = input.sourceColumns.indexOf(input.sourceColumn), targetIndex = input.targetColumns.indexOf(input.targetColumn);
-  if (sourceIndex < 0 || targetIndex < 0) return { choice: input.choice, from: input.from, to: input.to, normalization: input.normalization,
-    nSource: input.sourceRows.length, nTarget: input.targetRows.length, sourceNulls: null, targetNulls: null, matchedSourceRows: null, unmatchedSourceRows: null, matchPairs: null, ambiguousSourceRows: null,
-    duplicateTargetValues: 0, sampleBounded: true, fieldAvailability: 'NOT_PROJECTED', sourceEvidenceRefs: input.sourceEvidence, targetEvidenceRefs: input.targetEvidence, matches: [] };
-  const normalize = (value: unknown) => normalizeKey(value, input.normalization, input.cfg.normalizationContract);
-  const targetKeyCounts = new Map<string, number>();
-  for (const row of input.targetRows) { const key = normalize(row[targetIndex]); if (key !== null) targetKeyCounts.set(key, (targetKeyCounts.get(key) ?? 0) + 1); }
-  const matches: JoinMatch[] = []; let matchedSourceRows = 0, ambiguousSourceRows = 0;
-  for (const sourceRow of input.sourceRows) {
-    const sourceKey = normalize(sourceRow[sourceIndex]); if (sourceKey === null) continue;
-    const hits = input.targetRows.filter(targetRow => normalize(targetRow[targetIndex]) === sourceKey);
-    if (hits.length) matchedSourceRows++;
-    if (hits.length > 1) ambiguousSourceRows++;
-    for (const targetRow of hits) matches.push({ sourceRow: [...sourceRow], targetRow: [...targetRow], sourceEvidence: input.sourceEvidence[0] ?? 'unknown', targetEvidence: input.targetEvidence[0] ?? 'unknown' });
-  }
-  return { choice: input.choice, from: input.from, to: input.to, normalization: input.normalization, nSource: input.sourceRows.length, nTarget: input.targetRows.length,
-    sourceNulls: input.sourceRows.filter(row => normalize(row[sourceIndex]) === null).length, targetNulls: input.targetRows.filter(row => normalize(row[targetIndex]) === null).length,
-    matchedSourceRows, unmatchedSourceRows: input.sourceRows.length - matchedSourceRows, matchPairs: matches.length, ambiguousSourceRows,
-    duplicateTargetValues: [...targetKeyCounts.values()].filter(count => count > 1).length, sampleBounded: true, fieldAvailability: 'AVAILABLE',
-    sourceEvidenceRefs: input.sourceEvidence, targetEvidenceRefs: input.targetEvidence, matches };
-}
-
-function compareSicAndDescription(input: { cfg: any; sourceRows: readonly unknown[][]; sourceColumns: readonly string[]; targetRows: readonly unknown[][];
-  targetColumns: readonly string[]; sourceEvidence: string[]; targetEvidence: string[] }): JoinAlternative {
-  const si = input.sourceColumns.indexOf('sic'), sd = input.sourceColumns.indexOf('sicDescription');
-  const ti = input.targetColumns.indexOf('sic_code'), td = input.targetColumns.indexOf('description');
-  const base = { choice: 'SIC_CODE_AND_DESCRIPTION' as const, from: 'SEC_DATA.apple_submissions_raw.(sic,sicDescription)', to: 'COMPANY_DNS.sic_reference.(sic_code,description)',
-    normalization: 'integer(sic)+literal(text)', sampleBounded: true as const, sourceEvidenceRefs: input.sourceEvidence, targetEvidenceRefs: input.targetEvidence };
-  if ([si, sd, ti, td].some(index => index < 0)) return { ...base, nSource: input.sourceRows.length, nTarget: input.targetRows.length, sourceNulls: null, targetNulls: null, matchedSourceRows: null,
-    unmatchedSourceRows: null, matchPairs: null, ambiguousSourceRows: null, duplicateTargetValues: null, fieldAvailability: 'NOT_PROJECTED', matches: [] };
-  const codeKey = (value: unknown) => normalizeKey(value, 'integer', input.cfg.normalizationContract);
-  const composite = (code: unknown, description: unknown) => {
-    const normalizedCode = codeKey(code);
-    return normalizedCode === null || description === null || description === undefined || String(description) === '' ? null : JSON.stringify([normalizedCode, String(description)]);
+export function compareU2Alternatives(cfg: any, discovery: any, secRead?: BoundedTableRows, dnsRead?: BoundedTableRows): JoinAlternative<U2JoinChoice>[] {
+  const reads: Record<string, BoundedTableRows | undefined> = { apple_submissions_raw: secRead, sic_reference: dnsRead };
+  const view = (table: string): TableRowsView => {
+    const read = reads[table], spec = discovery.tables[table], useRead = Boolean(read?.rows.length);
+    return { rows: useRead ? read!.rows : spec?.sample?.rows ?? [], columns: useRead ? read!.columns : spec?.columns ?? [],
+      evidenceRefs: [useRead ? read!.queryId : spec?.sample?.queryId].filter(Boolean) };
   };
-  const targetCounts = new Map<string, number>();
-  for (const row of input.targetRows) { const key = composite(row[ti], row[td]); if (key !== null) targetCounts.set(key, (targetCounts.get(key) ?? 0) + 1); }
-  const matches: JoinMatch[] = []; let matchedSourceRows = 0, ambiguousSourceRows = 0;
-  for (const sourceRow of input.sourceRows) {
-    const key = composite(sourceRow[si], sourceRow[sd]); if (key === null) continue;
-    const hits = input.targetRows.filter(targetRow => composite(targetRow[ti], targetRow[td]) === key);
-    if (hits.length) matchedSourceRows++;
-    if (hits.length > 1) ambiguousSourceRows++;
-    for (const targetRow of hits) matches.push({ sourceRow: [...sourceRow], targetRow: [...targetRow], sourceEvidence: input.sourceEvidence[0] ?? 'unknown', targetEvidence: input.targetEvidence[0] ?? 'unknown' });
-  }
-  return { ...base, nSource: input.sourceRows.length, nTarget: input.targetRows.length,
-    sourceNulls: input.sourceRows.filter(row => composite(row[si], row[sd]) === null).length,
-    targetNulls: input.targetRows.filter(row => composite(row[ti], row[td]) === null).length, matchedSourceRows,
-    unmatchedSourceRows: input.sourceRows.length - matchedSourceRows, matchPairs: matches.length, ambiguousSourceRows,
-    duplicateTargetValues: [...targetCounts.values()].filter(count => count > 1).length, fieldAvailability: 'AVAILABLE', matches };
-}
-
-function compareU2Alternatives(cfg: any, discovery: any, secRead?: BoundedTableRows, dnsRead?: BoundedTableRows): JoinAlternative[] {
-  const facts = discovery.tables.apple_revenue_facts, submissions = discovery.tables.apple_submissions_raw, dns = discovery.tables.sic_reference;
-  const factRows = facts?.sample?.rows ?? [], factColumns = facts?.columns ?? [];
-  const secRows = secRead?.rows.length ? secRead.rows : submissions?.sample?.rows ?? [];
-  const secColumns = secRead?.rows.length ? secRead.columns : submissions?.columns ?? [];
-  const dnsRows = dnsRead?.rows.length ? dnsRead.rows : dns?.sample?.rows ?? [];
-  const dnsColumns = dnsRead?.rows.length ? dnsRead.columns : dns?.columns ?? [];
-  const factRef = [facts?.sample?.queryId].filter(Boolean), secRef = [secRead?.rows.length ? secRead.queryId : submissions?.sample?.queryId].filter(Boolean),
-    dnsRef = [dnsRead?.rows.length ? dnsRead.queryId : dns?.sample?.queryId].filter(Boolean);
-  return [
-    compareBoundedRows({ choice: 'CIK_TEXT', from: 'SEC_DATA.apple_revenue_facts.cik', to: 'SEC_DATA.apple_submissions_raw.cik', normalization: 'text', sourceRows: factRows,
-      sourceColumns: factColumns, targetRows: secRows, targetColumns: secColumns, sourceColumn: 'cik', targetColumn: 'cik', sourceEvidence: factRef, targetEvidence: secRef, cfg }),
-    compareBoundedRows({ choice: 'CIK_NORMALIZED', from: 'SEC_DATA.apple_revenue_facts.cik', to: 'SEC_DATA.apple_submissions_raw.cik', normalization: 'integer-pad10', sourceRows: factRows,
-      sourceColumns: factColumns, targetRows: secRows, targetColumns: secColumns, sourceColumn: 'cik', targetColumn: 'cik', sourceEvidence: factRef, targetEvidence: secRef, cfg }),
-    compareBoundedRows({ choice: 'SIC_CODE', from: 'SEC_DATA.apple_submissions_raw.sic', to: 'COMPANY_DNS.sic_reference.sic_code', normalization: 'integer', sourceRows: secRows,
-      sourceColumns: secColumns, targetRows: dnsRows, targetColumns: dnsColumns, sourceColumn: 'sic', targetColumn: 'sic_code', sourceEvidence: secRef, targetEvidence: dnsRef, cfg }),
-    compareBoundedRows({ choice: 'SIC_DESCRIPTION', from: 'SEC_DATA.apple_submissions_raw.sicDescription', to: 'COMPANY_DNS.sic_reference.description', normalization: 'text', sourceRows: secRows,
-      sourceColumns: secColumns, targetRows: dnsRows, targetColumns: dnsColumns, sourceColumn: 'sicDescription', targetColumn: 'description', sourceEvidence: secRef, targetEvidence: dnsRef, cfg }),
-    compareSicAndDescription({ cfg, sourceRows: secRows, sourceColumns: secColumns, targetRows: dnsRows, targetColumns: dnsColumns, sourceEvidence: secRef, targetEvidence: dnsRef }),
-    { choice: 'NO_JOIN', from: 'none', to: 'none', normalization: 'none', nSource: factRows.length, nTarget: dnsRows.length, sourceNulls: null, targetNulls: null,
-      matchedSourceRows: null, unmatchedSourceRows: null, matchPairs: null, ambiguousSourceRows: null, duplicateTargetValues: null, sampleBounded: true, fieldAvailability: 'NOT_APPLICABLE', sourceEvidenceRefs: factRef,
-      targetEvidenceRefs: dnsRef, matches: [] }
-  ];
+  return compareDeclaredAlternatives(cfg, U2_JOIN_ALTERNATIVES, view) as JoinAlternative<U2JoinChoice>[];
 }
 
 function runDiscoveryPhaseFor(ctx: AgentContext, saved?: any) { return runDiscoveryPhase(ctx, saved); }

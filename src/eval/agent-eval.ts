@@ -7,7 +7,8 @@ import { universeManifests } from '../registry/universes.ts';
 import { readJson, ROOT } from '../runtime.ts';
 import { relationPolicyFromConfig } from '../relations/policy.ts';
 import { universeConfig } from '../universe-pipeline.ts';
-import { fixtureClient, type AgentFixture } from './fixture-client.ts';
+import { catalogOf } from '../agent/catalog.ts';
+import { fixtureClient, fixtureTablesFromConfig, type AgentFixture } from './fixture-client.ts';
 import { createEvaluationProtocol, evaluateDevelopment, type EvaluationCase, type MethodRun } from './protocol.ts';
 
 /** Replays a fixed id script, then stops. Offline stand-in for the model; it can only pick permitted ids. */
@@ -26,7 +27,18 @@ export const METHODS = [{ methodId: 'agent-loop', explore: true }, { methodId: '
 
 export function agentFixtures(): AgentFixture[] {
   const dir = path.join(ROOT, 'eval', 'agent');
-  return fs.readdirSync(dir).filter(name => name.endsWith('.json')).sort().map(name => JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8')) as AgentFixture);
+  const files = fs.readdirSync(dir).filter(name => name.endsWith('.json')).sort().map(name => JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8')) as AgentFixture);
+  // R-03: an AGENT_EXPLORATION universe on the local-files adapter carries its own rows, so it needs no separate fixture file.
+  const derived = universeManifests.filter(manifest => manifest.source.adapterId === 'local-files' && manifest.capabilities.includes('AGENT_EXPLORATION')
+    && !files.some(fixture => manifest.aliases.includes(fixture.alias))).map(manifest => derivedLocalFixture(manifest.aliases[0]));
+  return [...files, ...derived].sort((a, b) => a.alias.localeCompare(b.alias));
+}
+
+/** Local universe fixture derived from its config: every catalog action in order, truth UNKNOWN because no adjudication is declared. */
+export function derivedLocalFixture(alias: string): AgentFixture {
+  const cfg = universeConfig(alias);
+  return { alias, basis: 'LOCAL_CONFIG_ROWS: tables are the config fixtureRows; no adjudication is declared', chooserScript: (catalogOf(cfg)?.actions ?? []).map((action: any) => action.id),
+    tables: fixtureTablesFromConfig(cfg), adjudications: Object.fromEntries((cfg.relations ?? []).map((relation: any) => [relation.id, 'UNKNOWN' as const])) };
 }
 
 /**

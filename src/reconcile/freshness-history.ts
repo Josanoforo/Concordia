@@ -26,13 +26,21 @@ const digest=(value:unknown)=>createHash('sha256').update(stable(value)).digest(
 const safeId=(value:string)=>/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(value);
 const checksumBody=(record:Omit<FreshnessAttempt,'checksum'>)=>digest(record);
 const isWithin=(candidate:string,root:string)=>{const rel=path.relative(path.resolve(root),path.resolve(candidate));return rel!==''&&rel!=='..'&&!rel.startsWith(`..${path.sep}`)&&!path.isAbsolute(rel);};
+/** CONCORDIA_FRESHNESS_DIR redirects the history root (tests isolate it per process); it must stay inside .concordia, and the default is unchanged. */
+export function freshnessRoot(concordia:string):string{
+  const override=process.env.CONCORDIA_FRESHNESS_DIR;
+  if(!override)return path.join(concordia,'freshness-v2');
+  const resolved=path.resolve(override);
+  if(!isWithin(resolved,concordia))throw new SafeError('FRESHNESS_ROOT_OUTSIDE_APPROVED_ROOT');
+  return resolved;
+}
 function historyDirectory(universeId:string,relationId:string,create:boolean):string{
   if(!safeId(universeId)||typeof relationId!=='string'||!relationId||relationId.length>512)throw new SafeError('FRESHNESS_SCOPE_INVALID');
-  const concordia=path.resolve(ROOT,'.concordia'),root=path.join(concordia,'freshness-v2'),universe=path.join(root,universeId),relation=path.join(universe,createHash('sha256').update(relationId).digest('hex'));
+  const concordia=path.resolve(ROOT,'.concordia'),root=freshnessRoot(concordia),universe=path.join(root,universeId),relation=path.join(universe,createHash('sha256').update(relationId).digest('hex'));
   let rootStat:fs.Stats;try{rootStat=fs.lstatSync(concordia);}catch(error:any){if(error?.code!=='ENOENT'||!create){if(error?.code==='ENOENT')return relation;throw error;}fs.mkdirSync(concordia);rootStat=fs.lstatSync(concordia);}if(!rootStat.isDirectory()||rootStat.isSymbolicLink())throw new SafeError('FRESHNESS_ROOT_INVALID');
   const realRoot=fs.realpathSync(concordia);
   for(const dir of [root,universe,relation]){
-    if(!fs.existsSync(dir)){if(!create)return relation;fs.mkdirSync(dir);}
+    if(!fs.existsSync(dir)){if(!create)return relation;fs.mkdirSync(dir,{recursive:dir===root});}
     const stat=fs.lstatSync(dir);if(!stat.isDirectory()||stat.isSymbolicLink()||!isWithin(fs.realpathSync(dir),realRoot))throw new SafeError('FRESHNESS_PATH_INVALID');
   }
   return relation;

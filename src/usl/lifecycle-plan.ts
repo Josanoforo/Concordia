@@ -6,6 +6,9 @@ import {
 } from './publication-plan.ts';
 
 export const L4_OBSERVED_RELATION_NAMESPACE = 'lightning.metastore.concordia_l4_json2_20261023';
+/** Approved publication namespaces: the sealed v1 namespace, or a dated agent-publication namespace (concordia_l4_agentpub_<yyyymmdd>) under lightning.metastore. */
+export const APPROVED_L4_NAMESPACE = /^lightning\.metastore\.concordia_l4_(?:json2_20261023|agentpub_\d{8})$/;
+export const isApprovedL4Namespace = (namespace: string) => APPROVED_L4_NAMESPACE.test(namespace);
 export const USL_LIFECYCLE_RENDERER_VERSION = 'concordia-usl-lifecycle/1';
 
 export interface PublicationSourceMapping {
@@ -153,7 +156,7 @@ export function compileUslLifecyclePlan(manifest: PublicationManifest, input: Pu
   if (stale.status !== 'CURRENT') reasons.add('publication_inputs_stale');
   if (manifest.eligibility !== 'publishable') reasons.add('publication_eligibility_not_publishable');
   if (manifest.publicationBasis !== 'ObservedRelation') reasons.add('observed_relation_basis_required');
-  if (target.namespace !== L4_OBSERVED_RELATION_NAMESPACE) reasons.add('target_namespace_not_approved_candidate');
+  if (!isApprovedL4Namespace(target.namespace)) reasons.add('target_namespace_not_approved_candidate');
   if (!/^concordia_l4_[a-z0-9_]+_v[1-9][0-9]*$/.test(target.model)) reasons.add('target_model_must_be_new_and_versioned');
   if (!validBindingShape(binding)) reasons.add('sealed_read_only_source_binding_required');
   if (contract.kind !== 'FOREIGN_KEY') reasons.add('foreign_key_relation_required');

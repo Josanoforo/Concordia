@@ -39,12 +39,18 @@ import { explainHistoricalCapture } from './historical-explanations.ts';
 import { createInstalledComaBridge } from './discovery/coma-provider.ts';
 import { runComaDiscovery } from './eval/coma-run.ts';
 import { recoverU2ComaFromSnapshot, runU2Agent } from './agent/u2.ts';
-import { runAgentCommand } from './agent/cli-run.ts';
+import { readSealedBindingBytes } from './usl/sealed-binding.ts';
+import { originateUslPlan } from './agent/usl-plan.ts';
+import { helpHint, usageFor, wantsHelp } from './agent/cli-help.ts';
+import { continueAgentCommand, runAgentCommand, runOfflineAgentCommand } from './agent/cli-run.ts';
 import { evaluateAgentLoop } from './eval/agent-eval.ts';
+import { writeAgentRunComparison, writeAgentRunReport } from './report/agent-run-report.ts';
 try {
   const command = process.argv[2];
   const option = (name:string) => { const eq=process.argv.find(x=>x.startsWith('--'+name+'=')); const i=process.argv.indexOf('--'+name); return eq?.slice(name.length+3)??(i>=0?process.argv[i+1]:undefined); };
-  if (command === 'agent-u2') {
+  const maxTokensOption = () => { const raw = option('max-tokens'); return raw === undefined ? undefined : Number(raw); };
+  if (wantsHelp(process.argv) && usageFor(process.argv)) console.log(usageFor(process.argv));
+  else if (command === 'agent-u2') {
     const isContinue = process.argv[3] === 'continue';
     const requestedRunId = option('run-id');
     if (isContinue && !requestedRunId) throw new SafeError('AGENT_CONTINUE_RUN_ID_REQUIRED');
@@ -52,12 +58,45 @@ try {
     await runU2Agent({ runId, task: option('task') ?? 'Prepare a sourced company brief from configured U2 evidence.',
       ...(isContinue ? { continueRunId: requestedRunId! } : {}), resumeAdaptive: process.argv.includes('--resume-adaptive'),
       enrich: process.argv.includes('--enrich'), resume: process.argv.includes('--resume'), decision: option('decide'), actor: option('actor') });
+  } else if (command === 'agent-report') {
+    const runId = option('run-id');
+    if (!runId) throw new SafeError('AGENT_RUN_ID_REQUIRED');
+    const out = writeAgentRunReport(runId);
+    console.log(JSON.stringify({ runId, files: out.files.map(f => `.concordia/agent-runs/${runId}/${f}`) }));
+  } else if (command === 'agent-compare') {
+    const runA = option('run-a'), runB = option('run-b');
+    if (!runA || !runB) throw new SafeError('AGENT_COMPARE_RUN_IDS_REQUIRED');
+    const out = writeAgentRunComparison(runA, runB);
+    console.log(JSON.stringify({ runA, runB, files: out.files.map(f => `.concordia/agent-runs/${f}`) }));
+  } else if (command === 'agent-usl-plan') {
+    // Plan-only: reads a sealed publication envelope, retargets it to an approved namespace and writes the lifecycle plan. No SQL, no grant, no apply.
+    const inputPath = option('input'), name = option('name'), namespace = option('namespace'), model = option('model');
+    const fingerprint = option('snapshot-fingerprint'), observedAt = option('snapshot-observed-at');
+    if (!inputPath || !name || !namespace || !model || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(name) || !!fingerprint !== !!observedAt) throw new SafeError('AGENT_USL_PLAN_ARGUMENTS_REQUIRED');
+    const sealed = readJson<any>(inputPath);
+    const out = originateUslPlan({ input: sealed.publicationInput, binding: sealed.sourceBinding, target: { namespace, model }, snapshot: fingerprint ? { fingerprint, observedAt: observedAt! } : undefined,
+      relation: { fromTable: option('from-table') ?? 'gtfs_trips', fromColumns: (option('from-columns') ?? 'route_id').split(','), toTable: option('to-table') ?? 'gtfs_routes', toColumns: (option('to-columns') ?? 'route_id').split(',') } });
+    const files: string[] = [];
+    if (out.lifecyclePlan) {
+      const inputFile = `.concordia/publication-plans/${name}.input.json`, planFile = `.concordia/publication-plans/${name}.${out.lifecyclePlan.fingerprint.slice(0, 24)}.plan.json`;
+      writeJson(inputFile, { publicationManifest: out.publicationManifest, publicationInput: out.publicationInput, sourceBinding: out.sourceBinding, authorizationState: out.authorizationState });
+      writeJson(planFile, out.lifecyclePlan);
+      files.push(inputFile, planFile);
+    }
+    console.log(JSON.stringify({ status: out.status, origin: out.origin, label: out.label, reasons: out.reasons, fingerprint: out.lifecyclePlan?.fingerprint ?? null, applyExecuted: false, liveSqlExecuted: false, files }));
+    if (out.status === 'NOT_PUBLISHABLE') process.exitCode = 1;
   } else if (command === 'eval-agent') {
     const result = await evaluateAgentLoop();
     writeJson('out/agent-eval/report.json', result);
     console.log(JSON.stringify({ registry: result.registry, runs: result.runs, metrics: result.evaluation.metrics.map(metric => ({ universeId: metric.universeId, methodId: metric.methodId, denominator: metric.denominator, counts: metric.counts })) }));
+  } else if (command === 'agent' && process.argv[3] === 'continue') {
+    const runId = option('run-id');
+    if (!runId) throw new SafeError('AGENT_RUN_ID_REQUIRED');
+    await continueAgentCommand(option('universe') ?? '', runId, Number(option('attempt') ?? 1), maxTokensOption());
+  } else if (command === 'agent' && process.argv.includes('--offline')) {
+    await runOfflineAgentCommand(option('universe') ?? '', { runId: option('run-id'), memory: process.argv.includes('--memory') });
   } else if (command === 'agent') {
-    await runAgentCommand(option('universe') ?? '', { runId: option('run-id'), model: !process.argv.includes('--no-model'), coma: !process.argv.includes('--no-coma') });
+    await runAgentCommand(option('universe') ?? '', { runId: option('run-id'), model: !process.argv.includes('--no-model'), coma: !process.argv.includes('--no-coma'), maxTokens: maxTokensOption(), memory: process.argv.includes('--memory') });
   } else if (command === 'discover-coma') {
     const runId = option('run-id');
     if (!runId) throw new SafeError('COMA_RUN_ID_REQUIRED');
@@ -226,7 +265,7 @@ try {
     const envelope = readJson<{ publicationManifest: PublicationManifest; publicationInput: PublicationPlanInput; sourceBinding: PublicationSourceBinding; liveAuthorizationGrant?: UslLiveExecutionGrant }>(inputPath!);
     const plan = readJson<UslLifecyclePlan>(planPath!);
     const rawBindingPath = path.join(ROOT, 'universes', 'svp1-live-bindings.json');
-    const rawBindingBytes = fs.readFileSync(rawBindingPath);
+    const rawBindingBytes = readSealedBindingBytes(rawBindingPath);
     const bindingDocument = JSON.parse(rawBindingBytes.toString('utf8'));
     const dialectBytes = fs.readFileSync(path.resolve(ROOT, dialectPath!));
     const grant = envelope.liveAuthorizationGrant;
@@ -404,4 +443,4 @@ try {
   else throw new SafeError('COMMAND_PENDING_IMPLEMENTATION');
   }
   }
-} catch (error) { console.error('FAIL', JSON.stringify(failure(error))); process.exitCode = 1; }
+} catch (error) { console.error('FAIL', JSON.stringify(failure(error))); const hint = helpHint(process.argv); if (hint && error instanceof SafeError) console.error(hint); process.exitCode = 1; }
