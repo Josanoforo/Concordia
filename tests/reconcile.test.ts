@@ -111,7 +111,7 @@ test('L2-B REUSED validation rejects symlinked target files', t => {
   const root=fs.mkdtempSync(path.join(ROOT,'.concordia','l2b-target-symlink-')),source=path.join(root,'legacy'),target=path.join(root,'target');fs.mkdirSync(source);
   const claims=[{id:'mem-1',domain:'U1',entity:'zone:1',attribute:'name',value:'A',source:'fixture'}],state={seq:1,records:[{id:'mem-1',domain:'U1',namespace:'U1/claims',content:'zone:1.name = A',source:'fixture'}]};
   fs.writeFileSync(path.join(source,'claims.json'),JSON.stringify({claims,conflicts:[]},null,2)+'\n');fs.writeFileSync(path.join(source,'state.json'),JSON.stringify(state,null,2)+'\n');migrateLegacyStateDirectory(source,target,'U1');
-  const actual=path.join(target,'claims.json'),saved=path.join(target,'claims.real.json');fs.renameSync(actual,saved);
+  const actual=path.join(target,'claims.json'),saved=path.join(root,'target-claims.real.json');fs.renameSync(actual,saved);
   try { fs.symlinkSync(saved,actual,'file'); }
   catch(error:any) { fs.renameSync(saved,actual);if(['EPERM','EACCES','ENOTSUP','EINVAL','UNKNOWN'].includes(error?.code)){t.skip('OS does not permit creating a file symlink');return;}throw error; }
   assert.throws(()=>migrateLegacyStateDirectory(source,target,'U1'),/MIGRATION_TARGET_FILE_INVALID/);
@@ -122,7 +122,7 @@ test('L2-B REUSED validation rejects symlinked backup files', t => {
   const root=fs.mkdtempSync(path.join(ROOT,'.concordia','l2b-backup-symlink-')),source=path.join(root,'legacy'),target=path.join(root,'target');fs.mkdirSync(source);
   const claims=[{id:'mem-1',domain:'U1',entity:'zone:1',attribute:'name',value:'A',source:'fixture'}],state={seq:1,records:[{id:'mem-1',domain:'U1',namespace:'U1/claims',content:'zone:1.name = A',source:'fixture'}]};
   fs.writeFileSync(path.join(source,'claims.json'),JSON.stringify({claims,conflicts:[]},null,2)+'\n');fs.writeFileSync(path.join(source,'state.json'),JSON.stringify(state,null,2)+'\n');const migrated=migrateLegacyStateDirectory(source,target,'U1');
-  const backup=path.join(ROOT,...migrated.receipt.sourceBackup.path.split('/')),actual=path.join(backup,'claims.json'),saved=path.join(backup,'claims.real.json');fs.renameSync(actual,saved);
+  const backup=path.join(ROOT,...migrated.receipt.sourceBackup.path.split('/')),actual=path.join(backup,'claims.json'),saved=path.join(root,'backup-claims.real.json');fs.renameSync(actual,saved);
   try { fs.symlinkSync(saved,actual,'file'); }
   catch(error:any) { fs.renameSync(saved,actual);if(['EPERM','EACCES','ENOTSUP','EINVAL','UNKNOWN'].includes(error?.code)){t.skip('OS does not permit creating a file symlink');return;}throw error; }
   assert.throws(()=>migrateLegacyStateDirectory(source,target,'U1'),/MIGRATION_BACKUP_FILE_INVALID/);
