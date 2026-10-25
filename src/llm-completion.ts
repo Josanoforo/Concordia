@@ -66,7 +66,7 @@ export async function completeLlm() {
   let state: Completion;
   if (fs.existsSync(path.join(ROOT, statePath))) state = readJson<Completion>(statePath);
   else {
-    state = { authorization: 'Jonas ratifies Anthropic Haiku/Sonnet, rejects Opus/Fable; generation count unlimited by explicit instruction 2026-10-22', startingConsumed: readBudget().consumed, status: 'IN_PROGRESS' };
+    state = { authorization: 'Project owner ratifies Anthropic Haiku/Sonnet, rejects Opus/Fable; generation count unlimited by explicit instruction 2026-10-22', startingConsumed: readBudget().consumed, status: 'IN_PROGRESS' };
     saveState(state);
   }
   if (state.status === 'PASS') { console.log('PASS completion already recorded; no generations sent'); return state; }

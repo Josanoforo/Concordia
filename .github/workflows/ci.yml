@@ -33,11 +33,11 @@ jobs:
       - run: npm run typecheck
       - run: npm test
         env:
-          NODE_OPTIONS: --require ./scripts/ci-no-services.cjs
+          NODE_OPTIONS: --require ${{ github.workspace }}/scripts/ci-no-services.cjs
       - name: Offline sample without credentials
         env:
           SAMPLE_MODE: 'true'
-          NODE_OPTIONS: --require ./scripts/ci-no-services.cjs
+          NODE_OPTIONS: --require ${{ github.workspace }}/scripts/ci-no-services.cjs
         run: npm run demo -- --universe=U1
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
