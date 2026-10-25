@@ -26,12 +26,17 @@ test('runU2Agent completes the whole flow offline: discovery, COMA, adaptive rea
   fs.writeFileSync(envFile, ['ZETARIS_REST_URL=http://127.0.0.1:1', 'ZETARIS_API_KEY=test-key', 'ZETARIS_ORG_ID=1', 'METERLESS_BASE_URL=http://127.0.0.1:1', 'METERLESS_RUNTIME_TOKEN=test-token', 'METERLESS_MODEL=meterless/test'].join('\n'));
   fs.writeFileSync(budgetFile, JSON.stringify({ limit: null, consumed: 0, attempts: [] }));
   const budgetBefore = fs.readFileSync(budgetFile, 'utf8');
-  const saved = { env: { ...process.env }, spawnSync: childProcess.spawnSync, fetch: globalThis.fetch, lstatSync: fs.lstatSync };
+  const saved = { env: { ...process.env }, spawnSync: childProcess.spawnSync, fetch: globalThis.fetch, lstatSync: fs.lstatSync, loadEnvFile: process.loadEnvFile };
   process.env.CONCORDIA_LOCAL_ENV_FILE = envFile; process.env.CONCORDIA_BUDGET_FILE = budgetFile;
+  // CI preloads a guard that makes process.loadEnvFile throw; only this test's own temporary env file is loaded, by assigning its test values.
+  process.loadEnvFile = ((file?: string | URL) => {
+    if (path.resolve(String(file)) !== path.resolve(envFile)) return saved.loadEnvFile.call(process, file as any);
+    for (const line of fs.readFileSync(envFile, 'utf8').split(/\r?\n/)) { const at = line.indexOf('='); if (at > 0) process.env[line.slice(0, at)] = line.slice(at + 1); }
+  }) as typeof process.loadEnvFile;
   t.after(() => {
     for (const key of Object.keys(process.env)) if (!(key in saved.env)) delete process.env[key];
     Object.assign(process.env, saved.env);
-    childProcess.spawnSync = saved.spawnSync; (fs as any).lstatSync = saved.lstatSync; syncBuiltinESMExports(); globalThis.fetch = saved.fetch;
+    process.loadEnvFile = saved.loadEnvFile; childProcess.spawnSync = saved.spawnSync; (fs as any).lstatSync = saved.lstatSync; syncBuiltinESMExports(); globalThis.fetch = saved.fetch;
     fs.rmSync(runDirectory, { recursive: true, force: true }); fs.rmSync(temp, { recursive: true, force: true });
   });
   assert.ok(!fs.existsSync(runDirectory), 'the run directory is new');
