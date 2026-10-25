@@ -31,7 +31,18 @@ jobs:
           "TMP=$tempPath" >> $env:GITHUB_ENV
       - run: npm ci
       - run: npm run typecheck
-      - run: npm test
+      - name: npm test
+        run: |
+          npm test 2>&1 | Tee-Object -FilePath test.log
+          $code = $LASTEXITCODE
+          if ($code -ne 0) {
+            Select-String -Path test.log -Pattern '✖|not ok' -Context 0,3 | Select-Object -First 30 | ForEach-Object {
+              $text = (@($_.Line) + $_.Context.PostContext) -join ' | '
+              $text = $text.Trim() -replace '%','%25' -replace "`r",'' -replace "`n",' '
+              Write-Output "::error title=failing test::$text"
+            }
+            exit $code
+          }
         env:
           NODE_OPTIONS: --require ${{ github.workspace }}/scripts/ci-no-services.cjs
       - name: Offline sample without credentials
