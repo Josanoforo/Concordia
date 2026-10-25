@@ -1,0 +1,12 @@
+H-MEM reference implementation
+Source: https://github.com/Meterless/Meterless, engines/hmem/reference/src
+Revision: 1742dec56a66e58eef9dda2d2b865823758ca8cd
+License: Apache License 2.0 (see the LICENSE file at the root of this repository
+and engines/hmem/LICENSE in the upstream repository).
+
+Modifications by Concordia:
+- trustLedger.ts: added TrustLedgerService.restoreAll(entries), which restores an
+  in-memory ledger snapshot and throws LEDGER_SNAPSHOT_RESTORE_REQUIRES_IN_MEMORY_SERVICE
+  on a file-backed ledger.
+
+All other files in this directory are identical to the upstream revision.

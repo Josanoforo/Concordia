@@ -1,6 +1,6 @@
 # Public file manifest
 
-Positive path allowlist for the sanitized working tree prepared on 2026-10-22 and refreshed on 2026-10-25 for v1.1-rc5. Public sample data is limited to the explicitly synthetic U3 schema/CSV and the U1 schema-graph fixture; there are no observed source rows, query/request IDs, or MaDI raw/gold files in these sample paths. Test fixtures under `tests/fixtures/agent-runs/` are sanitized copies of two live agent runs over public sources: bounded result rows only, with receipt and query identifiers replaced by fixture ids.
+Positive path allowlist for the sanitized working tree prepared on 2026-10-22 and refreshed on 2026-10-25 for v1.1-rc5 and for v1.1-rc6. Public sample data is limited to the explicitly synthetic U3 schema/CSV and the U1 schema-graph fixture; there are no observed source rows, query/request IDs, or MaDI raw/gold files in these sample paths. Test fixtures under `tests/fixtures/agent-runs/` are sanitized copies of two live agent runs over public sources: bounded result rows only, with receipt and query identifiers replaced by fixture ids.
 
 This describes the current index, not earlier commits. It does not sanitize history; do not publish the existing history without first rebuilding the unpublished commit on the public base.
 
@@ -146,6 +146,7 @@ Documents carried over unchanged from the previous public release (rc2) are incl
 - `src/hmem/dreaming.ts`
 - `src/hmem/embeddings.ts`
 - `src/hmem/index.ts`
+- `src/hmem/NOTICE`
 - `src/hmem/memoryMining.ts`
 - `src/hmem/memoryRetrieval.ts`
 - `src/hmem/memoryStore.ts`

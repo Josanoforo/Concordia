@@ -48,4 +48,16 @@ Requires Node.js and npm.
 
 A live run also requires compatible Zetaris and Nightshift services. If .env does not already exist, copy .env.example to .env and fill in your local values. U2 registration also stays disabled until you replace the contact placeholder in config/onboarding.json and set registrationEnabled to true. Keep credentials local; never commit .env.
 
+## H-MEM conformance
+
+`src/hmem` vendors the Meterless H-MEM reference implementation (rev `1742dec`) with one added method; see [docs/PREEXISTING.md](docs/PREEXISTING.md). To run the upstream conformance suite against it:
+
+    git clone https://github.com/Meterless/Meterless ../meterless-reference
+    git -C ../meterless-reference checkout 1742dec56a66e58eef9dda2d2b865823758ca8cd
+    npm run conformance
+
+Expected: 13/13 PASS. To use a checkout elsewhere, set `HMEM_CONFORMANCE_RUNNER` to its `engines/hmem/conformance/runner.ts`.
+
+## License
+
 The code is licensed under Apache-2.0. Third-party datasets and benchmark materials retain their own terms and are not included here.

@@ -35,6 +35,7 @@ export class TrustLedgerService {
     return entry;
   }
 
+  // Added by Concordia, not part of upstream rev 1742dec. See src/hmem/NOTICE.
   restoreAll(entries: readonly LedgerEntry[]): void {
     if (this.file) throw new Error('LEDGER_SNAPSHOT_RESTORE_REQUIRES_IN_MEMORY_SERVICE');
     this.entries = structuredClone([...entries]);

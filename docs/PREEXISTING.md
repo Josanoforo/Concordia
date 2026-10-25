@@ -2,7 +2,9 @@
 
 ## H-MEM
 
-The project includes the H-MEM reference implementation from `Meterless/Meterless`, revision `1742dec56a66e58eef9dda2d2b865823758ca8cd`, under its Apache-2.0 license. Concordia's adapter adds typed claims, conflict handling, review, and reinjection; those additions are project code, not upstream functionality. Upstream notices remain with the vendored files.
+The project includes the H-MEM reference implementation from `Meterless/Meterless`, revision `1742dec56a66e58eef9dda2d2b865823758ca8cd`, under its Apache-2.0 license. Concordia's adapter adds typed claims, conflict handling, review, and reinjection; those additions are project code, not upstream functionality. The ten files in `src/hmem` are vendored with one added method (`restoreAll` in `trustLedger.ts`, which restores an in-memory ledger snapshot and refuses to run on a file-backed ledger); all other files are identical to upstream revision `1742dec`. Provenance and the modification notice are in `src/hmem/NOTICE`.
+
+To reproduce the conformance result, clone `Meterless/Meterless` at that revision next to this repository and run `npm run conformance` (see the README). Expected result: 13/13 PASS.
 
 ## Zetaris references
 
