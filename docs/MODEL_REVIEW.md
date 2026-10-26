@@ -22,13 +22,15 @@ A model approval is never presented as a human one: the record carries `origin: 
 
 Every generation is checked against the run budget before it is made and charged from its receipt afterwards. Each call leaves a trace event with the prompt hash, the requested model, the bounded response, the receipt and the tokens; the overlay has one row per role with the models actually used, as reported by the receipts.
 
-Steps 4–5 describe the current code. The live runs below predate the forced tool call and the deterministic attacks: their judges answered in JSON text, and the adversary covered all four families.
+**Transport per role.** The model review uses, for each role, the transport proven live. The two judges answer through a forced tool call with a strict schema: 0 invalid responses in 785 live calls. The adversary answers in text with JSON formatting (`response_format`): 0 invalid responses in 185 live calls. Over the tool call, the adversary's nested schema produced badly encoded responses (25 of 182). As an extra defence, parsing normalizes the three encodings observed, with a test over the 25 real responses. The prompt version did not change.
+
+Steps 4–5 describe the current code. The NWCH checks and the first TPC-DS run (R10) predate the forced tool call and the deterministic attacks: their judges answered in JSON text, and the adversary covered all four families. The integrated TPC-DS run (R10b) used the current code.
 
 ## What has been measured
 
 **Offline (scripted stand-in models, not model evidence).** On 33 TPC-DS candidates (the project-owner review's 25 YES and 3 DEFERRED, 3 decoys from the live negative control, and 2 candidates that review left out because their target is not unique), the default configuration accepted 25/25 YES, deferred 3/3 DEFERRED, rejected 3/3 decoys and deferred 2/2 non-unique targets: 0 false accepts. With evidence-only judges and no adversarial pass, one decoy (`store_sales.ss_store_sk → web_site`) was accepted; adding the adversarial pass rejected it. These figures validate the pipeline and its floors, not how well a real model judges.
 
-**Live.** See [`NWCH_BLIND_CHECK.md`](NWCH_BLIND_CHECK.md) (6 never-touched tables, three successive checks) and [`TPCDS_FULL_RUN_R10.md`](TPCDS_FULL_RUN_R10.md) (full TPC-DS run: 182 candidates reviewed, 92 approved, precision 92/92 against the 103-edge gold set).
+**Live.** See [`NWCH_BLIND_CHECK.md`](NWCH_BLIND_CHECK.md) (6 never-touched tables, three successive checks) and [`TPCDS_FULL_RUN_R10.md`](TPCDS_FULL_RUN_R10.md) (full TPC-DS run: 182 candidates reviewed, 92 approved, precision 92/92 against the 103-edge gold set; the integrated run after the fixes, R10b, reached 92/92 in its final state with 0 invalid model responses in 353 calls).
 
 ## Limits
 
