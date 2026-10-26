@@ -1,3 +1,4 @@
+import { removePath } from './helpers/safe-rm.ts';
 import test from 'node:test';
 import fs from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -222,4 +223,36 @@ test('CONCORDIA_FRESHNESS_DIR redirects the history root inside .concordia; the 
     process.env.CONCORDIA_FRESHNESS_DIR = path.resolve(ROOT, '..', 'outside-freshness');
     assert.throws(() => freshnessRoot(concordia), /FRESHNESS_ROOT_OUTSIDE_APPROVED_ROOT/);
   } finally { if (saved === undefined) delete process.env.CONCORDIA_FRESHNESS_DIR; else process.env.CONCORDIA_FRESHNESS_DIR = saved; }
+});
+
+test('G0-5 the consumer freshness view counts only attempts of the requested mode and origin: a REPLAY attempt is never current for LIVE',async()=>{
+  const live=setup({mode:'LIVE',origin:'PUBLIC'}),replay=setup({universeId:live.universeId,relationId:live.relationId,mode:'REPLAY',origin:'PUBLIC'});
+  const liveAttempt=await capture(live,'2026-10-23T00:00:00Z'),replayAttempt=await capture(replay,'2026-10-23T00:05:00Z');
+  const now=()=>Date.parse('2026-10-23T00:10:00Z');
+  const latest=consumerFreshnessSnapshot(live.universeId,[live.relationId],undefined,{now}).dependencies[0];
+  assert.equal(latest.attemptRef,replayAttempt.record.attemptId,'unfiltered, the latest attempt is the REPLAY one');
+  const forLive=consumerFreshnessSnapshot(live.universeId,[live.relationId],undefined,{now,origin:{executionMode:'LIVE',dataOrigin:'PUBLIC'}}).dependencies[0];
+  assert.equal(forLive.attemptRef,liveAttempt.record.attemptId);assert.notEqual(forLive.attemptRef,replayAttempt.record.attemptId);
+  const forReplay=consumerFreshnessSnapshot(live.universeId,[live.relationId],undefined,{now,origin:{executionMode:'REPLAY',dataOrigin:'PUBLIC'}}).dependencies[0];
+  assert.equal(forReplay.attemptRef,replayAttempt.record.attemptId);
+  const other=consumerFreshnessSnapshot(live.universeId,[live.relationId],undefined,{now,origin:{executionMode:'LIVE',dataOrigin:'SYNTHETIC'}});
+  assert.deepEqual([other.state,other.dependencies[0].state,other.dependencies[0].attemptRef],['UNKNOWN','UNKNOWN',null],'another origin has no history, so it is UNKNOWN, never CURRENT');
+});
+
+test('RC-27 Reconciler.fichas hands its sealed origin to the freshness view, an explicit origin overrides it, and an origin with no history degrades to UNKNOWN instead of failing',async()=>{
+  const live=setup({mode:'LIVE',origin:'PUBLIC'}),replay=setup({universeId:live.universeId,relationId:live.relationId,mode:'REPLAY',origin:'PUBLIC'});
+  const liveAttempt=await capture(live,'2026-10-23T00:00:00Z'),replayAttempt=await capture(replay,'2026-10-23T00:05:00Z');
+  const now=()=>Date.parse('2026-10-23T00:10:00Z'),dir=fs.mkdtempSync(path.join(ROOT,'.concordia','fichas-origin-'));
+  try{
+    const seed=new Reconciler(live.universeId,dir,'concordia-agent');
+    seed.addClaim({entity:'relation:'+live.relationId,attribute:'status',value:'SOSTENIDA',source:'fixture.left',confidence:.9,requestIds:['r1'],sourceVersion:'v1'});
+    const origin={executionMode:'LIVE',dataOrigin:'PUBLIC'};
+    const sealed=new Reconciler(live.universeId,dir,'concordia-agent',{origin});
+    const dependency=(view:ReturnType<Reconciler['fichas']>)=>view.freshness.dependencies[0];
+    assert.equal(dependency(sealed.fichas(undefined,{now})).attemptRef,liveAttempt.record.attemptId,'the scope origin selects the LIVE attempt even though a REPLAY one is later');
+    assert.equal(dependency(sealed.fichas(undefined,{now,origin:{executionMode:'REPLAY',dataOrigin:'PUBLIC'}})).attemptRef,replayAttempt.record.attemptId,'an explicit origin overrides the scope origin');
+    assert.equal(dependency(new Reconciler(live.universeId,dir,'concordia-agent').fichas(undefined,{now})).attemptRef,replayAttempt.record.attemptId,'without an origin the legacy view still reads the latest attempt');
+    const unknown=new Reconciler(live.universeId,dir,'concordia-agent',{origin:{executionMode:'LIVE',dataOrigin:'SYNTHETIC'}}).fichas(undefined,{now});
+    assert.deepEqual([unknown.freshness.state,dependency(unknown).state,dependency(unknown).attemptRef],['UNKNOWN','UNKNOWN',null]);
+  }finally{removePath(dir);}
 });

@@ -2,8 +2,22 @@ import type { DataOrigin, EvidenceBundle, EvidenceObservation, ExecutionMode, Re
 import { validateRelationContract } from '../contracts/validate.ts';
 import { failure } from '../runtime.ts';
 
+/** Default per-read ceiling is 50; 51..100 only when the caller passes an explicit maxLimit (the per-run probe-limit override). */
+export const PROBE_LIMIT_HARD_MAX = 100;
 export interface ProbeFilter { column: string; values: readonly (string | number | boolean)[]; }
-export interface ProbeEndpointPlan { sourceId: string; objectId: string; columns: readonly string[]; keyColumns: readonly string[]; filter?: ProbeFilter; }
+/** DISTINCT_KEYS: the endpoint is read as the distinct values of its key among the filter values, not as rows. Opt-in per universe (probeMode "distinct-keys"). */
+export type ProbeReadMode = 'DISTINCT_KEYS';
+export interface ProbeEndpointPlan { sourceId: string; objectId: string; columns: readonly string[]; keyColumns: readonly string[]; filter?: ProbeFilter; readMode?: ProbeReadMode; }
+export const distinctKeysScope = (sampledKeys: number) => `claves origen muestreadas (${sampledKeys}); destino leído completo para esas claves`;
+/**
+ * Turns the SOURCE endpoint of a plan into a distinct-keys read: only the key column, over the K filter values, with K strictly below the plan limit.
+ * The read cannot reach the limit unless the source misbehaves, in which case it is reported as truncated like any other read; nothing is forced.
+ */
+export function withDistinctKeysSource(plan: ProbePlan): ProbePlan {
+  const [source, target] = plan.endpoints;
+  if (!source.filter || source.filter.values.length >= plan.limit || source.keyColumns.length !== 1 || source.filter.column !== source.keyColumns[0]) throw new TypeError('DISTINCT_KEYS_REQUIRES_SINGLE_KEY_FILTER_BELOW_LIMIT');
+  return { ...plan, endpoints: [{ ...source, columns: [...source.keyColumns], readMode: 'DISTINCT_KEYS' }, target] };
+}
 export interface ProbePlan { schemaVersion: 1; relationRef: string; contractVersion: string; limit: number; endpoints: readonly [ProbeEndpointPlan, ProbeEndpointPlan]; }
 export interface ProbeReadRequest extends ProbeEndpointPlan { limit: number; }
 export interface ProbeReadResult { tuples: unknown[][]; requestId?: string; observedAt?: string; requestedAt?: string; truncated?: boolean; statement?: string; queryId?: string; durationMs?: number; nativeVersion?: Unknown<string>; fingerprint?: Unknown<string>; }
@@ -15,7 +29,7 @@ export interface ProbeExecutionResult { status: 'COMPLETE' | 'PARTIAL' | 'ERROR'
 export function planProbe(contract: RelationContract, allowlist: Record<string, readonly string[]>, limit: number, maxLimit = 50, additionalColumns: Record<string, readonly string[]> = {}, filters: Record<string, ProbeFilter> = {}): ProbePlan {
   const issues = validateRelationContract(contract);
   if (issues.length) throw new TypeError(`Invalid relation contract: ${issues.map(issue => `${issue.path}:${issue.code}`).join(', ')}`);
-  if (!Number.isInteger(limit) || limit < 1 || limit > maxLimit || maxLimit > 50) throw new TypeError('INVALID_PROBE_LIMIT');
+  if (!Number.isInteger(limit) || limit < 1 || limit > maxLimit || maxLimit > PROBE_LIMIT_HARD_MAX) throw new TypeError('INVALID_PROBE_LIMIT');
   const endpoints = [contract.from, contract.to].map(endpoint => {
     const allowed = allowlist[endpoint.objectId];
     if (!allowed) throw new TypeError(`OBJECT_OUTSIDE_ALLOWLIST:${endpoint.objectId}`);
@@ -34,7 +48,8 @@ export function planProbe(contract: RelationContract, allowlist: Record<string, 
 
 /** Executes only through an injected adapter; this layer has no built-in network or filesystem adapter. */
 export async function executeProbe(plan: ProbePlan, adapter: ProbeAdapter, context: LocalProbeContext): Promise<ProbeExecutionResult> {
-  if (!Number.isInteger(plan.limit) || plan.limit < 1 || plan.limit > 50) throw new TypeError('INVALID_PROBE_LIMIT');
+  const ceiling = context.maxLimit ?? 50;
+  if (!Number.isInteger(ceiling) || ceiling < 1 || ceiling > PROBE_LIMIT_HARD_MAX || !Number.isInteger(plan.limit) || plan.limit < 1 || plan.limit > ceiling) throw new TypeError('INVALID_PROBE_LIMIT');
   if (!context.runId || !context.checkedAt || !context.scope) throw new TypeError('INVALID_PROBE_CONTEXT');
   const observations: EvidenceObservation[] = [], errors: ProbeExecutionResult['errors'] = [], reads: ProbeExecutionResult['reads'] = [];
   let anyTruncated = false;
@@ -55,7 +70,7 @@ export async function executeProbe(plan: ProbePlan, adapter: ProbeAdapter, conte
         requestId: result.requestId ? { state: 'KNOWN', value: result.requestId } : { state: 'UNKNOWN' },
         observedAt: result.observedAt ? { state: 'KNOWN', value: result.observedAt } : { state: 'UNKNOWN' },
         checkedAt: context.checkedAt, nativeVersion: result.nativeVersion ?? { state: 'UNKNOWN' }, fingerprint: result.fingerprint ?? { state: 'UNKNOWN' },
-        projection: [...endpoint.columns], filters: endpoint.filter ? [`${endpoint.filter.column} IN (${endpoint.filter.values.length} bounded values)`] : [], limit: plan.limit, measuredTuples: tuples,
+        projection: [...endpoint.columns], filters: endpoint.filter ? [`${endpoint.filter.column} IN (${endpoint.filter.values.length} bounded values)`, ...(endpoint.readMode ? ['distinct-keys'] : [])] : [], limit: plan.limit, measuredTuples: tuples,
         nullCount: tuples.filter(tuple => keyIndexes.some(index => tuple[index] === null || tuple[index] === undefined)).length,
         duplicateCount: 'UNKNOWN', truncated, transportStatus: 'OK', protectedPayloadRef: { state: 'UNKNOWN' }
       });

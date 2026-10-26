@@ -1,0 +1,1840 @@
+{
+ "alias": "TPCDS",
+ "basis": "SYNTHETIC_FIXTURE shaped like the TPC-DS key structure (24 tables, key columns plus non-personal entity labels, 5-6 rows each); foreign keys hold true by construction. Customer, item, date and time keys live in their own numeric ranges while the small dimensions share 1..5, so some unrelated keys overlap and some do not. No adjudication is declared: the configured relations are empty",
+ "chooserScript": [
+  "READ_CUSTOMER_KEYS",
+  "PROFILE_C_CUSTOMER_SK",
+  "PROFILE_SS_CUSTOMER_SK"
+ ],
+ "tables": {
+  "call_center": {
+   "columns": [
+    {
+     "name": "cc_call_center_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cc_call_center_id",
+     "type": "string"
+    },
+    {
+     "name": "cc_name",
+     "type": "string"
+    },
+    {
+     "name": "cc_closed_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cc_open_date_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "CA0001",
+     "Center 1",
+     2450001,
+     2450001
+    ],
+    [
+     2,
+     "CA0002",
+     "Center 2",
+     2450002,
+     2450002
+    ],
+    [
+     3,
+     "CA0003",
+     "Center 3",
+     2450003,
+     2450003
+    ],
+    [
+     4,
+     "CA0004",
+     "Center 4",
+     2450004,
+     2450004
+    ],
+    [
+     5,
+     "CA0005",
+     "Center 5",
+     2450005,
+     2450005
+    ]
+   ]
+  },
+  "catalog_page": {
+   "columns": [
+    {
+     "name": "cp_catalog_page_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cp_catalog_page_id",
+     "type": "string"
+    },
+    {
+     "name": "cp_description",
+     "type": "string"
+    },
+    {
+     "name": "cp_start_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cp_end_date_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "CA0001",
+     "Page 1",
+     2450001,
+     2450001
+    ],
+    [
+     2,
+     "CA0002",
+     "Page 2",
+     2450002,
+     2450002
+    ],
+    [
+     3,
+     "CA0003",
+     "Page 3",
+     2450003,
+     2450003
+    ],
+    [
+     4,
+     "CA0004",
+     "Page 4",
+     2450004,
+     2450004
+    ],
+    [
+     5,
+     "CA0005",
+     "Page 5",
+     2450005,
+     2450005
+    ]
+   ]
+  },
+  "customer": {
+   "columns": [
+    {
+     "name": "c_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "c_customer_id",
+     "type": "string"
+    },
+    {
+     "name": "c_current_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "c_current_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "c_current_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "c_first_shipto_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "c_first_sales_date_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     101,
+     "CU0001",
+     1,
+     1,
+     1,
+     2450001,
+     2450001
+    ],
+    [
+     102,
+     "CU0002",
+     2,
+     2,
+     2,
+     2450002,
+     2450002
+    ],
+    [
+     103,
+     "CU0003",
+     3,
+     3,
+     3,
+     2450003,
+     2450003
+    ],
+    [
+     104,
+     "CU0004",
+     4,
+     4,
+     4,
+     2450004,
+     2450004
+    ],
+    [
+     105,
+     "CU0005",
+     5,
+     5,
+     5,
+     2450005,
+     2450005
+    ]
+   ]
+  },
+  "customer_address": {
+   "columns": [
+    {
+     "name": "ca_address_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ca_address_id",
+     "type": "string"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "CU0001"
+    ],
+    [
+     2,
+     "CU0002"
+    ],
+    [
+     3,
+     "CU0003"
+    ],
+    [
+     4,
+     "CU0004"
+    ],
+    [
+     5,
+     "CU0005"
+    ]
+   ]
+  },
+  "customer_demographics": {
+   "columns": [
+    {
+     "name": "cd_demo_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     1
+    ],
+    [
+     2
+    ],
+    [
+     3
+    ],
+    [
+     4
+    ],
+    [
+     5
+    ]
+   ]
+  },
+  "date_dim": {
+   "columns": [
+    {
+     "name": "d_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "d_date_id",
+     "type": "string"
+    }
+   ],
+   "rows": [
+    [
+     2450001,
+     "DA0001"
+    ],
+    [
+     2450002,
+     "DA0002"
+    ],
+    [
+     2450003,
+     "DA0003"
+    ],
+    [
+     2450004,
+     "DA0004"
+    ],
+    [
+     2450005,
+     "DA0005"
+    ],
+    [
+     2450006,
+     "DA0006"
+    ]
+   ]
+  },
+  "household_demographics": {
+   "columns": [
+    {
+     "name": "hd_demo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "hd_income_band_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     1
+    ],
+    [
+     2,
+     2
+    ],
+    [
+     3,
+     3
+    ],
+    [
+     4,
+     4
+    ],
+    [
+     5,
+     5
+    ]
+   ]
+  },
+  "income_band": {
+   "columns": [
+    {
+     "name": "ib_income_band_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     1
+    ],
+    [
+     2
+    ],
+    [
+     3
+    ],
+    [
+     4
+    ],
+    [
+     5
+    ]
+   ]
+  },
+  "item": {
+   "columns": [
+    {
+     "name": "i_item_sk",
+     "type": "integer"
+    },
+    {
+     "name": "i_item_id",
+     "type": "string"
+    },
+    {
+     "name": "i_product_name",
+     "type": "string"
+    }
+   ],
+   "rows": [
+    [
+     201,
+     "IT0001",
+     "Product 1"
+    ],
+    [
+     202,
+     "IT0002",
+     "Product 2"
+    ],
+    [
+     203,
+     "IT0003",
+     "Product 3"
+    ],
+    [
+     204,
+     "IT0004",
+     "Product 4"
+    ],
+    [
+     205,
+     "IT0005",
+     "Product 5"
+    ]
+   ]
+  },
+  "promotion": {
+   "columns": [
+    {
+     "name": "p_promo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "p_promo_id",
+     "type": "string"
+    },
+    {
+     "name": "p_start_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "p_end_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "p_item_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "PR0001",
+     2450001,
+     2450001,
+     201
+    ],
+    [
+     2,
+     "PR0002",
+     2450002,
+     2450002,
+     202
+    ],
+    [
+     3,
+     "PR0003",
+     2450003,
+     2450003,
+     203
+    ],
+    [
+     4,
+     "PR0004",
+     2450004,
+     2450004,
+     204
+    ],
+    [
+     5,
+     "PR0005",
+     2450005,
+     2450005,
+     205
+    ]
+   ]
+  },
+  "reason": {
+   "columns": [
+    {
+     "name": "r_reason_sk",
+     "type": "integer"
+    },
+    {
+     "name": "r_reason_id",
+     "type": "string"
+    },
+    {
+     "name": "r_reason_desc",
+     "type": "string"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "RE0001",
+     "Reason 1"
+    ],
+    [
+     2,
+     "RE0002",
+     "Reason 2"
+    ],
+    [
+     3,
+     "RE0003",
+     "Reason 3"
+    ],
+    [
+     4,
+     "RE0004",
+     "Reason 4"
+    ],
+    [
+     5,
+     "RE0005",
+     "Reason 5"
+    ]
+   ]
+  },
+  "ship_mode": {
+   "columns": [
+    {
+     "name": "sm_ship_mode_sk",
+     "type": "integer"
+    },
+    {
+     "name": "sm_ship_mode_id",
+     "type": "string"
+    },
+    {
+     "name": "sm_type",
+     "type": "string"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "SH0001",
+     "Mode 1"
+    ],
+    [
+     2,
+     "SH0002",
+     "Mode 2"
+    ],
+    [
+     3,
+     "SH0003",
+     "Mode 3"
+    ],
+    [
+     4,
+     "SH0004",
+     "Mode 4"
+    ],
+    [
+     5,
+     "SH0005",
+     "Mode 5"
+    ]
+   ]
+  },
+  "store": {
+   "columns": [
+    {
+     "name": "s_store_sk",
+     "type": "integer"
+    },
+    {
+     "name": "s_store_id",
+     "type": "string"
+    },
+    {
+     "name": "s_store_name",
+     "type": "string"
+    },
+    {
+     "name": "s_closed_date_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "ST0001",
+     "Store 1",
+     2450001
+    ],
+    [
+     2,
+     "ST0002",
+     "Store 2",
+     2450002
+    ],
+    [
+     3,
+     "ST0003",
+     "Store 3",
+     2450003
+    ],
+    [
+     4,
+     "ST0004",
+     "Store 4",
+     2450004
+    ],
+    [
+     5,
+     "ST0005",
+     "Store 5",
+     2450005
+    ]
+   ]
+  },
+  "time_dim": {
+   "columns": [
+    {
+     "name": "t_time_sk",
+     "type": "integer"
+    },
+    {
+     "name": "t_time_id",
+     "type": "string"
+    }
+   ],
+   "rows": [
+    [
+     36001,
+     "TI0001"
+    ],
+    [
+     36002,
+     "TI0002"
+    ],
+    [
+     36003,
+     "TI0003"
+    ],
+    [
+     36004,
+     "TI0004"
+    ],
+    [
+     36005,
+     "TI0005"
+    ],
+    [
+     36006,
+     "TI0006"
+    ]
+   ]
+  },
+  "warehouse": {
+   "columns": [
+    {
+     "name": "w_warehouse_sk",
+     "type": "integer"
+    },
+    {
+     "name": "w_warehouse_id",
+     "type": "string"
+    },
+    {
+     "name": "w_warehouse_name",
+     "type": "string"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "WA0001",
+     "Depot 1"
+    ],
+    [
+     2,
+     "WA0002",
+     "Depot 2"
+    ],
+    [
+     3,
+     "WA0003",
+     "Depot 3"
+    ],
+    [
+     4,
+     "WA0004",
+     "Depot 4"
+    ],
+    [
+     5,
+     "WA0005",
+     "Depot 5"
+    ]
+   ]
+  },
+  "web_page": {
+   "columns": [
+    {
+     "name": "wp_web_page_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wp_web_page_id",
+     "type": "string"
+    },
+    {
+     "name": "wp_creation_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wp_access_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wp_customer_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "WE0001",
+     2450001,
+     2450001,
+     101
+    ],
+    [
+     2,
+     "WE0002",
+     2450002,
+     2450002,
+     102
+    ],
+    [
+     3,
+     "WE0003",
+     2450003,
+     2450003,
+     103
+    ],
+    [
+     4,
+     "WE0004",
+     2450004,
+     2450004,
+     104
+    ],
+    [
+     5,
+     "WE0005",
+     2450005,
+     2450005,
+     105
+    ]
+   ]
+  },
+  "web_site": {
+   "columns": [
+    {
+     "name": "web_site_sk",
+     "type": "integer"
+    },
+    {
+     "name": "web_site_id",
+     "type": "string"
+    },
+    {
+     "name": "web_name",
+     "type": "string"
+    },
+    {
+     "name": "web_open_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "web_close_date_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     1,
+     "WE0001",
+     "Site 1",
+     2450001,
+     2450001
+    ],
+    [
+     2,
+     "WE0002",
+     "Site 2",
+     2450002,
+     2450002
+    ],
+    [
+     3,
+     "WE0003",
+     "Site 3",
+     2450003,
+     2450003
+    ],
+    [
+     4,
+     "WE0004",
+     "Site 4",
+     2450004,
+     2450004
+    ],
+    [
+     5,
+     "WE0005",
+     "Site 5",
+     2450005,
+     2450005
+    ]
+   ]
+  },
+  "store_sales": {
+   "columns": [
+    {
+     "name": "ss_item_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ss_ticket_number",
+     "type": "integer"
+    },
+    {
+     "name": "ss_sold_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ss_sold_time_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ss_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ss_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ss_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ss_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ss_store_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ss_promo_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     201,
+     1,
+     2450001,
+     36001,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     202,
+     2,
+     2450002,
+     36002,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     203,
+     3,
+     2450003,
+     36003,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    [
+     204,
+     4,
+     2450001,
+     36001,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     205,
+     1,
+     2450002,
+     36002,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     201,
+     2,
+     2450003,
+     36003,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   ]
+  },
+  "store_returns": {
+   "columns": [
+    {
+     "name": "sr_item_sk",
+     "type": "integer"
+    },
+    {
+     "name": "sr_ticket_number",
+     "type": "integer"
+    },
+    {
+     "name": "sr_returned_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "sr_return_time_sk",
+     "type": "integer"
+    },
+    {
+     "name": "sr_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "sr_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "sr_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "sr_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "sr_store_sk",
+     "type": "integer"
+    },
+    {
+     "name": "sr_reason_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     201,
+     1,
+     2450001,
+     36001,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     202,
+     2,
+     2450002,
+     36002,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     203,
+     3,
+     2450003,
+     36003,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    [
+     204,
+     4,
+     2450001,
+     36001,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     205,
+     1,
+     2450002,
+     36002,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     201,
+     2,
+     2450003,
+     36003,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   ]
+  },
+  "catalog_sales": {
+   "columns": [
+    {
+     "name": "cs_item_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_order_number",
+     "type": "integer"
+    },
+    {
+     "name": "cs_sold_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_sold_time_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_ship_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_bill_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_bill_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_bill_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_bill_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_ship_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_ship_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_ship_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_ship_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_call_center_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_catalog_page_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_ship_mode_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_warehouse_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cs_promo_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     201,
+     1,
+     2450001,
+     36001,
+     2450001,
+     101,
+     1,
+     1,
+     1,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     202,
+     2,
+     2450002,
+     36002,
+     2450002,
+     102,
+     2,
+     2,
+     2,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     203,
+     3,
+     2450003,
+     36003,
+     2450003,
+     103,
+     3,
+     3,
+     3,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    [
+     204,
+     4,
+     2450001,
+     36001,
+     2450001,
+     101,
+     1,
+     1,
+     1,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     205,
+     1,
+     2450002,
+     36002,
+     2450002,
+     102,
+     2,
+     2,
+     2,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     201,
+     2,
+     2450003,
+     36003,
+     2450003,
+     103,
+     3,
+     3,
+     3,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   ]
+  },
+  "catalog_returns": {
+   "columns": [
+    {
+     "name": "cr_item_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_order_number",
+     "type": "integer"
+    },
+    {
+     "name": "cr_returned_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_returned_time_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_refunded_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_refunded_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_refunded_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_refunded_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_returning_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_returning_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_returning_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_returning_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_call_center_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_catalog_page_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_ship_mode_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_warehouse_sk",
+     "type": "integer"
+    },
+    {
+     "name": "cr_reason_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     201,
+     1,
+     2450001,
+     36001,
+     101,
+     1,
+     1,
+     1,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     202,
+     2,
+     2450002,
+     36002,
+     102,
+     2,
+     2,
+     2,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     203,
+     3,
+     2450003,
+     36003,
+     103,
+     3,
+     3,
+     3,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    [
+     204,
+     4,
+     2450001,
+     36001,
+     101,
+     1,
+     1,
+     1,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     205,
+     1,
+     2450002,
+     36002,
+     102,
+     2,
+     2,
+     2,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     201,
+     2,
+     2450003,
+     36003,
+     103,
+     3,
+     3,
+     3,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   ]
+  },
+  "web_sales": {
+   "columns": [
+    {
+     "name": "ws_item_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_order_number",
+     "type": "integer"
+    },
+    {
+     "name": "ws_sold_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_sold_time_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_ship_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_bill_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_bill_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_bill_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_bill_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_ship_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_ship_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_ship_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_ship_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_web_page_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_web_site_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_ship_mode_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_warehouse_sk",
+     "type": "integer"
+    },
+    {
+     "name": "ws_promo_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     201,
+     1,
+     2450001,
+     36001,
+     2450001,
+     101,
+     1,
+     1,
+     1,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     202,
+     2,
+     2450002,
+     36002,
+     2450002,
+     102,
+     2,
+     2,
+     2,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     203,
+     3,
+     2450003,
+     36003,
+     2450003,
+     103,
+     3,
+     3,
+     3,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    [
+     204,
+     4,
+     2450001,
+     36001,
+     2450001,
+     101,
+     1,
+     1,
+     1,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     205,
+     1,
+     2450002,
+     36002,
+     2450002,
+     102,
+     2,
+     2,
+     2,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     201,
+     2,
+     2450003,
+     36003,
+     2450003,
+     103,
+     3,
+     3,
+     3,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   ]
+  },
+  "web_returns": {
+   "columns": [
+    {
+     "name": "wr_item_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_order_number",
+     "type": "integer"
+    },
+    {
+     "name": "wr_returned_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_returned_time_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_refunded_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_refunded_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_refunded_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_refunded_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_returning_customer_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_returning_cdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_returning_hdemo_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_returning_addr_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_web_page_sk",
+     "type": "integer"
+    },
+    {
+     "name": "wr_reason_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     201,
+     1,
+     2450001,
+     36001,
+     101,
+     1,
+     1,
+     1,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     202,
+     2,
+     2450002,
+     36002,
+     102,
+     2,
+     2,
+     2,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     203,
+     3,
+     2450003,
+     36003,
+     103,
+     3,
+     3,
+     3,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    [
+     204,
+     4,
+     2450001,
+     36001,
+     101,
+     1,
+     1,
+     1,
+     101,
+     1,
+     1,
+     1,
+     1,
+     1
+    ],
+    [
+     205,
+     1,
+     2450002,
+     36002,
+     102,
+     2,
+     2,
+     2,
+     102,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    [
+     201,
+     2,
+     2450003,
+     36003,
+     103,
+     3,
+     3,
+     3,
+     103,
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   ]
+  },
+  "inventory": {
+   "columns": [
+    {
+     "name": "inv_date_sk",
+     "type": "integer"
+    },
+    {
+     "name": "inv_item_sk",
+     "type": "integer"
+    },
+    {
+     "name": "inv_warehouse_sk",
+     "type": "integer"
+    }
+   ],
+   "rows": [
+    [
+     2450001,
+     201,
+     1
+    ],
+    [
+     2450002,
+     202,
+     2
+    ],
+    [
+     2450003,
+     203,
+     3
+    ],
+    [
+     2450004,
+     204,
+     4
+    ],
+    [
+     2450005,
+     205,
+     5
+    ],
+    [
+     2450006,
+     201,
+     1
+    ]
+   ]
+  }
+ },
+ "adjudications": {}
+}

@@ -14,6 +14,7 @@ import { discoverMappings, probeMappings, evaluateMadi } from './madi.ts';
 import { demoUsl } from './usl/demo.ts';
 import { artifacts, cacheFingerprint, captureCache, ledgerRows, loadCache, isolateTrace, snapshotLabel } from './demo-cache.ts';
 import { writeReport } from './report/index.ts';
+import { resolveUniverseManifest } from './registry/universes.ts';
 import { uslDossier } from './usl/dossier.ts';
 import { criticize } from './critic/adversarial.ts';
 import { evaluateCritic } from './critic/eval.ts';
@@ -26,6 +27,12 @@ export async function requireZetaris(check:()=>Promise<unknown>) {
   try{await check();}catch(error){throw new SafeError('ZETARIS_UNAVAILABLE_STOP_NO_SIMULATED_PROBES',undefined,JSON.stringify(failure(error)));}
 }
 const budget=()=>readBudget();
+/** True mode and origin of what the demo runs: a bundled fixture is LOCAL/SYNTHETIC, a cached replay is REPLAY, only a cold run that queries the source is LIVE. Unknown origins stay UNKNOWN. */
+export function demoRunLabels(kind:'fixture'|'replay'|'live',universeId:string,snapshot?:any){
+  if(kind==='fixture')return{executionMode:'LOCAL',dataOrigin:'SYNTHETIC'};
+  const origin=snapshot?.dataOrigin??resolveUniverseManifest(universeId)?.source.dataOrigin??'UNKNOWN';
+  return{executionMode:kind==='live'?'LIVE':'REPLAY',dataOrigin:origin};
+}
 export async function demo(universeId='U1') {
   const started=performance.now(),sampleMode=process.env.SAMPLE_MODE==='true',runId='d4a-'+universeId+'-'+stamp();
   const cached=loadCache(universeId,sampleMode);
@@ -34,7 +41,7 @@ export async function demo(universeId='U1') {
     for(const key of artifacts)if(snapshot.artifacts[key])writeJson(`out/${universeId}/${key}.json`,snapshot.artifacts[key]);
     snapshot.artifacts.dossier=uslDossier(universeId,{snapshot,sample:true});
     const r=snapshot.artifacts.relaciones.relations,f=snapshot.artifacts.fichas;
-    const run:any={runId,utc:new Date().toISOString(),universe:universeId,sampleMode:true,live:false,sourceUtc:snapshot.sourceUtc,cacheLabel:label,syntheticFixture:Boolean(snapshot.publicFixture),mode:'offline-replay',status:'PASS',sondas:0,generations:0,models:[],verdicts:counts(r),conflicts:conflictCounts(f),critic:snapshot.artifacts.critic?{confirmed:snapshot.artifacts.critic.confirmed,degraded:snapshot.artifacts.critic.degraded,insufficient:snapshot.artifacts.critic.insufficient,errors:snapshot.artifacts.critic.errors,skipped:snapshot.artifacts.critic.skipped,utc:snapshot.artifacts.critic.utc}:null,criticEval:snapshot.artifacts['critic-eval']??null,durationMs:Math.round(performance.now()-started),nightshift:'No network or generation',coldWarm:'Offline sample; not a live warm benchmark'};
+    const run:any={runId,utc:new Date().toISOString(),universe:universeId,sampleMode:true,live:false,sourceUtc:snapshot.sourceUtc,cacheLabel:label,syntheticFixture:Boolean(snapshot.publicFixture),mode:'offline-replay',...demoRunLabels(snapshot.publicFixture?'fixture':'replay',universeId,snapshot),status:'PASS',sondas:0,generations:0,models:[],verdicts:counts(r),conflicts:conflictCounts(f),critic:snapshot.artifacts.critic?{confirmed:snapshot.artifacts.critic.confirmed,degraded:snapshot.artifacts.critic.degraded,insufficient:snapshot.artifacts.critic.insufficient,errors:snapshot.artifacts.critic.errors,skipped:snapshot.artifacts.critic.skipped,utc:snapshot.artifacts.critic.utc}:null,criticEval:snapshot.artifacts['critic-eval']??null,durationMs:Math.round(performance.now()-started),nightshift:'No network or generation',coldWarm:'Offline sample; not a live warm benchmark'};
     // No .env, clients, H-MEM query or budget access in this branch.
     run.report=writeReport(universeId,run,snapshot);
     writeReport(universeId,run,snapshot,'sample');writeJson(`out/${universeId}/sample/metrics.json`,run);
@@ -42,7 +49,7 @@ export async function demo(universeId='U1') {
   }
   const fingerprint=cacheFingerprint(universeId),warm=cached?.fingerprint===fingerprint&&Date.now()-cached.createdAt<86400000;
   const dir=`evidence/runs/${runId}`,tracePath=traceFileForRun(runId),offset=fs.existsSync(tracePath)?fs.readFileSync(tracePath,'utf8').length:0;
-  const before=budget(),run:any={runId,utc:new Date().toISOString(),universe:universeId,sampleMode:false,fingerprint,mode:warm?'warm':'cold',status:'IN_PROGRESS',sondas:0,generations:0,models:[],cacheTTLHours:24};
+  const before=budget(),run:any={runId,utc:new Date().toISOString(),universe:universeId,sampleMode:false,fingerprint,mode:warm?'warm':'cold',...demoRunLabels(warm?'replay':'live',universeId,warm?cached:undefined),status:'IN_PROGRESS',sondas:0,generations:0,models:[],cacheTTLHours:24};
   setTraceRun(runId);
   try{
     await requireZetaris(()=>new Zetaris().listDatabases());

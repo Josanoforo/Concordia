@@ -11,9 +11,11 @@ import { ROOT } from '../src/runtime.ts';
 import { acquireReconcileWriterLock, atomicWriteFile, buildReconcileSnapshot, inspectReconcileWriterLock, readActiveReconcileSnapshot, reconcileSnapshotPath, recoverStaleReconcileWriterLock } from '../src/reconcile/persistence.ts';
 
 const worker=path.join(path.dirname(fileURLToPath(import.meta.url)),'reconcile-concurrency-worker.ts');
+// A cold tsx worker needs several seconds when the whole suite runs in parallel (an 18 s start was seen under load): the barrier is generous, a hang still fails.
+const BARRIER_MS=90000;
 const delay=(ms:number)=>new Promise(resolve=>setTimeout(resolve,ms));
 async function waitFile(file:string,child?:ChildProcess){
-  const start=Date.now();while(!fs.existsSync(file)){if(child?.exitCode!==null&&child?.exitCode!==undefined)throw new Error('WORKER_EXITED_BEFORE_BARRIER');if(Date.now()-start>15000)throw new Error('BARRIER_TIMEOUT '+JSON.stringify((child as any)?.captured?.()??{}));await delay(10);}
+  const start=Date.now();while(!fs.existsSync(file)){if(child?.exitCode!==null&&child?.exitCode!==undefined)throw new Error('WORKER_EXITED_BEFORE_BARRIER');if(Date.now()-start>BARRIER_MS)throw new Error('BARRIER_TIMEOUT '+JSON.stringify((child as any)?.captured?.()??{}));await delay(10);}
   return JSON.parse(fs.readFileSync(file,'utf8'));
 }
 function spawnWorker(args:string[]):ChildProcess{
@@ -23,7 +25,7 @@ function spawnWorker(args:string[]):ChildProcess{
 async function waitExit(child:ChildProcess){
   let stdout='',stderr='';child.stdout?.on('data',chunk=>stdout+=chunk);child.stderr?.on('data',chunk=>stderr+=chunk);
   if(child.exitCode!==null)return {code:child.exitCode,stdout,stderr};
-  return await new Promise<{code:number|null;stdout:string;stderr:string}>((resolve,reject)=>{const timer=setTimeout(()=>{child.kill();reject(new Error('WORKER_EXIT_TIMEOUT'));},15000);child.once('error',error=>{clearTimeout(timer);reject(error);});child.once('exit',code=>{clearTimeout(timer);resolve({code,stdout,stderr});});});
+  return await new Promise<{code:number|null;stdout:string;stderr:string}>((resolve,reject)=>{const timer=setTimeout(()=>{child.kill();reject(new Error('WORKER_EXIT_TIMEOUT'));},BARRIER_MS);child.once('error',error=>{clearTimeout(timer);reject(error);});child.once('exit',code=>{clearTimeout(timer);resolve({code,stdout,stderr});});});
 }
 function fixture(){
   const dir=fs.mkdtempSync(path.join(ROOT,'.concordia','b23-process-')),r=new Reconciler('U1',dir,'fixture');

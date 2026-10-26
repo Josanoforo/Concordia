@@ -191,6 +191,17 @@
           "region_code"
         ],
         "description": "Bounded region rows for observed order regions"
+      },
+      {
+        "id": "READ_ORDERS_BY_REGION",
+        "kind": "KEYED_READ",
+        "table": "orders",
+        "filterColumn": "region_code",
+        "observation": "observedRegions",
+        "requiredColumns": [
+          "region_code"
+        ],
+        "description": "Bounded order rows for the regions observed in orders (a third read, to test three valid steps and then the step cap)"
       }
     ]
   },

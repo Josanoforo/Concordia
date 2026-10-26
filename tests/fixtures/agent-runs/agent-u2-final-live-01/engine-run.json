@@ -1,0 +1,422 @@
+{
+  "schemaVersion": 1,
+  "runId": "agent-u2-final-live-01",
+  "universeId": "U2",
+  "manifestId": "concordia.universe.sec-companies",
+  "executionMode": "LIVE",
+  "dataOrigin": "PUBLIC",
+  "utc": "2026-10-25T03:40:00.757Z",
+  "phases": {
+    "discovery": {
+      "status": "PASS",
+      "tables": [
+        "apple_revenue_facts",
+        "apple_submissions_raw",
+        "sic_reference"
+      ],
+      "relations": [
+        "cik_text_trap",
+        "cik_normalized",
+        "company_sic_reference"
+      ]
+    },
+    "coma": {
+      "status": "RAN",
+      "comaInputVersion": 1,
+      "comaInputVersionExplicit": false,
+      "inputHash": "3a49787469cad83d035c0d6b5c05136bcdfd7c1ed17b33a4fb655db916988f66",
+      "providerStates": [
+        {
+          "providerId": "valentine.coma",
+          "status": "PARTIAL"
+        }
+      ],
+      "candidates": 2,
+      "outOfScopeProposals": [
+        {
+          "providerId": "valentine.coma",
+          "providerVersion": "1.1.0",
+          "method": "COMA",
+          "from": {
+            "db": "SEC_DATA",
+            "table": "apple_submissions_raw",
+            "column": "sicDescription"
+          },
+          "to": {
+            "db": "COMPANY_DNS",
+            "table": "sic_reference",
+            "column": "description"
+          },
+          "rawScore": 0.8571428571428571,
+          "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+          "verificationStatus": "NO VERIFICADO/UNKNOWN",
+          "reviewState": "PENDING",
+          "inputHash": "3a49787469cad83d035c0d6b5c05136bcdfd7c1ed17b33a4fb655db916988f66",
+          "configHash": "d3493636fcedb342e31906d27338906e55dc5d780ffa3fa9e222904a6e8dbfec",
+          "evidenceRefs": [
+            "query_fixture_101",
+            "query_fixture_102",
+            "query_fixture_103",
+            "query_fixture_104",
+            "query_fixture_105",
+            "query_fixture_106"
+          ]
+        }
+      ]
+    },
+    "exploration": {
+      "actions": [
+        {
+          "step": 1,
+          "action": "READ_SEC_PROFILE",
+          "reason": "CIK 320193/0000320193 with SIC 3571 observed from SEC submissions data, but no SEC profile fields (company name, etc.) have been read yet; reading the SEC profile is the next bounded step to confirm identity.",
+          "execution": "PASS",
+          "observation": {
+            "queryId": "query_fixture_107",
+            "requestId": "query_fixture_108",
+            "rows": 1,
+            "columns": [
+              "cik",
+              "sic",
+              "name",
+              "sicDescription"
+            ],
+            "observedAfter": {
+              "observedCiks": [
+                "320193",
+                "0000320193"
+              ],
+              "observedSicValues": [
+                "3571"
+              ]
+            }
+          },
+          "sql": "SELECT `cik`, `sic`, `name`, `sicDescription` FROM SEC_DATA.apple_submissions_raw WHERE cik IN ('320193', '0000320193') LIMIT 20",
+          "adaptedFromObservedState": true
+        },
+        {
+          "step": 2,
+          "action": "STOP_EXPLORATION",
+          "reason": "SEC profile already confirmed Apple Inc., CIK 320193, SIC 3571 Electronic Computers; scope excludes addresses/officers/contact fields, and DNS reference data is unrelated to SIC/company identity so would not add bounded evidence.",
+          "execution": "NOT_REQUIRED",
+          "adaptedFromObservedState": true
+        }
+      ],
+      "calls": [
+        {
+          "stage": "select_bounded_read_1",
+          "status": "PASS",
+          "requestedModel": "meterless/cheap",
+          "promptHash": "c9f833e4a70769a9ee026b5bcbe6b9fcc800f00c9b60b674eeee1ef8c0bb9d1a",
+          "utc": "2026-10-25T03:40:12.359Z",
+          "receipt": {
+            "receiptId": "rcpt_fixture_11",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5",
+            "inputTokens": 1410,
+            "outputTokens": 157,
+            "totalTokens": 1567,
+            "latencyMs": 2344,
+            "fromCache": false,
+            "requestedMode": "cheap",
+            "routedMode": "cheap",
+            "modeCoerced": false,
+            "predicted": "claude-sonnet-5",
+            "winner": "claude-sonnet-5",
+            "routingReason": "latency-hedge",
+            "routingPolicy": "learned-router"
+          },
+          "decisionStatus": "VALID",
+          "selected": "READ_SEC_PROFILE",
+          "reason": "CIK 320193/0000320193 with SIC 3571 observed from SEC submissions data, but no SEC profile fields (company name, etc.) have been read yet; reading the SEC profile is the next bounded step to confirm identity."
+        },
+        {
+          "stage": "select_bounded_read_2",
+          "status": "PASS",
+          "requestedModel": "meterless/cheap",
+          "promptHash": "a3ededf063fed766845d1f509c3836a8d136402bb5000f8027263d0c1b5d1449",
+          "utc": "2026-10-25T03:40:16.062Z",
+          "receipt": {
+            "receiptId": "rcpt_fixture_12",
+            "provider": "anthropic",
+            "model": "claude-sonnet-5",
+            "inputTokens": 1758,
+            "outputTokens": 111,
+            "totalTokens": 1869,
+            "latencyMs": 1558,
+            "fromCache": false,
+            "requestedMode": "cheap",
+            "routedMode": "cheap",
+            "modeCoerced": false,
+            "predicted": "claude-sonnet-5",
+            "winner": "claude-sonnet-5",
+            "routingReason": "latency-hedge",
+            "routingPolicy": "learned-router"
+          },
+          "decisionStatus": "VALID",
+          "selected": "STOP_EXPLORATION",
+          "reason": "SEC profile already confirmed Apple Inc., CIK 320193, SIC 3571 Electronic Computers; scope excludes addresses/officers/contact fields, and DNS reference data is unrelated to SIC/company identity so would not add bounded evidence."
+        }
+      ],
+      "plannerError": null,
+      "reads": {
+        "READ_SEC_PROFILE": {
+          "source": "SEC_DATA.apple_submissions_raw",
+          "columns": [
+            "cik",
+            "sic",
+            "name",
+            "sicDescription"
+          ],
+          "rows": 1,
+          "queryId": "query_fixture_107"
+        }
+      }
+    },
+    "probes": {
+      "mode": "CHOSEN",
+      "selected": [
+        "company_sic_reference",
+        "cik_normalized",
+        "cik_text_trap"
+      ],
+      "skipped": [],
+      "error": null
+    },
+    "critic": {
+      "status": "EVALUATED",
+      "eligible": 0,
+      "summary": {
+        "confirmed": 0,
+        "degraded": 0,
+        "insufficient": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    }
+  },
+  "probeSelection": {
+    "mode": "CHOSEN",
+    "modelRanking": "USED",
+    "fallback": null,
+    "selected": [
+      "company_sic_reference",
+      "cik_normalized",
+      "cik_text_trap"
+    ],
+    "skipped": [],
+    "calls": [
+      {
+        "stage": "select_probe_1",
+        "status": "PASS",
+        "requestedModel": "meterless/cheap",
+        "promptHash": "02032738916bb5ce01b08eadbdfd3ee7afec7e045c740f89d95c8e8bca1b1012",
+        "utc": "2026-10-25T03:40:17.767Z",
+        "receipt": {
+          "receiptId": "rcpt_fixture_13",
+          "provider": "anthropic",
+          "model": "claude-sonnet-5",
+          "inputTokens": 1082,
+          "outputTokens": 90,
+          "totalTokens": 1172,
+          "latencyMs": 1568,
+          "fromCache": false,
+          "requestedMode": "cheap",
+          "routedMode": "cheap",
+          "modeCoerced": false,
+          "predicted": "claude-sonnet-5",
+          "winner": "claude-sonnet-5",
+          "routingReason": "latency-hedge",
+          "routingPolicy": "learned-router"
+        },
+        "decisionStatus": "VALID",
+        "selected": "PROBE:company_sic_reference",
+        "reason": "SEC data shows CIK 320193 with SIC 3571 but no SIC description has been resolved yet; probing company_sic_reference is the bounded next step to confirm the SIC classification meaning."
+      },
+      {
+        "stage": "select_probe_2",
+        "status": "PASS",
+        "requestedModel": "meterless/cheap",
+        "promptHash": "38d99b07824ff3074be22a6a4f051b19bc8587280d5ff0472f8f225b5c7bea12",
+        "utc": "2026-10-25T03:40:19.488Z",
+        "receipt": {
+          "receiptId": "rcpt_fixture_14",
+          "provider": "anthropic",
+          "model": "claude-sonnet-5",
+          "inputTokens": 804,
+          "outputTokens": 83,
+          "totalTokens": 887,
+          "latencyMs": 1382,
+          "fromCache": false,
+          "requestedMode": "cheap",
+          "routedMode": "cheap",
+          "modeCoerced": false,
+          "predicted": "claude-sonnet-5",
+          "winner": "claude-sonnet-5",
+          "routingReason": "latency-hedge",
+          "routingPolicy": "learned-router"
+        },
+        "decisionStatus": "VALID",
+        "selected": "PROBE:cik_normalized",
+        "reason": "CIK 320193/0000320193 is already observed from SEC data; probing cik_normalized is the bounded next step to confirm the normalized CIK form before considering the text trap variant."
+      },
+      {
+        "stage": "select_probe_3",
+        "status": "PASS",
+        "requestedModel": "meterless/cheap",
+        "promptHash": "992a4b79842114b1fc76b1598728f95e8b9562a24db8496b849954834e1ffaa0",
+        "utc": "2026-10-25T03:40:21.040Z",
+        "receipt": {
+          "receiptId": "rcpt_fixture_15",
+          "provider": "anthropic",
+          "model": "claude-sonnet-5",
+          "inputTokens": 767,
+          "outputTokens": 82,
+          "totalTokens": 849,
+          "latencyMs": 1092,
+          "fromCache": false,
+          "requestedMode": "cheap",
+          "routedMode": "cheap",
+          "modeCoerced": false,
+          "predicted": "claude-sonnet-5",
+          "winner": "claude-sonnet-5",
+          "routingReason": "latency-hedge",
+          "routingPolicy": "learned-router"
+        },
+        "decisionStatus": "VALID",
+        "selected": "PROBE:cik_text_trap",
+        "reason": "CIK 320193/0000320193 and SIC 3571 are already confirmed; cik_text_trap is the last remaining relation and a bounded next step before stopping exploration."
+      }
+    ]
+  },
+  "postComa": {
+    "status": "SUGGESTED_ONLY",
+    "policy": {
+      "maxProbes": 2,
+      "ranking": "rawScore desc, then proposalId",
+      "costPerProbe": 1,
+      "equality": "literal text equality of sampled values"
+    },
+    "proposals": [
+      {
+        "proposalId": "apple_submissions_raw.sicDescription__sic_reference.description",
+        "from": {
+          "db": "SEC_DATA",
+          "table": "apple_submissions_raw",
+          "column": "sicDescription"
+        },
+        "to": {
+          "db": "COMPANY_DNS",
+          "table": "sic_reference",
+          "column": "description"
+        },
+        "rawScore": 0.8571428571428571,
+        "reason": "COMA_COLUMN_PAIR_OUT_OF_SCOPE",
+        "verificationStatus": "NO VERIFICADO/UNKNOWN",
+        "reviewState": "PENDING",
+        "coverageProbe": {
+          "kind": "COVERAGE_PROBE",
+          "status": "NOT_EXECUTABLE",
+          "reason": "ENDPOINT_OUTSIDE_ALLOWLIST_OR_UNDISCOVERED"
+        }
+      }
+    ],
+    "counts": {
+      "proposals": 1,
+      "executed": 0,
+      "suggested": 0,
+      "notExecutable": 1,
+      "skippedBudget": 0,
+      "failed": 0
+    },
+    "limitations": [
+      "Coverage compares literal text of bounded sampled values; it does not apply normalization and says nothing about the whole table.",
+      "A coverage probe is a diagnostic: the proposal stays NO VERIFICADO/UNKNOWN and PENDING, and no verdict is produced or changed."
+    ]
+  },
+  "decisions": [
+    {
+      "relationId": "cik_text_trap",
+      "verdict": "INDETERMINADA",
+      "reasonCodes": [
+        "endpoint_evidence_missing"
+      ]
+    },
+    {
+      "relationId": "cik_normalized",
+      "verdict": "INDETERMINADA",
+      "reasonCodes": [
+        "identifier_space_or_namespace_unknown"
+      ]
+    },
+    {
+      "relationId": "company_sic_reference",
+      "verdict": "INDETERMINADA",
+      "reasonCodes": [
+        "identifier_space_or_namespace_unknown"
+      ]
+    }
+  ],
+  "memory": {
+    "schemaVersion": 1,
+    "status": "RECORDED",
+    "runId": "agent-u2-final-live-01",
+    "universeId": "U2",
+    "scope": ".concordia/agent-memory/U2/LIVE-PUBLIC",
+    "claims": [],
+    "conflicts": [],
+    "reviewQueue": [],
+    "ledger": {
+      "entries": 0,
+      "appendOnly": true
+    },
+    "reuse": {
+      "schemaVersion": 1,
+      "mode": "COLD",
+      "reused": [],
+      "queriesSaved": 0,
+      "reprobe": [
+        {
+          "relationId": "cik_text_trap",
+          "reason": "NO_MEMORY",
+          "currentVersion": "rv1:2a8ba4279ad3897d6089bfdd"
+        },
+        {
+          "relationId": "cik_normalized",
+          "reason": "NO_MEMORY",
+          "currentVersion": "rv1:e6c0f3d6ae1cd82278f0c433"
+        },
+        {
+          "relationId": "company_sic_reference",
+          "reason": "NO_MEMORY",
+          "currentVersion": "rv1:acc2c12b80dff50501b0c4e8"
+        }
+      ]
+    }
+  },
+  "artifactsFile": ".concordia/agent-runs/agent-u2-final-live-01/artifacts.json",
+  "status": "COMPLETED",
+  "budget": {
+    "limits": {
+      "maxQueriesPerRun": 25,
+      "readLimit": 20,
+      "maxTokensPerRun": 50000,
+      "maxSteps": 3
+    },
+    "tokenCap": {
+      "value": 50000,
+      "source": "flag"
+    },
+    "used": {
+      "queries": 10,
+      "tokens": 6344,
+      "steps": 2
+    },
+    "exhausted": []
+  },
+  "limitations": [
+    "Read-only: bounded SELECT templates and configured probes only; no DDL, no gold, no model-written SQL.",
+    "Verdicts come from the deterministic relation policy; COMA proposals and model choices never change them.",
+    "Bounded samples are not table-wide claims."
+  ]
+}

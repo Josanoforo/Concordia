@@ -1,3 +1,4 @@
+import { removeFile, removePath } from './helpers/safe-rm.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -129,8 +130,8 @@ test('C1 CLI validates approved configs offline and rejects malformed keys, limi
     const traversal=spawnSync(process.execPath,[path.join(ROOT,'node_modules/tsx/dist/cli.mjs'),path.join(ROOT,'src/cli.ts'),'universe','validate','--manifest','universes/../package.json'],{cwd:ROOT,encoding:'utf8',env:{...process.env,CONCORDIA_LOCAL_ENV_FILE:missingEnv}});
     assert.equal(traversal.status,1);assert.match(traversal.stderr,/INVALID_MANIFEST_PATH/);
   }finally{
-    for(const file of [absoluteManifest,absoluteConfig])if(fs.existsSync(file))fs.unlinkSync(file);
-    fs.rmSync(scratch,{recursive:true,force:true});
+    for(const file of [absoluteManifest,absoluteConfig])removeFile(file);
+    removePath(scratch);
   }
 });test('C2 runs GTFS, CHINOOK and a config-registered third-party fixture through the common evaluator', async () => {
   for (const alias of ['GTFS', 'CHINOOK', 'TRAINING_FIXTURE']) {
@@ -184,7 +185,7 @@ test('C2 external CLI resolves fixture aliases and stable manifest IDs offline w
   assert.equal(dispatchedResult.status,'EVALUATED');
   assert.equal(dispatchedResult.universeId,'GTFS');
   } finally {
-    fs.rmSync(scratch, { recursive: true, force: true });
+    removePath(scratch);
   }
 
 });
@@ -252,7 +253,7 @@ test('C2 U1 and U2 CLI eval replay typed evidence with the common evaluator offl
     assert.equal(incomplete.status,'INCOMPLETE');
     assert.equal(incomplete.results[0].actual,'NOT_EVALUABLE');
     assert.equal(incomplete.results[0].legacyVerdict,'SOSTENIDA');
-  }finally{fs.rmSync(scratch,{recursive:true,force:true});}
+  }finally{removePath(scratch);}
 });
 test('C2 fixture aliases and stable IDs share canonical contract, evidence and decision identity', async () => {
   for (const route of [
@@ -307,7 +308,7 @@ test('C2 external U3 eval replays typed evidence with current policy and never n
     assert.deepEqual(JSON.parse(fs.readFileSync(relationsPath,'utf8')),{relations:[source]});
     assert.equal(fs.existsSync(goldPath),false);
   }finally{
-    fs.rmSync(scratch,{recursive:true,force:true});
+    removePath(scratch);
   }
 });
 

@@ -140,10 +140,10 @@ export async function publishDecisions(id='U1',dryRun=false){
     stage='load_runtime_environment';loadLocalEnv();const z=new Zetaris(),db='CONCORDIA';
     stage='list_databases';
     const databases=await z.listDatabases();
-    if(!databases.rows.some(r=>String(r[0])===db)){stage='create_decision_database';await z.runSql(`CREATE LIGHTNING DATABASE ${db} DESCRIBE BY "Concordia decision metadata"`,1);}
+    if(!databases.rows.some(r=>String(r[0])===db)){stage='create_decision_database';await z.runLegacyMutationSql(`CREATE LIGHTNING DATABASE ${db} DESCRIBE BY "Concordia decision metadata"`,1,{caller:'decisions'});}
     stage='list_existing_tables';
     const tables=await z.listTables(db),tablesBefore=[...new Set(tables.rows.map(r=>String(r[0])))].sort(),existing=new Set(tablesBefore);
-    for(const f of local.files){if(!existing.has(f.table)){stage='create_decision_table';await z.runSql(`CREATE LIGHTNING FILESTORE TABLE ${identifier(f.table)} FROM ${db} FORMAT CSV OPTIONS (PATH "${f.containerPath}", header "true", inferSchema "false")`,1);}}
+    for(const f of local.files){if(!existing.has(f.table)){stage='create_decision_table';await z.runLegacyMutationSql(`CREATE LIGHTNING FILESTORE TABLE ${identifier(f.table)} FROM ${db} FORMAT CSV OPTIONS (PATH "${f.containerPath}", header "true", inferSchema "false")`,1,{caller:'decisions'});}}
     stage='verify_table_idempotency';
     const afterTables=await z.listTables(db),tableNames=afterTables.rows.map(r=>String(r[0])),tablesAfter=[...new Set(tableNames)].sort();
     const expectedTables=Object.keys(decisionTableSpecs).sort(),decisionTableCounts=Object.fromEntries(expectedTables.map(name=>[name,tableNames.filter(t=>t===name).length]));

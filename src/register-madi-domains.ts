@@ -52,9 +52,9 @@ export async function registerMadiDomains(){
     }
     stage='connect_zetaris';loadLocalEnv();const z=new Zetaris(),databases=await z.listDatabases();
     for(const domain of domains){stage='register_'+domain;const entry=output.domains[domain],db=entry.database;
-      if(!databases.rows.some(r=>r[0]===db))await z.runSql(`CREATE LIGHTNING DATABASE ${identifier(db)} DESCRIBE BY "MaDI ${domain} local schema mapping evaluation"`,1);
+      if(!databases.rows.some(r=>r[0]===db))await z.runLegacyMutationSql(`CREATE LIGHTNING DATABASE ${identifier(db)} DESCRIBE BY "MaDI ${domain} local schema mapping evaluation"`,1,{caller:'register-madi-domains'});
       const listed=await z.listTables(db),names=new Set(listed.rows.flat().map(String));
-      for(const f of entry.files){stage='verify_'+domain+'_'+f.table;if(!names.has(f.table))await z.runSql(`CREATE LIGHTNING FILESTORE TABLE ${identifier(f.table)} FROM ${identifier(db)} FORMAT CSV OPTIONS (PATH "${f.path}", header "true", inferSchema "false")`,1);
+      for(const f of entry.files){stage='verify_'+domain+'_'+f.table;if(!names.has(f.table))await z.runLegacyMutationSql(`CREATE LIGHTNING FILESTORE TABLE ${identifier(f.table)} FROM ${identifier(db)} FORMAT CSV OPTIONS (PATH "${f.path}", header "true", inferSchema "false")`,1,{caller:'register-madi-domains'});
         const record:any={table:f.table,status:'REGISTERED',fileSha256:f.sha256,sourceColumns:f.columns.length};
         try{const verification=await z.runSql(`SELECT 1 AS row_present FROM ${identifier(db)}.${identifier(f.table)} LIMIT 1`,1,{timeoutMs:120000});record.probe='PASS';record.sampleRows=verification.rows.length;record.requestId=verification.requestId;record.durationMs=verification.durationMs;}
         catch(error){const detail=failure(error);if(detail.code==='TIMEOUT'){record.probe='EXCLUDED_TECHNICAL_TIMEOUT';record.timeoutMs=120000;record.error=detail;}else throw error;}

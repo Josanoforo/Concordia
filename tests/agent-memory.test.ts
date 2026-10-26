@@ -18,7 +18,7 @@ async function offlineRun(alias: string, runId: string, mutate?: (tables: any) =
   return runAgent(alias, runId, { client: fixtureClient(universeConfig(alias), fixture.tables) as any, executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', persist: false, now: () => NOW }) as Promise<any>;
 }
 const made: string[] = [];
-const scratch = () => { const dir = fs.mkdtempSync(path.join(ROOT, '.concordia', 'agent-memory-test-')); made.push(dir); return dir; };
+const scratch = () => { const dir = fs.mkdtempSync(path.join(ROOT, '.concordia', 'agent-memory-test-')); made.push(dir); return path.join(dir, 'LOCAL-SYNTHETIC'); };
 test.after(() => { for (const dir of made) fs.rmSync(dir, { recursive: true, force: true }); });
 
 test('3.1 the run writes relation claims stamped with its run id; the ledger only appends', async () => {
@@ -47,7 +47,7 @@ test('3.1 a probe-less run is SKIPPED and writes nothing; an unsupported scope s
   const dir = scratch();
   const skipped = recordRunMemory({ universeId: 'AGENTFX', runId: 'agent-mem-none', discovery: {}, probes: [], dir });
   assert.equal(skipped.status, 'SKIPPED');
-  assert.equal(fs.readdirSync(dir).length, 0);
+  assert.equal(fs.existsSync(dir), false, 'a probe-less run creates neither the scope nor its seal');
   const outside = recordRunMemory({ universeId: 'AGENTFX', runId: 'agent-mem-out', discovery: {}, probes: [{}], dir: path.join(ROOT, 'out', 'nope') });
   assert.equal(outside.status, 'ERROR');
 });
@@ -57,13 +57,13 @@ const relationsOf = (alias: string, discovery: any) => universeConfig(alias).rel
 test('3.2 a warm start reuses current SOSTENIDA evidence under its version and re-probes the rest with the reason', async () => {
   const dir = scratch();
   const cold = planWarmStart({ universeId: 'AGENTFX', discovery: {tables:{}}, relations: [], dir });
-  assert.equal(cold.mode, 'COLD'); assert.equal(fs.existsSync(dir) && fs.readdirSync(dir).length, 0, 'planning never creates memory');
+  assert.equal(cold.mode, 'COLD'); assert.equal(fs.existsSync(dir), false, 'planning never creates memory');
   const first = await offlineRun('AGENTFX', 'agent-warm-a');
   const relations = relationsOf('AGENTFX', first.artifacts.discovery);
-  assert.equal(planWarmStart({ universeId: 'AGENTFX', discovery: first.artifacts.discovery, relations, dir }).reused.length, 0);
+  assert.equal(planWarmStart({ universeId: 'AGENTFX', discovery: first.artifacts.discovery, relations, dir, now: () => Date.parse(NOW) }).reused.length, 0);
   recordRunMemory({ universeId: 'AGENTFX', runId: 'agent-warm-a', discovery: first.artifacts.discovery, probes: first.artifacts.probes, dir });
   const sustained = first.decisions.filter((item: any) => item.verdict === 'SOSTENIDA').map((item: any) => item.relationId).sort();
-  const plan = planWarmStart({ universeId: 'AGENTFX', discovery: first.artifacts.discovery, relations, dir });
+  const plan = planWarmStart({ universeId: 'AGENTFX', discovery: first.artifacts.discovery, relations, dir, now: () => Date.parse(NOW) });
   assert.equal(plan.mode, 'WARM');
   assert.deepEqual(plan.reused.map(item => item.relationId).sort(), sustained);
   assert.ok(plan.reused.every(item => item.reusedFromRunId === 'agent-warm-a' && item.version.startsWith('rv1:') && item.queriesSaved > 0));
@@ -86,7 +86,7 @@ test('3.2 an altered schema or TTL expiry blocks REUSED', async () => {
   const altered = structuredClone(first.artifacts.discovery);
   altered.tables.customers.sourceMetadata.rows.push(['loyalty_tier', 'string']);
   assert.notEqual(relationVersion(altered, relations.find((r: any) => r.to.table === 'customers')), relationVersion(first.artifacts.discovery, relations.find((r: any) => r.to.table === 'customers')));
-  const plan = planWarmStart({ universeId: 'AGENTFX', discovery: altered, relations, dir });
+  const plan = planWarmStart({ universeId: 'AGENTFX', discovery: altered, relations, dir, now: () => Date.parse(NOW) });
   assert.ok(plan.reprobe.some(item => item.reason === 'VERSION_CHANGED' && item.relationId === 'orders_customer' && item.rememberedVersion));
   assert.ok(plan.reused.every(item => item.relationId !== 'orders_customer'));
   assert.ok(plan.reused.some(item => item.relationId === 'orders_region'), 'untouched relations are still reused');
@@ -102,11 +102,11 @@ test('3.3 E-10: cold, hot unchanged and hot altered, measured through revalidati
   const sustained = first.decisions.filter((item: any) => item.verdict === 'SOSTENIDA').map((item: any) => item.relationId).sort();
   const budgetFor = (queries = 25) => new RunBudget(limitsFromBounds({ maxQueriesPerRun: queries }));
   // COLD: no memory, every relation is probed
-  const cold = planWarmStart({ universeId: alias, discovery: first.artifacts.discovery, relations, dir });
+  const cold = planWarmStart({ universeId: alias, discovery: first.artifacts.discovery, relations, dir, now: () => Date.parse(NOW) });
   assert.deepEqual({ reused: cold.reused.length, reprobe: cold.reprobe.length }, { reused: 0, reprobe: relations.length });
   recordRunMemory({ universeId: alias, runId: 'agent-reval-a', discovery: first.artifacts.discovery, probes: first.artifacts.probes, dir });
   // HOT, nothing changed: tables re-described once each, REUSED stands
-  const plan = planWarmStart({ universeId: alias, discovery: first.artifacts.discovery, relations, dir });
+  const plan = planWarmStart({ universeId: alias, discovery: first.artifacts.discovery, relations, dir, now: () => Date.parse(NOW) });
   const unchangedBudget = budgetFor();
   const unchanged = await revalidateWarmStart({ plan, cfg, discovery: first.artifacts.discovery, client: fixtureClient(cfg, fixture.tables) as any, budget: unchangedBudget, relations });
   assert.deepEqual(unchanged.revalidation.confirmed.sort(), sustained);
@@ -140,7 +140,7 @@ test('3.5 full history: run-1 decides, evidence is altered, run-2 degrades with 
   assert.equal(decided.value, 'SOSTENIDA');
 
   // branch A: nothing changed -> run 2 reuses and the history shows both runs
-  const planA = planWarmStart({ universeId: alias, discovery: one.artifacts.discovery, relations, dir });
+  const planA = planWarmStart({ universeId: alias, discovery: one.artifacts.discovery, relations, dir, now: () => Date.parse(NOW) });
   assert.ok(planA.reused.some(item => item.relationId === 'orders_customer'));
 
   // branch B: customers no longer carry the orders' keys -> run 2 re-probes and the verdict drops
@@ -164,7 +164,7 @@ test('3.5 full history: run-1 decides, evidence is altered, run-2 degrades with 
   // the untouched relation keeps both runs; run 3 no longer reuses the degraded relation
   const region = recorded.claims.find(claim => claim.relationId === 'orders_region');
   assert.deepEqual(region?.runIds, ['agent-hist-1', 'agent-hist-2']);
-  const planC = planWarmStart({ universeId: alias, discovery: two.artifacts.discovery, relations, dir });
+  const planC = planWarmStart({ universeId: alias, discovery: two.artifacts.discovery, relations, dir, now: () => Date.parse(NOW) });
   assert.ok(planC.reprobe.some(item => item.relationId === 'orders_customer' && item.reason === 'NOT_SUSTAINED'));
   assert.ok(planC.reused.some(item => item.relationId === 'orders_region'));
 });
@@ -181,7 +181,7 @@ test('3.5 U2 fixture: abstentions leave memory without sustained claims, and a s
 test('3.1/3.2 engine: two consecutive offline runs, the second REUSES instead of probing (AGENTFX) and U2 shows no reusable evidence', async () => {
   for (const alias of ['AGENTFX', 'U2']) {
     const dir = scratch(), fixture = agentFixtures().find(item => item.alias === alias)!, cfg = universeConfig(alias);
-    const run = (runId: string) => runAgent(alias, runId, { client: fixtureClient(cfg, fixture.tables) as any, executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', persist: false, memory: { dir }, now: () => NOW }) as Promise<any>;
+    const run = (runId: string) => runAgent(alias, runId, { client: fixtureClient(cfg, fixture.tables) as any, executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', persist: false, memory: { dir } }) as Promise<any>;
     const a = await run(`agent-eng-${alias.toLowerCase()}-1`), b = await run(`agent-eng-${alias.toLowerCase()}-2`);
     assert.equal(a.memory.status, 'RECORDED'); assert.equal(a.memory.reuse.mode, 'COLD');
     assert.equal(b.memory.reuse.mode, 'WARM');

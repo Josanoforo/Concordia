@@ -25,7 +25,8 @@ export async function continueAgentExploration(universe: string, runId: string, 
   const last = calls[calls.length - 1];
   // Continuable: the last decision was rejected (INVALID_RESPONSE) or the model call itself failed in transport (no decision was made).
   const transportFailure = last?.status === 'FAIL' && last.decisionStatus === undefined;
-  if (report.status !== 'COMPLETED' || report.executionMode !== 'LIVE' || (last?.decisionStatus !== 'INVALID_RESPONSE' && !transportFailure)) throw new SafeError('AGENT_RUN_NOT_CONTINUABLE');
+  // A run whose model call was rejected or failed in transport ends DEGRADED_NO_MODEL (or COMPLETED_WITH_WARNINGS when the review still used the model); that is exactly the run this retry exists for.
+  if (!['COMPLETED', 'COMPLETED_WITH_WARNINGS', 'DEGRADED_NO_MODEL'].includes(report.status) || report.executionMode !== 'LIVE' || (last?.decisionStatus !== 'INVALID_RESPONSE' && !transportFailure)) throw new SafeError('AGENT_RUN_NOT_CONTINUABLE');
   const ctx = prepareAgentContext(universe, runId, { client: deps.client, executionMode: 'LIVE' });
   if (report.universeId !== ctx.universeId) throw new SafeError('AGENT_RUN_SCOPE_MISMATCH');
   // Attempt 2 exists only for an explicit human re-authorization after a failed attempt 1; there is no attempt 3.

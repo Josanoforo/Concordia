@@ -61,7 +61,7 @@ export function writeRelations(output: any,id='U1') {
     lines.push('','## Crítica adversarial','','Confirmadas: '+output.critic.confirmed+'; degradadas: '+output.critic.degraded+'; insuficientes: '+output.critic.insufficient+'; omitidas: '+output.critic.skipped+'.');
     for(const r of relations.filter((x:any)=>x.critic)){
       lines.push('',`### ${r.relationId}: ${r.critic.status}`,'',r.critic.reason??'');
-      for(const c of r.critic.counterprobes??[])lines.push(`- ${c.strategy}; ${c.metrics?.matchedKeys??'—'}/${c.metrics?.seedKeys??'—'} claves coinciden; duplicados en la respuesta: ${c.metrics?.duplicateKeys?.length??0}; requestId ${c.requestId??'no disponible'}.`,'','```sql',c.sql,'```');
+      for(const c of r.critic.counterprobes??[])lines.push(`- ${c.strategy}; ${c.metrics?.matchedKeys??'—'}/${c.metrics?.fringeKeys??c.metrics?.seedKeys??'—'} claves coinciden; duplicados en la respuesta: ${c.metrics?.duplicateKeys?.length??0}; requestId ${c.requestId??'no disponible'}.`,'','```sql',c.sql,'```');
     }
   }
   fs.writeFileSync(path.join(ROOT, `out/${id}/relaciones.md`), sanitize(lines.join('\n')) + '\n');

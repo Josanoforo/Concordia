@@ -1,0 +1,79 @@
+{
+ "schemaVersion": 1,
+ "description": "Sanitized capture of the live NWCH re-check agent-nwch-r9-blind-live-02 (25-oct-2026): the raw answers of judges and adversary for the three foreign keys, verbatim, without receipt or request ids. The ProductID adversary answer was cut at 2000 output tokens; the ArtistId adversary sustained a SIBLING attack on a sibling whose target (TrackId) is not globally unique. Nothing live.",
+ "source": "agent-nwch-r9-blind-live-02",
+ "responses": [
+  {
+   "relationId": "chinook_album.ArtistId__chinook_artist.ArtistId",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 488,
+   "responseText": "{\"relationId\":\"chinook_album.ArtistId__chinook_artist.ArtistId\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLINGS_WEAKER\"],\"rationale\":\"ArtistId names the same entity as target table/column; full key inclusion, unique target, correct orientation. Sibling TrackId match is a different entity (track) despite equal coverage, so name match decides in favor of this relation.\"}"
+  },
+  {
+   "relationId": "chinook_album.ArtistId__chinook_artist.ArtistId",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 231,
+   "responseText": "{\"relationId\":\"chinook_album.ArtistId__chinook_artist.ArtistId\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLINGS_WEAKER\"],\"rationale\":\"ArtistId matches target table/column exactly; full key inclusion, unique target, correct orientation. Cross-domain siblings show weak coverage; same-entity sibling (TrackId) differs in entity despite equal coverage, so name decides.\"}"
+  },
+  {
+   "relationId": "chinook_album.ArtistId__chinook_artist.ArtistId",
+   "stage": "ATTACK",
+   "slot": 0,
+   "actor": "adversary",
+   "outputTokens": 493,
+   "responseText": "```json\n{\n  \"relationId\": \"chinook_album.ArtistId__chinook_artist.ArtistId\",\n  \"attacks\": [\n    {\n      \"family\": \"HOMONYM\",\n      \"severity\": \"none\",\n      \"recommend\": \"keep\",\n      \"argument\": \"Source column 'ArtistId' and target table 'chinook_artist' with column 'ArtistId' share exact name match in same domain. Cross-domain siblings show 0/15, 2/15 coverage while this shows 15/15, strongly discriminating against homonym.\",\n      \"evidenceRefs\": []\n    },\n    {\n      \"family\": \"INSUFFICIENT_KEYS\",\n      \"severity\": \"none\",\n      \"recommend\": \"keep\",\n      \"argument\": \"15 distinct keys substantially exceeds minDistinctKeys threshold of 3. maxRowsPerKey of 2 shows minimal duplication. Key distribution adequate for bounded sample with no uniformity concerns evident.\",\n      \"evidenceRefs\": []\n    },\n    {\n      \"family\": \"SIBLING\",\n      \"severity\": \"blocking\",\n      \"recommend\": \"defer\",\n      \"argument\": \"Sibling chinook_album.ArtistId__chinook_playlist_track.TrackId shows identical 15/15 coverage from same source. Both relations match all probed keys equally in bounded sample. Name alone cannot definitively exclude TrackId as homonym without domain evidence.\",\n      \"evidenceRefs\": [\"siblings[5].coverage.matched\", \"coverage.matched\", \"siblings[5].other.column\"]\n    },\n    {\n      \"family\": \"INVERTED_ORIENTATION\",\n      \"severity\": \"none\",\n      \"recommend\": \"keep\",\n      \"argument\": \"Source has duplicates (maxRowsPerKey=2), target unique in sample. Structure supports many-to-one from album to artist. Name 'ArtistId' in album table conventionally references artist entity. Orientation consistent with naming and cardinality.\",\n      \"evidenceRefs\": []\n    }\n  ]\n}\n```"
+  },
+  {
+   "relationId": "northwind_order_details.OrderID__northwind_orders.OrderID",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 225,
+   "responseText": "{\"relationId\":\"northwind_order_details.OrderID__northwind_orders.OrderID\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLINGS_WEAKER\"],\"rationale\":\"OrderID matches in name and entity across same-domain tables; full key inclusion, target unique, correct orientation. Cross-domain chinook siblings sharing this target all show 0 coverage, ruling out homonym explanation.\"}"
+  },
+  {
+   "relationId": "northwind_order_details.OrderID__northwind_orders.OrderID",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 226,
+   "responseText": "{\"relationId\":\"northwind_order_details.OrderID__northwind_orders.OrderID\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLINGS_WEAKER\"],\"rationale\":\"OrderID matches name/entity across same-domain tables; full key inclusion, unique target, correct orientation. Cross-domain chinook siblings sharing this target or source all show 0 coverage, ruling out homonym explanation.\"}"
+  },
+  {
+   "relationId": "northwind_order_details.OrderID__northwind_orders.OrderID",
+   "stage": "ATTACK",
+   "slot": 0,
+   "actor": "adversary",
+   "outputTokens": 1820,
+   "responseText": "{\"relationId\":\"northwind_order_details.OrderID__northwind_orders.OrderID\",\"attacks\":[{\"family\":\"HOMONYM\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"Source column 'OrderID' and target table 'northwind_orders' are same-domain, same-entity, identical name. All cross-domain chinook siblings sharing this target show 0 coverage, discriminating strongly against a homonym explanation.\",\"evidenceRefs\":[\"source.column\",\"target.table\",\"siblings[0]\",\"siblings[1]\"]},{\"family\":\"INSUFFICIENT_KEYS\",\"severity\":\"minor\",\"recommend\":\"keep\",\"argument\":\"Only 7 distinct keys observed, just above minDistinctKeys=3; sample is small though internally consistent (20 rows, maxRowsPerKey=3, no violations). Low key diversity limits confidence but does not invalidate the relation.\",\"evidenceRefs\":[\"sourceKeys\",\"minDistinctKeys\"]},{\"family\":\"SIBLING\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"All listed siblings are cross-domain chinook tables with 0/15-20 matches, far weaker than this relation's 7/7 coverage. No sibling fits better than the proposed relation.\",\"evidenceRefs\":[\"siblings[2]\",\"siblings[3]\",\"siblings[4]\",\"siblings[5]\"]},{\"family\":\"INVERTED_ORIENTATION\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"Structure shows source duplicates (maxRowsPerKey=3) mapping to a unique, declared-key target (UNIQUE_IN_SAMPLE, targetDeclaredKey=true), matching the expected many-to-one FK direction AS_PROPOSED.\",\"evidenceRefs\":[\"structure\",\"keyRules\",\"orientation\"]}]}"
+  },
+  {
+   "relationId": "northwind_order_details.ProductID__northwind_products.ProductID",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 226,
+   "responseText": "{\"relationId\":\"northwind_order_details.ProductID__northwind_products.ProductID\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLINGS_WEAKER\"],\"rationale\":\"ProductID matches name/entity across same-domain northwind tables; full key inclusion, unique target, correct orientation. Cross-domain chinook siblings sharing this target/source show weak coverage, ruling out homonym explanation.\"}"
+  },
+  {
+   "relationId": "northwind_order_details.ProductID__northwind_products.ProductID",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 221,
+   "responseText": "{\"relationId\":\"northwind_order_details.ProductID__northwind_products.ProductID\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLINGS_WEAKER\"],\"rationale\":\"ProductID matches target entity in same-domain Northwind tables; full key inclusion, unique target, correct orientation. Chinook siblings sharing this target/source show weak coverage, ruling out homonym explanation.\"}"
+  },
+  {
+   "relationId": "northwind_order_details.ProductID__northwind_products.ProductID",
+   "stage": "ATTACK",
+   "slot": 0,
+   "actor": "adversary",
+   "outputTokens": 2000,
+   "responseText": "{\"relationId\":\"northwind_order_details.ProductID__northwind_products.ProductID\",\"attacks\":[{\"family\":\"HOMONYM\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"Source 'ProductID' and target 'northwind_products' share name, entity, and domain. No negativeControl was run, but all cross-domain chinook siblings sharing this target/source show weak coverage (0-3/15-20) versus 18/18 here, discriminating against homonym.\",\"evidenceRefs\":[\"source.column\",\"target.table\",\"siblings[0]\",\"siblings[3]\"]},{\"family\":\"INSUFFICIENT_KEYS\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"18 distinct source keys and 18 distinct target keys far exceed minDistinctKeys=3. maxRowsPerKey values (2 source, 1 target) show mild non-uniform duplication consistent with real FK structure, not degenerate uniformity.\",\"evidenceRefs\":[\"sourceKeys\",\"targetKeys\",\"minDistinctKeys\"]"
+  }
+ ]
+}

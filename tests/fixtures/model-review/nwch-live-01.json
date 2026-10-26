@@ -1,0 +1,2009 @@
+{
+ "schemaVersion": 1,
+ "description": "Sanitized capture of the live NWCH blind run agent-nwch-r9-blind-live-01 (25-oct-2026): the post-COMA proposals the reviewer saw (counts and names only) and the 19 raw model responses of its judges and adversary, verbatim, without receipt or request ids. Regression fixture: nothing live.",
+ "source": "agent-nwch-r9-blind-live-01",
+ "proposals": [
+  {
+   "proposalId": "chinook_album.ArtistId__chinook_artist.ArtistId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_artist",
+    "column": "ArtistId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "HIGH",
+      "matched": 15,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": false,
+      "reasons": []
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 15,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "NO_VIOLATION_IN_SAMPLE",
+       "missingCount": 0
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "northwind_order_details.OrderID__northwind_orders.OrderID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "OrderID"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_orders",
+    "column": "OrderID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "HIGH",
+      "matched": 7,
+      "probed": 7,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": false,
+      "reasons": []
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 7,
+       "maxRowsPerKey": 3
+      },
+      "to": {
+       "rows": 7,
+       "distinctKeys": 7,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "NO_VIOLATION_IN_SAMPLE",
+       "missingCount": 0
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "northwind_order_details.ProductID__northwind_products.ProductID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "ProductID"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_products",
+    "column": "ProductID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "HIGH",
+      "matched": 18,
+      "probed": 18,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": false,
+      "reasons": []
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 18,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 18,
+       "distinctKeys": 18,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "NO_VIOLATION_IN_SAMPLE",
+       "missingCount": 0
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_album.AlbumId__northwind_orders.OrderID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "AlbumId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_orders",
+    "column": "OrderID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 20,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 20,
+       "maxRowsPerKey": 1
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 20
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "UNIQUE_IN_SAMPLE",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_album.AlbumId__northwind_products.ProductID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "AlbumId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_products",
+    "column": "ProductID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "LOW",
+      "matched": 3,
+      "probed": 20,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "LOW_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 20,
+       "maxRowsPerKey": 1
+      },
+      "to": {
+       "rows": 3,
+       "distinctKeys": 3,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 17
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "UNIQUE_IN_SAMPLE",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_album.ArtistId__northwind_orders.OrderID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_orders",
+    "column": "OrderID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 15
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_album.ArtistId__northwind_products.ProductID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_products",
+    "column": "ProductID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "LOW",
+      "matched": 2,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "LOW_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 2,
+       "distinctKeys": 2,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 13
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_playlist_track.PlaylistId__chinook_artist.ArtistId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "PlaylistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_artist",
+    "column": "ArtistId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "HIGH",
+      "matched": 1,
+      "probed": 1,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": false,
+      "reasons": []
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 1,
+       "maxRowsPerKey": 20
+      },
+      "to": {
+       "rows": 1,
+       "distinctKeys": 1,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "NO_VIOLATION_IN_SAMPLE",
+       "missingCount": 0
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "SWAPPED_TARGET_UNIQUE"
+   }
+  },
+  {
+   "proposalId": "chinook_playlist_track.PlaylistId__northwind_orders.OrderID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "PlaylistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_orders",
+    "column": "OrderID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 1,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 1,
+       "maxRowsPerKey": 20
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 1
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_playlist_track.PlaylistId__northwind_products.ProductID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "PlaylistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_products",
+    "column": "ProductID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 1,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 1,
+       "maxRowsPerKey": 20
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 1
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_playlist_track.TrackId__northwind_orders.OrderID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "TrackId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_orders",
+    "column": "OrderID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 20,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 20,
+       "maxRowsPerKey": 1
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 20
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "UNIQUE_IN_SAMPLE",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_playlist_track.TrackId__northwind_products.ProductID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "TrackId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_products",
+    "column": "ProductID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "LOW",
+      "matched": 3,
+      "probed": 20,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "LOW_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 20,
+       "maxRowsPerKey": 1
+      },
+      "to": {
+       "rows": 3,
+       "distinctKeys": 3,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 17
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "UNIQUE_IN_SAMPLE",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "northwind_order_details.OrderID__chinook_artist.ArtistId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "OrderID"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_artist",
+    "column": "ArtistId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 7,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 7,
+       "maxRowsPerKey": 3
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 7
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "SWAPPED_TARGET_UNIQUE"
+   }
+  },
+  {
+   "proposalId": "northwind_order_details.ProductID__chinook_artist.ArtistId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "ProductID"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_artist",
+    "column": "ArtistId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "LOW",
+      "matched": 2,
+      "probed": 18,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "LOW_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 18,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 2,
+       "distinctKeys": 2,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 16
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": true,
+    "orientation": "SWAPPED_TARGET_UNIQUE"
+   }
+  },
+  {
+   "proposalId": "chinook_album.AlbumId__chinook_playlist_track.TrackId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "AlbumId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "TrackId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "HIGH",
+      "matched": 20,
+      "probed": 20,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": false,
+      "reasons": []
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 20,
+       "maxRowsPerKey": 1
+      },
+      "to": {
+       "rows": 20,
+       "distinctKeys": 20,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "NO_VIOLATION_IN_SAMPLE",
+       "missingCount": 0
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "UNIQUE_IN_SAMPLE",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": false,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_album.ArtistId__chinook_playlist_track.TrackId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "TrackId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "HIGH",
+      "matched": 15,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": false,
+      "reasons": []
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 15,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "NO_VIOLATION_IN_SAMPLE",
+       "missingCount": 0
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": false,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_artist.ArtistId__chinook_playlist_track.TrackId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_artist",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "TrackId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "HIGH",
+      "matched": 15,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": false,
+      "reasons": []
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 15,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 1
+      },
+      "to": {
+       "rows": 15,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "NO_VIOLATION_IN_SAMPLE",
+       "missingCount": 0
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "UNIQUE_IN_SAMPLE",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": false,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_playlist_track.PlaylistId__chinook_album.AlbumId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "PlaylistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "AlbumId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "HIGH",
+      "matched": 1,
+      "probed": 1,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": false,
+      "reasons": []
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 1,
+       "maxRowsPerKey": 20
+      },
+      "to": {
+       "rows": 1,
+       "distinctKeys": 1,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "NO_VIOLATION_IN_SAMPLE",
+       "missingCount": 0
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": false,
+    "orientation": "SWAPPED_TARGET_UNIQUE"
+   }
+  },
+  {
+   "proposalId": "northwind_order_details.OrderID__chinook_album.AlbumId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "OrderID"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "AlbumId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 7,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 7,
+       "maxRowsPerKey": 3
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 7
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": false,
+    "orientation": "SWAPPED_TARGET_UNIQUE"
+   }
+  },
+  {
+   "proposalId": "northwind_order_details.OrderID__chinook_playlist_track.TrackId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "OrderID"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "TrackId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 7,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 7,
+       "maxRowsPerKey": 3
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 7
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": false,
+    "orientation": "SWAPPED_TARGET_UNIQUE"
+   }
+  },
+  {
+   "proposalId": "northwind_order_details.ProductID__chinook_album.AlbumId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "ProductID"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "AlbumId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "LOW",
+      "matched": 3,
+      "probed": 18,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "LOW_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 18,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 3,
+       "distinctKeys": 3,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 15
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": false,
+    "orientation": "SWAPPED_TARGET_UNIQUE"
+   }
+  },
+  {
+   "proposalId": "northwind_order_details.ProductID__chinook_playlist_track.TrackId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "ProductID"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "TrackId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "LOW",
+      "matched": 3,
+      "probed": 18,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "LOW_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 18,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 3,
+       "distinctKeys": 3,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 15
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_CANDIDATE",
+    "targetDeclaredKey": false,
+    "orientation": "SWAPPED_TARGET_UNIQUE"
+   }
+  },
+  {
+   "proposalId": "chinook_album.ArtistId__chinook_playlist_track.PlaylistId",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "PlaylistId"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "LOW",
+      "matched": 1,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "LOW_COVERAGE",
+       "TARGET_NOT_UNIQUE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 20,
+       "distinctKeys": 1,
+       "maxRowsPerKey": 20
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "UNKNOWN",
+       "missingCount": 14
+      },
+      "targetUniqueness": {
+       "status": "DUPLICATES_OBSERVED",
+       "duplicateKeyCount": 1
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "DUPLICATES_OBSERVED",
+    "rankClass": "BOTH_SIDES_DUPLICATED",
+    "targetDeclaredKey": false,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_album.ArtistId__northwind_order_details.OrderID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "OrderID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 15
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "DUPLICATES_OBSERVED",
+    "rankClass": "BOTH_SIDES_DUPLICATED",
+    "targetDeclaredKey": false,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_album.ArtistId__northwind_order_details.ProductID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_album",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "ProductID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "LOW",
+      "matched": 2,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "LOW_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 2
+      },
+      "to": {
+       "rows": 2,
+       "distinctKeys": 2,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 13
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "DUPLICATES_OBSERVED",
+    "rankClass": "BOTH_SIDES_DUPLICATED",
+    "targetDeclaredKey": false,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_artist.ArtistId__northwind_orders.OrderID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_artist",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_orders",
+    "column": "OrderID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE",
+       "KEY_TO_KEY"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 15,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 1
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 15
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "UNIQUE_IN_SAMPLE",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_TO_KEY",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_artist.ArtistId__northwind_products.ProductID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_artist",
+    "column": "ArtistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_products",
+    "column": "ProductID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "LOW",
+      "matched": 2,
+      "probed": 15,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "LOW_COVERAGE",
+       "KEY_TO_KEY"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 15,
+       "distinctKeys": 15,
+       "maxRowsPerKey": 1
+      },
+      "to": {
+       "rows": 2,
+       "distinctKeys": 2,
+       "maxRowsPerKey": 1
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 13
+      },
+      "targetUniqueness": {
+       "status": "NO_DUPLICATES_IN_SAMPLE",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "UNIQUE_IN_SAMPLE",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_TO_KEY",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_playlist_track.PlaylistId__northwind_order_details.OrderID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "PlaylistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "OrderID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 1,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 1,
+       "maxRowsPerKey": 20
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 1
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "DUPLICATES_OBSERVED",
+    "rankClass": "BOTH_SIDES_DUPLICATED",
+    "targetDeclaredKey": false,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "chinook_playlist_track.PlaylistId__northwind_order_details.ProductID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "chinook_playlist_track",
+    "column": "PlaylistId"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_order_details",
+    "column": "ProductID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 1,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 20,
+       "distinctKeys": 1,
+       "maxRowsPerKey": 20
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 1
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "DUPLICATES_OBSERVED",
+    "to": "DUPLICATES_OBSERVED",
+    "rankClass": "BOTH_SIDES_DUPLICATED",
+    "targetDeclaredKey": false,
+    "orientation": "AS_PROPOSED"
+   }
+  },
+  {
+   "proposalId": "northwind_orders.OrderID__northwind_products.ProductID",
+   "from": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_orders",
+    "column": "OrderID"
+   },
+   "to": {
+    "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+    "table": "northwind_products",
+    "column": "ProductID"
+   },
+   "coverageProbe": {
+    "status": "EXECUTED",
+    "diagnostic": {
+     "coverage": {
+      "level": "NONE",
+      "matched": 0,
+      "probed": 7,
+      "threshold": 0.8
+     },
+     "labels": {
+      "signal": "NOT_COMPARABLE"
+     },
+     "suspect": {
+      "value": true,
+      "reasons": [
+       "NO_COVERAGE",
+       "KEY_TO_KEY"
+      ]
+     },
+     "multiplicity": {
+      "from": {
+       "rows": 7,
+       "distinctKeys": 7,
+       "maxRowsPerKey": 1
+      },
+      "to": {
+       "rows": 0,
+       "distinctKeys": 0,
+       "maxRowsPerKey": 0
+      }
+     },
+     "keyRules": {
+      "inclusion": {
+       "status": "VIOLATED_IN_SAMPLE",
+       "missingCount": 7
+      },
+      "targetUniqueness": {
+       "status": "UNKNOWN",
+       "duplicateKeyCount": 0
+      }
+     }
+    }
+   },
+   "structure": {
+    "from": "UNIQUE_IN_SAMPLE",
+    "to": "UNIQUE_IN_SAMPLE",
+    "rankClass": "KEY_TO_KEY",
+    "targetDeclaredKey": true,
+    "orientation": "AS_PROPOSED"
+   }
+  }
+ ],
+ "responses": [
+  {
+   "relationId": "chinook_album.ArtistId__chinook_artist.ArtistId",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 400,
+   "responseText": "{\"relationId\":\"chinook_album.ArtistId__chinook_artist.ArtistId\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERS"
+  },
+  {
+   "relationId": "chinook_album.ArtistId__chinook_artist.ArtistId",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 248,
+   "responseText": "{\"relationId\":\"chinook_album.ArtistId__chinook_artist.ArtistId\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"ArtistId name matches target table/column exactly; full inclusion with no violations, target unique in sample. Cross-domain siblings (northwind) show weak/no coverage, confirming this is the true entity match, not a homonym. Bounded sample, but evidence is coherent and discriminating.\"}"
+  },
+  {
+   "relationId": "chinook_album.ArtistId__chinook_artist.ArtistId",
+   "stage": "ATTACK",
+   "slot": 0,
+   "actor": "adversary",
+   "outputTokens": 400,
+   "responseText": "```json\n{\n  \"relationId\": \"chinook_album.ArtistId__chinook_artist.ArtistId\",\n  \"attacks\": [\n    {\n      \"family\": \"HOMONYM\",\n      \"severity\": \"none\",\n      \"recommend\": \"keep\",\n      \"argument\": \"Source column name 'ArtistId' matches target table 'chinook_artist' and column 'ArtistId' exactly, indicating same entity. Cross-domain siblings to northwind tables show weak coverage (0/15, 2/15), while same-domain match shows 15/15. Name and coverage pattern discriminate against homonym.\",\n      \"evidenceRefs\": []\n    },\n    {\n      \"family\": \"INSUFFICIENT_KEYS\",\n      \"severity\": \"none\",\n      \"recommend\": \"keep\",\n      \"argument\": \"15 distinct keys exceeds minDistinctKeys threshold of 3. Coverage shows 15/15 matched, providing adequate diversity for the bounded sample. No uniformity issues evident in key distribution.\",\n      \"evidenceRefs\": []\n    },\n    {\n      \"family\": \"SIBLING\",\n      \"severity\": \"blocking\",\n      \"recommend\": \"defer\",\n      \"argument\": \"Sibling chinook_album.ArtistId__chinook_playlist_track.TrackId shows identical 15/15 coverage with same source column. This creates ambiguity: the source keys match both chinook_artist.ArtistId and chinook_playlist_track.TrackId equally well in the bounded sample. Without additional discrimination, cannot definitively prefer one over the other.\",\n      \"evidenceRefs\": [\"coverage.matched\", \"siblings[5].coverage.matched\", \"siblings[5"
+  },
+  {
+   "relationId": "northwind_order_details.OrderID__northwind_orders.OrderID",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 240,
+   "responseText": "{\"relationId\":\"northwind_order_details.OrderID__northwind_orders.OrderID\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"OrderID names match exactly between source and target; full inclusion, no duplicates in target, same-domain tables. Cross-domain chinook siblings sharing this target all show 0 coverage, confirming this is the genuine entity match rather than a coincidental key overlap.\"}"
+  },
+  {
+   "relationId": "northwind_order_details.OrderID__northwind_orders.OrderID",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 239,
+   "responseText": "{\"relationId\":\"northwind_order_details.OrderID__northwind_orders.OrderID\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"OrderID matches exactly in name and entity across same-domain tables; full inclusion, target unique, no duplicates. Cross-domain chinook siblings sharing this target all show 0 coverage, discriminating against homonym and supporting this as the genuine relation.\"}"
+  },
+  {
+   "relationId": "northwind_order_details.OrderID__northwind_orders.OrderID",
+   "stage": "ATTACK",
+   "slot": 0,
+   "actor": "adversary",
+   "outputTokens": 400,
+   "responseText": "Let me decompose this task:\n1. Review the evaluations for the relation northwind_order_details.OrderID__northwind_orders.OrderID\n2. Attack each evaluation from four families: HOMONYM, INSUFFICIENT_KEYS, SIBLING, INVERTED_ORIENTATION\n3. For each family, determine severity and recommendation with evidence\n\nLet me examine the packet systematically:\n\n**Source & Target:**\n- Source: northwind_order_details.OrderID\n- Target: northwind_orders.OrderID\n- Both in northwind domain\n- Column names identical: \"OrderID\"\n\n**Coverage:**\n- matched: 7/7 (100%)\n- HIGH level\n\n**Keys:**\n- Source: 20 rows, 7 distinct keys, max 3 rows per key (duplicates observed)\n- Target: 7 rows, 7 distinct keys, max 1 row per key (unique in sample)\n- minDistinctKeys: 3 (we have 7, so OK)\n\n**Key Rules:**\n- inclusion: NO_VIOLATION_IN_SAMPLE (0 missing)\n- targetUniqueness: NO_DUPLICATES_IN_SAMPLE (0 duplicates)\n\n**Structure:**\n- sourceShape: DUPLICATES_OBSERVED\n- targetShape: UNIQUE_IN_SAMPLE\n- rankClass: KEY_CANDIDATE\n- targetDeclaredKey: true\n\n**Orientation:** AS_PROPOSED\n\n**Siblings:**\nAll cross-domain (chinook to northwind_orders):\n1. chinook_album.AlbumId: 0/20 coverage\n2. chinook_album.ArtistId: 0/15 coverage\n3. chinook_"
+  },
+  {
+   "relationId": "northwind_order_details.ProductID__northwind_products.ProductID",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 242,
+   "responseText": "{\"relationId\":\"northwind_order_details.ProductID__northwind_products.ProductID\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"ProductID matches exactly in name and entity between same-domain northwind tables; full inclusion, target unique, no violations. Cross-domain chinook siblings sharing this target show weak coverage (0-3/15-20), discriminating against homonym and confirming genuine relation.\"}"
+  },
+  {
+   "relationId": "northwind_order_details.ProductID__northwind_products.ProductID",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 242,
+   "responseText": "{\"relationId\":\"northwind_order_details.ProductID__northwind_products.ProductID\",\"decision\":\"accept\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MATCH\",\"KEY_MEMBERSHIP_COMPLETE\",\"TARGET_UNIQUE_IN_SAMPLE\",\"ORIENTATION_CONSISTENT\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"ProductID matches exactly in name and entity across same-domain northwind tables; full inclusion, target unique, no violations. Cross-domain chinook siblings sharing this target show weak coverage (0-3/15-20), discriminating against homonym and confirming genuine relation.\"}"
+  },
+  {
+   "relationId": "northwind_order_details.ProductID__northwind_products.ProductID",
+   "stage": "ATTACK",
+   "slot": 0,
+   "actor": "adversary",
+   "outputTokens": 400,
+   "responseText": "```json\n{\n  \"relationId\": \"northwind_order_details.ProductID__northwind_products.ProductID\",\n  \"attacks\": [\n    {\n      \"family\": \"HOMONYM\",\n      \"severity\": \"none\",\n      \"recommend\": \"keep\",\n      \"argument\": \"Source column 'ProductID' and target table 'northwind_products' both refer to products in the same northwind domain. Column names match exactly. Cross-domain siblings show weak coverage (0-3 matches from 15-20 probes) while this relation shows 18/18, strongly discriminating against homonym hypothesis.\",\n      \"evidenceRefs\": []\n    },\n    {\n      \"family\": \"INSUFFICIENT_KEYS\",\n      \"severity\": \"none\",\n      \"recommend\": \"keep\",\n      \"argument\": \"18 distinct keys substantially exceeds minDistinctKeys threshold of 3. maxRowsPerKey of 2 in source shows minimal duplication. Key distribution appears adequate for bounded sample analysis with no uniformity concerns evident.\",\n      \"evidenceRefs\": []\n    },\n    {\n      \"family\": \"SIBLING\",\n      \"severity\": \"none\",\n      \"recommend\": \"keep\",\n      \"argument\": \"All siblings are cross-domain (chinook to northwind). Target-sharing siblings show dramatically weaker coverage: 0/1, 2/15, 3/20, 3/20 versus this relation's 18/18. Source-sharing siblings also weak: 2/18, 3/18. No same-domain competitor exists. Coverage differential strongly favors this relation.\",\n      \"evidenceRefs\": []\n    },\n    {\n      \"family\": \"INVERTED_ORIENTATION\",\n      "
+  },
+  {
+   "relationId": "chinook_playlist_track.PlaylistId__chinook_artist.ArtistId",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 400,
+   "responseText": "{\"relationId\":\"chinook_playlist_track.PlaylistId__chinook_artist.ArtistId\",\"decision\":\"reject\",\"confidence\":\"high\",\""
+  },
+  {
+   "relationId": "chinook_playlist_track.PlaylistId__chinook_artist.ArtistId",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 246,
+   "responseText": "{\"relationId\":\"chinook_playlist_track.PlaylistId__chinook_artist.ArtistId\",\"decision\":\"reject\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MISMATCH\",\"INSUFFICIENT_DISTINCT_KEYS\",\"SIBLING_BETTER_MATCH\",\"HOMONYM_RISK\"],\"rationale\":\"PlaylistId names a playlist entity, not an artist; 1 distinct source key cannot establish a real FK relationship. The sibling chinook_album.ArtistId__chinook_artist.ArtistId is the true entity match with proper name alignment and broader coverage. This is a coincidental small-integer overlap, not a genuine relation.\"}"
+  },
+  {
+   "relationId": "chinook_album.AlbumId__chinook_playlist_track.TrackId",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 400,
+   "responseText": "{\"relationId\":\"chinook_album.AlbumId__chinook_playlist_track.TrackId\",\"decision\":\"reject\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MISMATCH\",\"HOMONYM_RISK\",\"SIBLING_BETTER_MATCH\",\"EVIDENCE_NOT_DISCRIMINATING\"],\"rationale\":\"AlbumId names an album entity, not a track; target column TrackId refers"
+  },
+  {
+   "relationId": "chinook_album.AlbumId__chinook_playlist_track.TrackId",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 400,
+   "responseText": "{\"relationId\":\"chinook_album.AlbumId__chinook_playlist_track.TrackId\",\"decision\":\"reject\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MISMATCH\",\"HOMONYM_RISK\",\"EVIDENCE_NOT_DISCRIMINATING\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"AlbumId names an album entity, not a track; target TrackId belongs to a different entity. Siblings sharing TRACKET (ArtistId variants) show identical 15/15 coverage, indicating coincidental small-integer overlap rather than a genuine FK. No semant"
+  },
+  {
+   "relationId": "chinook_album.ArtistId__chinook_playlist_track.TrackId",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 257,
+   "responseText": "{\"relationId\":\"chinook_album.ArtistId__chinook_playlist_track.TrackId\",\"decision\":\"reject\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MISMATCH\",\"HOMONYM_RISK\",\"EVIDENCE_NOT_DISCRIMINATING\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"ArtistId names an artist entity, not a track; target TrackId belongs to playlist_track. Sibling chinook_album.ArtistId__chinook_artist.ArtistId is the true entity match with identical coverage, while other TrackId-targeting siblings (AlbumId, ArtistId) show same coincidental small-integer overlap. No semantic link between artist and track identity.\"}"
+  },
+  {
+   "relationId": "chinook_album.ArtistId__chinook_playlist_track.TrackId",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 238,
+   "responseText": "{\"relationId\":\"chinook_album.ArtistId__chinook_playlist_track.TrackId\",\"decision\":\"reject\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MISMATCH\",\"HOMONYM_RISK\",\"EVIDENCE_NOT_DISCRIMINATING\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"ArtistId denotes an artist entity, not a track; target TrackId belongs to playlist_track. Sibling chinook_album.ArtistId__chinook_artist.ArtistId shares identical 15/15 coverage and is the true entity match. Overlap here is coincidental small-integer key collision, not a semantic link.\"}"
+  },
+  {
+   "relationId": "chinook_artist.ArtistId__chinook_playlist_track.TrackId",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 235,
+   "responseText": "{\"relationId\":\"chinook_artist.ArtistId__chinook_playlist_track.TrackId\",\"decision\":\"reject\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MISMATCH\",\"HOMONYM_RISK\",\"EVIDENCE_NOT_DISCRIMINATING\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"ArtistId names an artist entity, not a track; target TrackId belongs to playlist_track. Sibling chinook_album.ArtistId__chinook_artist.ArtistId is the true semantic link. Full coverage here is coincidental small-integer overlap, not evidence of a genuine FK to tracks.\"}"
+  },
+  {
+   "relationId": "chinook_artist.ArtistId__chinook_playlist_track.TrackId",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 234,
+   "responseText": "{\"relationId\":\"chinook_artist.ArtistId__chinook_playlist_track.TrackId\",\"decision\":\"reject\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MISMATCH\",\"HOMONYM_RISK\",\"EVIDENCE_NOT_DISCRIMINATING\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"ArtistId identifies an artist, not a track; target TrackId belongs to a different entity. Sibling chinook_album.ArtistId__chinook_artist.ArtistId is the genuine semantic link. Identical 15/15 coverage here reflects coincidental small-integer overlap, not a real FK.\"}"
+  },
+  {
+   "relationId": "chinook_playlist_track.PlaylistId__chinook_album.AlbumId",
+   "stage": "EVALUATION",
+   "slot": 0,
+   "actor": "judge-a",
+   "outputTokens": 367,
+   "responseText": "{\"relationId\":\"chinook_playlist_track.PlaylistId__chinook_album.AlbumId\",\"decision\":\"reject\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MISMATCH\",\"INSUFFICIENT_DISTINCT_KEYS\",\"HOMONYM_RISK\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"PlaylistId denotes a playlist entity, not an album; target is AlbumId. Only 1 distinct source key and 1 target row make this a trivial coincidental match, not a genuine FK. The true album relation is chinook_album.ArtistId__chinook_artist.ArtistId, confirming this is a homonym artifact.\"}"
+  },
+  {
+   "relationId": "chinook_playlist_track.PlaylistId__chinook_album.AlbumId",
+   "stage": "EVALUATION",
+   "slot": 1,
+   "actor": "judge-b",
+   "outputTokens": 243,
+   "responseText": "{\"relationId\":\"chinook_playlist_track.PlaylistId__chinook_album.AlbumId\",\"decision\":\"reject\",\"confidence\":\"high\",\"reasonCodes\":[\"NAME_ENTITY_MISMATCH\",\"INSUFFICIENT_DISTINCT_KEYS\",\"HOMONYM_RISK\",\"SIBLING_BETTER_MATCH\"],\"rationale\":\"PlaylistId refers to a playlist entity, not an album; target is AlbumId. Only 1 distinct source key and 1 target row is a trivial coincidental match, not evidence of a real FK. The true album relation is chinook_album.ArtistId__chinook_artist.ArtistId, confirming this is a homonym artifact.\"}"
+  }
+ ]
+}

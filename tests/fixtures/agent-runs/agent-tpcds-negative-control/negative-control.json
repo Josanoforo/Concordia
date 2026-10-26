@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "kind": "ACT3_NEGATIVE_CONTROL",
+  "label": "LIVE_READ_ONLY",
+  "universe": "TPCDS",
+  "sourceRun": "agent-tpcds-live-04",
+  "runId": "agent-tpcds-live-04",
+  "sqlSent": 6,
+  "sqlCeiling": 6,
+  "contract": "SYNTHETIC REVIEWED contract per decoy, hypothetical; not a human review and not part of the approved set",
+  "note": "OUT_OF_CONTRACT_ONLY: the policy alone would sustain the decoy (key membership); only the human contract set keeps it out. REJECTED_BY_EVIDENCE: the evidence itself rejects it.",
+  "decoys": [
+    {
+      "id": "store_sales.ss_store_sk__web_site.web_site_sk",
+      "from": "store_sales.ss_store_sk",
+      "to": "web_site.web_site_sk",
+      "inContract": false,
+      "sql": [
+        {
+          "side": "SOURCE",
+          "sql": "SELECT DISTINCT ss_store_sk FROM (SELECT ss_item_sk, ss_ticket_number, ss_sold_date_sk, ss_sold_time_sk, ss_customer_sk, ss_cdemo_sk, ss_hdemo_sk, ss_addr_sk, ss_store_sk, ss_promo_sk FROM TPCDS_DB.store_sales) concordia_source WHERE ss_store_sk IN ('1', '10', '7') LIMIT 4",
+          "rows": 3,
+          "distinctKeys": 3,
+          "truncated": false
+        },
+        {
+          "side": "TARGET",
+          "sql": "SELECT web_site_sk, web_name FROM (SELECT web_site_sk, web_site_id, web_name, web_open_date_sk, web_close_date_sk FROM TPCDS_DB.web_site) concordia_source WHERE web_site_sk IN ('1', '10', '7') LIMIT 50",
+          "rows": 3,
+          "distinctKeys": 3,
+          "truncated": false
+        }
+      ],
+      "hypotheticalVerdict": "SOSTENIDA",
+      "reasonCodes": [
+        "bounded_sample_key_membership"
+      ],
+      "outcome": "OUT_OF_CONTRACT_ONLY"
+    },
+    {
+      "id": "inventory.inv_warehouse_sk__ship_mode.sm_ship_mode_sk",
+      "from": "inventory.inv_warehouse_sk",
+      "to": "ship_mode.sm_ship_mode_sk",
+      "inContract": false,
+      "sql": [
+        {
+          "side": "SOURCE",
+          "sql": "SELECT DISTINCT inv_warehouse_sk FROM (SELECT inv_date_sk, inv_item_sk, inv_warehouse_sk FROM TPCDS_DB.inventory) concordia_source WHERE inv_warehouse_sk IN ('1') LIMIT 2",
+          "rows": 1,
+          "distinctKeys": 1,
+          "truncated": false
+        },
+        {
+          "side": "TARGET",
+          "sql": "SELECT sm_ship_mode_sk, sm_type FROM (SELECT sm_ship_mode_sk, sm_ship_mode_id, sm_type FROM TPCDS_DB.ship_mode) concordia_source WHERE sm_ship_mode_sk IN ('1') LIMIT 50",
+          "rows": 1,
+          "distinctKeys": 1,
+          "truncated": false
+        }
+      ],
+      "hypotheticalVerdict": "INDETERMINADA",
+      "reasonCodes": [
+        "insufficient_distinct_sample_keys"
+      ],
+      "outcome": "REJECTED_BY_EVIDENCE"
+    },
+    {
+      "id": "store_sales.ss_promo_sk__reason.r_reason_sk",
+      "from": "store_sales.ss_promo_sk",
+      "to": "reason.r_reason_sk",
+      "inContract": false,
+      "sql": [
+        {
+          "side": "SOURCE",
+          "sql": "SELECT DISTINCT ss_promo_sk FROM (SELECT ss_item_sk, ss_ticket_number, ss_sold_date_sk, ss_sold_time_sk, ss_customer_sk, ss_cdemo_sk, ss_hdemo_sk, ss_addr_sk, ss_store_sk, ss_promo_sk FROM TPCDS_DB.store_sales) concordia_source WHERE ss_promo_sk IN ('72', '147', '298', '254', '272', '94', '137', '236', '62', '227', '173', '290', '87', '127', '238', '11', '278', '188', '221') LIMIT 20",
+          "rows": 19,
+          "distinctKeys": 19,
+          "truncated": false
+        },
+        {
+          "side": "TARGET",
+          "sql": "SELECT r_reason_sk, r_reason_desc FROM (SELECT r_reason_sk, r_reason_id, r_reason_desc FROM TPCDS_DB.reason) concordia_source WHERE r_reason_sk IN ('72', '147', '298', '254', '272', '94', '137', '236', '62', '227', '173', '290', '87', '127', '238', '11', '278', '188', '221') LIMIT 50",
+          "rows": 1,
+          "distinctKeys": 1,
+          "truncated": false
+        }
+      ],
+      "hypotheticalVerdict": "ENGAÑOSA",
+      "reasonCodes": [
+        "observed_key_missing_from_referenced_sample"
+      ],
+      "outcome": "REJECTED_BY_EVIDENCE"
+    }
+  ],
+  "outOfContractOnly": [
+    "store_sales.ss_store_sk__web_site.web_site_sk"
+  ],
+  "rejectedByEvidence": [
+    "inventory.inv_warehouse_sk__ship_mode.sm_ship_mode_sk",
+    "store_sales.ss_promo_sk__reason.r_reason_sk"
+  ]
+}

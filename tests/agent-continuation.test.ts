@@ -37,7 +37,7 @@ test('compact continuation makes exactly one decision and read, keeps earlier ev
     assert.equal(record.outcome, 'COMPLETED');
     assert.equal(chooser.seen.length, 1, 'exactly one model decision');
     assert.equal(chooser.seen[0].compact, true);
-    assert.deepEqual(chooser.seen[0].allowed, ['READ_REGION_REFERENCE', 'STOP_EXPLORATION'], 'already-read actions are not offered again');
+    assert.deepEqual(chooser.seen[0].allowed, ['READ_REGION_REFERENCE', 'READ_ORDERS_BY_REGION', 'STOP_EXPLORATION'], 'already-read actions are not offered again');
     assert.deepEqual(record.newActions.map((item: any) => item.action), ['READ_REGION_REFERENCE']);
     assert.match(record.newActions[0].sql ?? '', /^SELECT .* FROM AGENT_FIXTURE\.regions WHERE region_code IN \(.*\) LIMIT 50$/);
     assert.deepEqual(Object.keys(record.reads).sort(), ['READ_CUSTOMER_PROFILE', 'READ_REGION_REFERENCE']);
@@ -99,4 +99,15 @@ test('a transport failure of the model call is continuable once, like an invalid
     await runAgent('AGENTFX', other, { client: client(), chooser: new Script(['READ_CUSTOMER_PROFILE', 'STOP_EXPLORATION']), executionMode: 'LIVE', dataOrigin: 'SYNTHETIC', critic: false });
     await assert.rejects(() => continueAgentExploration('AGENTFX', other, { client: client(), chooser: new Script([]) }), /AGENT_RUN_NOT_CONTINUABLE/);
   } finally { for (const id of [runId, other]) fs.rmSync(runDir(id), { recursive: true, force: true }); }
+});
+
+test('a DEGRADED_NO_MODEL run (invalid model response, model requested) is continuable; one with a valid last decision is still refused', async () => {
+  const runId = 'agent-agentfx-continuation-degraded-1';
+  fs.rmSync(runDir(runId), { recursive: true, force: true });
+  try {
+    const report = await runAgent('AGENTFX', runId, { client: client(), chooser: new Script(['INVALID']), executionMode: 'LIVE', dataOrigin: 'SYNTHETIC', critic: false, modelRequested: true } as any);
+    assert.equal(report.status, 'DEGRADED_NO_MODEL');
+    const record = await continueAgentExploration('AGENTFX', runId, { client: client(), chooser: new Script(['READ_CUSTOMER_PROFILE']) });
+    assert.equal(record.outcome, 'COMPLETED');
+  } finally { fs.rmSync(runDir(runId), { recursive: true, force: true }); }
 });

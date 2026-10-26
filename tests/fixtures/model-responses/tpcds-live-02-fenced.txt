@@ -1,0 +1,6 @@
+```json
+{
+  "action": "PROFILE_SS_ITEM_SK",
+  "reason": "store_sales.ss_item_sk shows values (538, 17608, 12103) that fall within observed item key range (1-39). High-confidence COMA proposal (score 0.88) and standard TPC-DS schema suggest this is the item foreign key. Profiling will confirm the relationship using observed item keys."
+}
+```

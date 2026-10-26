@@ -21,6 +21,19 @@ Everything is read-only. Output: `.concordia/agent-runs/<runId>/engine-run.json`
 - `npm run agent -- continue --universe <id> --run-id <run>`: the single compact retry of an exploration that stopped on an invalid model response or a failed model call. One generation, never automatic.
 Every agent command prints its usage with `--help`, and the same usage appears under its errors.
 
+## Model review
+Universes can declare `reviewMode: MODEL_ADVERSARIAL`, so candidate relations are reviewed by model judges plus an adversarial pass instead of waiting for a human contract; approvals are sealed `MODEL_REVIEWED`, never human. How it works and its limits: [MODEL_REVIEW.md](MODEL_REVIEW.md). Live results: [NWCH_BLIND_CHECK.md](NWCH_BLIND_CHECK.md) and [TPCDS_FULL_RUN_R10.md](TPCDS_FULL_RUN_R10.md).
+
+## Run status
+Run status has a core and an auxiliary side (`src/agent/run-status.ts`, `classifyRunStatus(report)`, a pure function that also classifies a saved `engine-run.json`). Core phases: discovery, post-COMA probing and coverage, candidate review, memory. Auxiliary: exploration (and the secondary judge), critic (and critic assist), informational budget.
+
+- `COMPLETED`: every phase complete.
+- `COMPLETED_WITH_WARNINGS`: core complete, an auxiliary phase degraded (for example a non-JSON or network failure during exploration while the review ran with the model). The CLI exits 0 and prints `NOTE: warnings(<phase>:<code>,...)`.
+- `DEGRADED`: a core phase degraded (COMA failed, the review failed or was unhealthy, or memory ERROR/quarantine with `--memory`). Exit 1.
+- `DEGRADED_NO_MODEL`: the review needed the model and did not get it. Exit 1.
+
+`engine-run.json` carries `phaseStatus` (per phase: role core or auxiliary, state COMPLETE, DEGRADED, SKIPPED or NOT_APPLICABLE) and `statusExplanation`; `degradations[]` is unchanged.
+
 ## Reports and comparison
 - `node scripts/run-tsx.mjs src/cli.ts agent-report --run-id <run>` writes `report.md` and `report.html` for a run: verdicts with a per-verdict "why" view (rule, strategy, evidence), probe selection, post-COMA coverage diagnostics, artifacts, per-stage metrics with denominators, efficiency (tokens per decision, caps, SQL per relation, receipts), and, when memory is on, claims, conflicts and the human review queue. Invalid model responses link to their line in `adaptive-decisions.jsonl`.
 - `node scripts/run-tsx.mjs src/cli.ts agent-compare --run-a <run> --run-b <run>` writes a side-by-side comparison of two runs, with the same stage and efficiency metrics aligned.

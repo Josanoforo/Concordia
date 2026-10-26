@@ -32,7 +32,7 @@ export function zetarisSourceQuery(spec: ZetarisTableSpec): string {
 /** Executes only the request's validated projection, key filter, and LIMIT. */
 export class ZetarisProbeAdapter implements ProbeAdapter {
   readonly adapterId = 'zetaris';
-  constructor(private readonly tables: Readonly<Record<string, ZetarisTableSpec>>, private readonly client: Pick<Zetaris, 'runSql'>) {}
+  constructor(private readonly tables: Readonly<Record<string, ZetarisTableSpec>>, private readonly client: Pick<Zetaris, 'runSql'>, private readonly limitCeiling?: number) {}
 
   async read(request: ProbeReadRequest): Promise<ProbeReadResult> {
     const match = Object.entries(this.tables).find(([table, spec]) => `${spec.db}.${table}` === request.objectId);
@@ -42,10 +42,14 @@ export class ZetarisProbeAdapter implements ProbeAdapter {
     if (!request.columns.length || request.columns.some(column => !allowed.has(column))) throw new SafeError('PROBE_COLUMN_OUTSIDE_CONFIG');
     if (!request.filter || !request.keyColumns.includes(request.filter.column) || !allowed.has(request.filter.column)) throw new SafeError('PROBE_KEY_FILTER_REQUIRED');
     if (!request.filter.values.length || request.filter.values.length > 50) throw new SafeError('INVALID_PROBE_KEYS');
+    const distinct = request.readMode === 'DISTINCT_KEYS';
+    if (distinct && (request.columns.length !== 1 || request.columns[0] !== request.filter.column)) throw new SafeError('PROBE_DISTINCT_KEYS_PROJECTION_INVALID');
     const projection = request.columns.map(identifier).join(', ');
     const where = ` WHERE ${identifier(request.filter.column)} IN (${quotedValues([...request.filter.values])})`;
-    const sql = `SELECT ${projection} FROM ${zetarisSourceQuery(spec)}${where} LIMIT ${request.limit}`;
-    const result = await this.client.runSql(sql, request.limit);
+    // Distinct keys cannot exceed the K filter values, so K+1 rows only ever ask for one row more than possible; `truncated` below is still measured against the plan limit.
+    const rowLimit = distinct ? Math.min(request.filter.values.length + 1, request.limit) : request.limit;
+    const sql = `SELECT ${distinct ? 'DISTINCT ' : ''}${projection} FROM ${zetarisSourceQuery(spec)}${where} LIMIT ${rowLimit}`;
+    const result = await (this.client.runSql as any)(sql, request.limit, this.limitCeiling && this.limitCeiling > 50 ? { limitCeiling: this.limitCeiling } : undefined);
     return {
       tuples: result.rows,
       requestId: result.requestId,

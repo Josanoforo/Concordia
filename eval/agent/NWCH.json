@@ -1,0 +1,395 @@
+{
+  "alias": "NWCH",
+  "basis": "SYNTHETIC_FIXTURE shaped like the six key-only tables of Northwind and Chinook; the three true foreign keys hold by construction (order_details.OrderID -> orders, order_details.ProductID -> products, album.ArtistId -> artist). Every key lives in 1..8, so unrelated keys overlap across the schemas (OrderID, ProductID, ArtistId and AlbumId are homonyms by value), and playlist_track.PlaylistId/TrackId have no parent table. The scripted COMA answers propose the true edges, cross-schema homonym pairs and the orphan columns.",
+  "chooserScript": [
+    "READ_ORDER_KEYS",
+    "PROFILE_NORTHWIND_ORDERS_ORDERID",
+    "PROFILE_CHINOOK_ALBUM_ARTISTID"
+  ],
+  "tables": {
+    "northwind_orders": {
+      "columns": [
+        {
+          "name": "OrderID",
+          "type": "integer"
+        }
+      ],
+      "rows": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    "northwind_order_details": {
+      "columns": [
+        {
+          "name": "OrderID",
+          "type": "integer"
+        },
+        {
+          "name": "ProductID",
+          "type": "integer"
+        }
+      ],
+      "rows": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          2,
+          3
+        ],
+        [
+          3,
+          4
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          6
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          8,
+          1
+        ],
+        [
+          8,
+          2
+        ]
+      ]
+    },
+    "northwind_products": {
+      "columns": [
+        {
+          "name": "ProductID",
+          "type": "integer"
+        }
+      ],
+      "rows": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    "chinook_artist": {
+      "columns": [
+        {
+          "name": "ArtistId",
+          "type": "integer"
+        }
+      ],
+      "rows": [
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ],
+        [
+          5
+        ],
+        [
+          6
+        ],
+        [
+          7
+        ],
+        [
+          8
+        ]
+      ]
+    },
+    "chinook_album": {
+      "columns": [
+        {
+          "name": "AlbumId",
+          "type": "integer"
+        },
+        {
+          "name": "ArtistId",
+          "type": "integer"
+        }
+      ],
+      "rows": [
+        [
+          1,
+          1
+        ],
+        [
+          2,
+          1
+        ],
+        [
+          3,
+          2
+        ],
+        [
+          4,
+          3
+        ],
+        [
+          5,
+          4
+        ],
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          6
+        ],
+        [
+          8,
+          7
+        ]
+      ]
+    },
+    "chinook_playlist_track": {
+      "columns": [
+        {
+          "name": "PlaylistId",
+          "type": "integer"
+        },
+        {
+          "name": "TrackId",
+          "type": "integer"
+        }
+      ],
+      "rows": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          3
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          2,
+          4
+        ],
+        [
+          3,
+          5
+        ],
+        [
+          3,
+          6
+        ],
+        [
+          3,
+          8
+        ]
+      ]
+    }
+  },
+  "adjudications": {},
+  "comaProposals": [
+    {
+      "source": "northwind_order_details",
+      "target": "northwind_orders",
+      "sourceColumn": "OrderID",
+      "targetColumn": "OrderID",
+      "rawScore": 0.95
+    },
+    {
+      "source": "northwind_order_details",
+      "target": "northwind_products",
+      "sourceColumn": "ProductID",
+      "targetColumn": "ProductID",
+      "rawScore": 0.95
+    },
+    {
+      "source": "chinook_album",
+      "target": "chinook_artist",
+      "sourceColumn": "ArtistId",
+      "targetColumn": "ArtistId",
+      "rawScore": 0.95
+    },
+    {
+      "source": "chinook_artist",
+      "target": "northwind_orders",
+      "sourceColumn": "ArtistId",
+      "targetColumn": "OrderID",
+      "rawScore": 0.62
+    },
+    {
+      "source": "chinook_album",
+      "target": "northwind_orders",
+      "sourceColumn": "AlbumId",
+      "targetColumn": "OrderID",
+      "rawScore": 0.58
+    },
+    {
+      "source": "chinook_album",
+      "target": "northwind_orders",
+      "sourceColumn": "ArtistId",
+      "targetColumn": "OrderID",
+      "rawScore": 0.56
+    },
+    {
+      "source": "chinook_artist",
+      "target": "northwind_order_details",
+      "sourceColumn": "ArtistId",
+      "targetColumn": "OrderID",
+      "rawScore": 0.6
+    },
+    {
+      "source": "chinook_artist",
+      "target": "northwind_order_details",
+      "sourceColumn": "ArtistId",
+      "targetColumn": "ProductID",
+      "rawScore": 0.57
+    },
+    {
+      "source": "chinook_album",
+      "target": "northwind_order_details",
+      "sourceColumn": "AlbumId",
+      "targetColumn": "ProductID",
+      "rawScore": 0.6
+    },
+    {
+      "source": "chinook_album",
+      "target": "northwind_order_details",
+      "sourceColumn": "AlbumId",
+      "targetColumn": "OrderID",
+      "rawScore": 0.55
+    },
+    {
+      "source": "chinook_artist",
+      "target": "northwind_products",
+      "sourceColumn": "ArtistId",
+      "targetColumn": "ProductID",
+      "rawScore": 0.6
+    },
+    {
+      "source": "chinook_album",
+      "target": "northwind_products",
+      "sourceColumn": "AlbumId",
+      "targetColumn": "ProductID",
+      "rawScore": 0.62
+    },
+    {
+      "source": "chinook_playlist_track",
+      "target": "northwind_orders",
+      "sourceColumn": "TrackId",
+      "targetColumn": "OrderID",
+      "rawScore": 0.5
+    },
+    {
+      "source": "chinook_playlist_track",
+      "target": "northwind_order_details",
+      "sourceColumn": "PlaylistId",
+      "targetColumn": "OrderID",
+      "rawScore": 0.5
+    },
+    {
+      "source": "chinook_playlist_track",
+      "target": "northwind_order_details",
+      "sourceColumn": "TrackId",
+      "targetColumn": "ProductID",
+      "rawScore": 0.5
+    },
+    {
+      "source": "chinook_playlist_track",
+      "target": "northwind_products",
+      "sourceColumn": "TrackId",
+      "targetColumn": "ProductID",
+      "rawScore": 0.5
+    },
+    {
+      "source": "chinook_artist",
+      "target": "chinook_playlist_track",
+      "sourceColumn": "ArtistId",
+      "targetColumn": "TrackId",
+      "rawScore": 0.5
+    },
+    {
+      "source": "chinook_album",
+      "target": "chinook_playlist_track",
+      "sourceColumn": "AlbumId",
+      "targetColumn": "TrackId",
+      "rawScore": 0.5
+    },
+    {
+      "source": "chinook_album",
+      "target": "chinook_playlist_track",
+      "sourceColumn": "ArtistId",
+      "targetColumn": "PlaylistId",
+      "rawScore": 0.48
+    }
+  ]
+}

@@ -1,0 +1,1285 @@
+{
+ "label": "LIVE shapes (agent-tpcds-r10-full-live-01, pass 1, critic counterprobes reported as counterevidence_transport_or_scope_incomplete). Only counts and ids; no data values.",
+ "source": ".concordia/completed-runs/agent-tpcds-r10-full-live-01/artifacts.json probes[].critic.counterprobes[0]",
+ "limit": 50,
+ "shapes": [
+  {
+   "relationId": "store_returns.sr_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_returns",
+    "column": "sr_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 46,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_sales.ss_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_sales",
+    "column": "ss_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "promotion.p_item_sk__item.i_item_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "promotion",
+    "column": "p_item_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "item",
+    "column": "i_item_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 48,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_web_page_sk__web_page.wp_web_page_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_web_page_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "web_page",
+    "column": "wp_web_page_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 11,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_web_page_sk__web_page.wp_web_page_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_web_page_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "web_page",
+    "column": "wp_web_page_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 11,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_promo_sk__promotion.p_promo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_promo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "promotion",
+    "column": "p_promo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 44,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_sales.ss_promo_sk__promotion.p_promo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_sales",
+    "column": "ss_promo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "promotion",
+    "column": "p_promo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 47,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_promo_sk__promotion.p_promo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_promo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "promotion",
+    "column": "p_promo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 43,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_item_sk__item.i_item_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_item_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "item",
+    "column": "i_item_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_item_sk__item.i_item_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_item_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "item",
+    "column": "i_item_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_returns.sr_item_sk__item.i_item_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_returns",
+    "column": "sr_item_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "item",
+    "column": "i_item_sk"
+   },
+   "seedKeys": 20,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_sales.ss_item_sk__item.i_item_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_sales",
+    "column": "ss_item_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "item",
+    "column": "i_item_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_item_sk__item.i_item_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_item_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "item",
+    "column": "i_item_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_item_sk__item.i_item_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_item_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "item",
+    "column": "i_item_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "promotion.p_end_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "promotion",
+    "column": "p_end_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 47,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "inventory.inv_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "inventory",
+    "column": "inv_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 1,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_bill_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_bill_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 13,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_ship_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_ship_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 13,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_bill_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_bill_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_ship_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_ship_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_sold_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_sold_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 1,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_sold_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_sold_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_returns.sr_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_returns",
+    "column": "sr_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 48,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_returns.sr_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_returns",
+    "column": "sr_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_returns.sr_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_returns",
+    "column": "sr_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 48,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_sales.ss_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_sales",
+    "column": "ss_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_sales.ss_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_sales",
+    "column": "ss_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_sales.ss_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_sales",
+    "column": "ss_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_refunded_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_refunded_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_refunded_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_refunded_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 46,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_returning_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_returning_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_returning_customer_sk__customer.c_customer_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_returning_customer_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_customer_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_ship_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_ship_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 37,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_sold_time_sk__time_dim.t_time_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_sold_time_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "time_dim",
+    "column": "t_time_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 13,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_sales.ss_sold_time_sk__time_dim.t_time_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_sales",
+    "column": "ss_sold_time_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "time_dim",
+    "column": "t_time_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_ship_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_ship_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_sold_time_sk__time_dim.t_time_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_sold_time_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "time_dim",
+    "column": "t_time_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_returned_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_returned_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 42,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_returned_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_returned_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 48,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_refunded_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_refunded_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_refunded_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_refunded_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_refunded_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_refunded_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 48,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_returned_time_sk__time_dim.t_time_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_returned_time_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "time_dim",
+    "column": "t_time_sk"
+   },
+   "seedKeys": 20,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_returning_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_returning_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_returning_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_returning_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_returns.cr_returning_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_returns",
+    "column": "cr_returning_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_bill_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_bill_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 13,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_bill_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_bill_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 13,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_bill_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_bill_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 12,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_ship_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_ship_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 13,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_ship_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_ship_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 13,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "catalog_sales.cs_ship_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "catalog_sales",
+    "column": "cs_ship_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 12,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "customer.c_current_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_current_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "customer.c_current_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_current_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "customer.c_current_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_current_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "store_returns.sr_return_time_sk__time_dim.t_time_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "store_returns",
+    "column": "sr_return_time_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "time_dim",
+    "column": "t_time_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_refunded_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_refunded_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 46,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_refunded_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_refunded_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 46,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_refunded_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_refunded_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 47,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_returned_time_sk__time_dim.t_time_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_returned_time_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "time_dim",
+    "column": "t_time_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 45,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_returning_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_returning_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 46,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_returning_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_returning_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 49,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_returns.wr_returning_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_returns",
+    "column": "wr_returning_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 48,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_bill_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_bill_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_bill_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_bill_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_bill_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_bill_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_ship_addr_sk__customer_address.ca_address_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_ship_addr_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_address",
+    "column": "ca_address_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_ship_cdemo_sk__customer_demographics.cd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_ship_cdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "customer_demographics",
+    "column": "cd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "web_sales.ws_ship_hdemo_sk__household_demographics.hd_demo_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "web_sales",
+    "column": "ws_ship_hdemo_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "household_demographics",
+    "column": "hd_demo_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 9,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "customer.c_first_sales_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_first_sales_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  },
+  {
+   "relationId": "customer.c_first_shipto_date_sk__date_dim.d_date_sk",
+   "from": {
+    "db": "TPCDS_DB",
+    "table": "customer",
+    "column": "c_first_shipto_date_sk"
+   },
+   "to": {
+    "db": "TPCDS_DB",
+    "table": "date_dim",
+    "column": "d_date_sk"
+   },
+   "seedKeys": 49,
+   "sourceRows": 50,
+   "targetKeys": 50,
+   "liveMatchedKeys": 0,
+   "liveTransport": "TRUNCATED"
+  }
+ ]
+}

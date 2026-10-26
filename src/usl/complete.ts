@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { Zetaris, identifier } from '../clients/zetaris.ts';
+import { Zetaris, assertLegacyMutationSql, assertReadPathSql, identifier } from '../clients/zetaris.ts';
 import { universe } from '../universe.ts';
 import { sourceQuery, universeConfig } from '../universe-pipeline.ts';
 import { readJson, writeJson, ROOT, failure, SafeError, stamp, setTraceRun } from '../runtime.ts';
@@ -46,14 +46,28 @@ function modelJson(rows:any[][]) {
   for(const row of rows)for(const cell of row)if(typeof cell==='string') {try{const obj=JSON.parse(cell);if(obj?.tables&&obj?.name)return obj;}catch{}}
   throw new SafeError('USL_COMPILED_MODEL_JSON_NOT_FOUND');
 }
+/** Every statement completeUsl will send, in order. The U1 UPDATE payload only exists after COMPILE, so a placeholder JSON object stands in for its shape. */
+export function completeUslStatements(id:string,plan:ReturnType<typeof buildCompleteUsl>,options?:{deferDq:boolean}):{kind:'read'|'mutation';sql:string}[] {
+  const out:{kind:'read'|'mutation';sql:string}[]=[{kind:'mutation',sql:`CREATE NAMESPACE IF NOT EXISTS ${plan.namespace}`}];
+  if(id==='U1')out.push({kind:'mutation',sql:`LOAD USL ${plan.model} NAMESPACE ${plan.namespace}`},{kind:'mutation',sql:`COMPILE USL ${plan.model} NAMESPACE ${plan.namespace} DDL\n${plan.ddl}`},{kind:'mutation',sql:`UPDATE USL ${plan.model} NAMESPACE ${plan.namespace} AS {}`});
+  else out.push({kind:'mutation',sql:`COMPILE USL ${plan.model} DEPLOY NAMESPACE ${plan.namespace} DDL\n${plan.ddl}`});
+  for(const table of plan.plans)out.push({kind:'mutation',sql:`ACTIVATE USL TABLE ${plan.fullModel}.${table.name} AS ${table.activation}`},{kind:'read',sql:`SELECT ${table.columns.join(', ')} FROM ${plan.fullModel}.${table.name} LIMIT 3`});
+  if(!options?.deferDq)out.push({kind:'read',sql:`LIST DQ USL ${plan.fullModel}`});
+  return out;
+}
+/** Preflight: the whole plan is checked against the read and legacy allowlists before the first statement is sent, so a refusal never leaves a half-applied mutation. UPDATE USL (U1 replacement) has no legacy form: it needs the authorized publication path. */
+export function assertCompleteUslPlanAllowed(id:string,plan:ReturnType<typeof buildCompleteUsl>,options?:{deferDq:boolean}) {
+  for(const {kind,sql} of completeUslStatements(id,plan,options)) {try{kind==='read'?assertReadPathSql(sql):assertLegacyMutationSql(sql,'usl-complete');}catch{throw new SafeError('USL_PLAN_REQUIRES_AUTHORIZED_PATH',undefined,sql.split(String.fromCharCode(10))[0].slice(0,160));}}
+}
 export async function completeUsl(id:string, options?: { deferDq: boolean }) {
   if (id==='U1' && fs.existsSync(path.join(ROOT,'.concordia/03b-U1-continuation.json'))) throw new SafeError('U1_FULL_MODEL_REPLAY_FORBIDDEN_AFTER_03B_CONTINUATION');
   const relations=readJson(`out/${id}/relaciones.json`).relations, plan=buildCompleteUsl(id,relations),z=new Zetaris();
+  assertCompleteUslPlanAllowed(id,plan,options);
   const runId='usl-complete-'+id+'-'+stamp(),dir='evidence/runs/'+runId,tracePath=path.join(ROOT,'evidence/trace.jsonl');
   const offset=fs.readFileSync(tracePath,'utf8').length;
   const result:any={utc:new Date().toISOString(),runId,status:'IN_PROGRESS',...plan,steps:[],generations:0};
   setTraceRun(runId);
-  const execute=async(stage:string,sql:string,limit=1)=>{result.failedStatement={stage,sql};const r=await z.runSql(sql,limit);result.steps.push({stage,...r});delete result.failedStatement;writeJson(`out/${id}/usl-complete.json`,result);return r;};
+  const execute=async(stage:string,sql:string,limit=1)=>{result.failedStatement={stage,sql};const r=/^(?:SELECT|LIST DQ USL)/.test(sql)?await z.runSql(sql,limit):await z.runLegacyMutationSql(sql,limit,{caller:'usl-complete'});result.steps.push({stage,...r});delete result.failedStatement;writeJson(`out/${id}/usl-complete.json`,result);return r;};
   try {
     await execute('namespace',`CREATE NAMESPACE IF NOT EXISTS ${plan.namespace}`);
     if(id==='U1') {

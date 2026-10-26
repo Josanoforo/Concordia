@@ -2,6 +2,16 @@ import type { Decision, EvidenceBundle, EvidenceObservation, RelationContract, U
 import { validateEvidenceBundle, validateRelationContract } from '../contracts/validate.ts';
 
 export interface RelationPolicy { policyVersion: string; minimumDistinctKeys?: number; minimumOverlapRatio?: number; }
+/**
+ * Measured GLOBAL evidence (Round 9, P3; built by src/probe/full-evidence.ts). Two observation types, anchored on the contract's own endpoints, whole-table aggregates:
+ * GLOBAL_COVERAGE [sourceDistinct, missing] on the source endpoint, GLOBAL_UNIQUENESS [rows, distinct, nulls] on the target endpoint. Without a well-formed observation the
+ * matching caveat (global_coverage_not_established / global_uniqueness_not_established) stays exactly as before.
+ */
+export const GLOBAL_COVERAGE_OBSERVATION = 'GLOBAL_COVERAGE';
+export const GLOBAL_UNIQUENESS_OBSERVATION = 'GLOBAL_UNIQUENESS';
+export const GLOBAL_COVERAGE_PROJECTION = ['sourceDistinct', 'missing'] as const;
+export const GLOBAL_UNIQUENESS_PROJECTION = ['rows', 'distinct', 'nulls'] as const;
+const BOUNDED_SCOPE = 'bounded observed sample only; no global coverage or uniqueness claim';
 const isKnown = <T>(value: Unknown<T>): value is { state: 'KNOWN'; value: T; provenance?: string } => value?.state === 'KNOWN';
 const sorted = (values: string[]) => [...new Set(values)].sort((a, b) => a.localeCompare(b, 'en'));
 const tupleToken = (tuple: unknown[]) => JSON.stringify(tuple.map(value => [value === null ? 'null' : typeof value, value]));
@@ -34,7 +44,7 @@ function projectEndpointKeys(endpoint: RelationContract['from'], observations: r
 }
 
 function makeDecision(contract: RelationContract, bundles: readonly EvidenceBundle[], policyVersion: string,
-  verdict: Decision['verdict'], reasonCodes: string[], requirementsMet: string[], requirementsMissing: string[], contradictions: string[], status: Decision['status']): Decision {
+  verdict: Decision['verdict'], reasonCodes: string[], requirementsMet: string[], requirementsMissing: string[], contradictions: string[], status: Decision['status'], scope: string = BOUNDED_SCOPE): Decision {
   const refs = sorted(bundles.map(bundle => bundle.evidenceBundleId));
   return {
     schemaVersion: 1,
@@ -46,7 +56,7 @@ function makeDecision(contract: RelationContract, bundles: readonly EvidenceBund
     requirementsMet: sorted(requirementsMet),
     requirementsMissing: sorted(requirementsMissing),
     contradictions: sorted(contradictions),
-    scope: { state: 'KNOWN', value: 'bounded observed sample only; no global coverage or uniqueness claim' },
+    scope: { state: 'KNOWN', value: scope },
     evidenceBundleRefs: refs,
     policyVersion,
     evaluatedAt: unknown(),
@@ -55,7 +65,28 @@ function makeDecision(contract: RelationContract, bundles: readonly EvidenceBund
   };
 }
 
-/** Pure deterministic evaluation of bounded key-membership evidence. */
+const nonNegativeInteger = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+const sameStrings = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((item, index) => item === b[index]);
+interface GlobalMeasurements { coverage?: { sourceDistinct: number; missing: number }; uniqueness?: { rows: number; distinct: number; nulls: number; unique: boolean }; malformed: string[] }
+/** Reads only well-formed, complete, single-column global observations that sit on the contract's own endpoints; anything else is ignored and reported, never trusted. */
+function globalMeasurements(contract: RelationContract, observations: readonly EvidenceObservation[]): GlobalMeasurements {
+  const out: GlobalMeasurements = { malformed: [] };
+  if (contract.from.orderedColumns.length !== 1 || contract.to.orderedColumns.length !== 1) return out;
+  for (const observation of observations) {
+    if (observation.type !== GLOBAL_COVERAGE_OBSERVATION && observation.type !== GLOBAL_UNIQUENESS_OBSERVATION) continue;
+    const coverage = observation.type === GLOBAL_COVERAGE_OBSERVATION, endpoint = coverage ? contract.from : contract.to;
+    const tuple = observation.measuredTuples.length === 1 ? observation.measuredTuples[0] : undefined;
+    const shaped = observation.sourceRef === endpoint.sourceId && observation.transportStatus === 'OK' && observation.truncated === false
+      && sameStrings(observation.projection, coverage ? GLOBAL_COVERAGE_PROJECTION : GLOBAL_UNIQUENESS_PROJECTION) && tuple !== undefined && tuple.length === observation.projection.length && tuple.every(nonNegativeInteger);
+    if (!shaped) { out.malformed.push(observation.type); continue; }
+    const [a, b, c] = tuple as number[];
+    if (coverage) { if (a < 1 || b > a || out.coverage) { out.malformed.push(observation.type); continue; } out.coverage = { sourceDistinct: a, missing: b }; }
+    else { if (c > a || b > a - c || out.uniqueness) { out.malformed.push(observation.type); continue; } out.uniqueness = { rows: a, distinct: b, nulls: c, unique: a - c === b }; }
+  }
+  return out;
+}
+
+/** Pure deterministic evaluation of bounded key-membership evidence, plus measured global coverage/uniqueness when the bundle carries it. */
 export function evaluateRelation(contract: RelationContract, evidence: readonly EvidenceBundle[], policy: RelationPolicy): Decision {
   const contractIssues = validateRelationContract(contract);
   if (contractIssues.length) throw new TypeError(`Invalid relation contract: ${contractIssues.map(issue => `${issue.path}:${issue.code}`).join(', ')}`);
@@ -150,5 +181,22 @@ export function evaluateRelation(contract: RelationContract, evidence: readonly 
   const missing = [...uniqueFrom.keys()].filter(key => !uniqueTo.has(key)).sort((a, b) => a.localeCompare(b, 'en'));
   const overlapRatio = (uniqueFrom.size - missing.length) / uniqueFrom.size;
   if (missing.length && (policy.minimumOverlapRatio === undefined || overlapRatio < policy.minimumOverlapRatio)) return makeDecision(contract, matching, policy.policyVersion, 'ENGAÑOSA', ['observed_key_missing_from_referenced_sample'], ['namespace_compatible', 'minimum_distinct_sample_met'], [], ['sampled_source_key_absent_from_referenced_sample'], 'CURRENT');
-  return makeDecision(contract, matching, policy.policyVersion, 'SOSTENIDA', ['bounded_sample_key_membership'], ['namespace_compatible', 'minimum_distinct_sample_met', 'all_observed_source_keys_present_in_referenced_sample'], ['global_coverage_not_established', 'global_uniqueness_not_established'], [], 'CURRENT');
+  const baseMet = ['namespace_compatible', 'minimum_distinct_sample_met', 'all_observed_source_keys_present_in_referenced_sample'];
+  const measured = globalMeasurements(contract, observations);
+  // Measured global coverage can only tighten the sample verdict: a source key the whole target lacks is judged by the same rule as a sampled one.
+  if (measured.coverage && measured.coverage.missing > 0) {
+    const globalRatio = (measured.coverage.sourceDistinct - measured.coverage.missing) / measured.coverage.sourceDistinct;
+    if (policy.minimumOverlapRatio === undefined || globalRatio < policy.minimumOverlapRatio) {
+      return makeDecision(contract, matching, policy.policyVersion, 'ENGAÑOSA', ['global_source_keys_missing_from_target'], ['namespace_compatible', 'minimum_distinct_sample_met'], [], ['global_source_key_absent_from_target'], 'CURRENT',
+        'whole-table coverage measured: some source keys have no match in the referenced table');
+    }
+  }
+  if (measured.uniqueness && !measured.uniqueness.unique) {
+    return makeDecision(contract, matching, policy.policyVersion, 'INDETERMINADA', ['global_target_keys_not_unique'], baseMet, ['unique_referenced_keys'], [], 'CURRENT', 'whole-table uniqueness measured: the referenced key repeats');
+  }
+  const coverageComplete = measured.coverage?.missing === 0, uniquenessMeasured = measured.uniqueness?.unique === true;
+  const stillMissing = [...(coverageComplete ? [] : ['global_coverage_not_established']), ...(uniquenessMeasured ? [] : ['global_uniqueness_not_established'])];
+  const reasons = ['bounded_sample_key_membership', ...(coverageComplete ? ['global_coverage_measured_complete'] : measured.coverage ? ['global_coverage_measured_partial'] : []), ...(uniquenessMeasured ? ['global_target_uniqueness_measured'] : []), ...(measured.malformed.length ? ['global_evidence_malformed_ignored'] : [])];
+  const scope = coverageComplete && uniquenessMeasured ? 'whole-table coverage and target uniqueness measured by aggregate queries' : coverageComplete ? 'whole-table coverage measured; target uniqueness not established' : uniquenessMeasured ? 'whole-table target uniqueness measured; global coverage not established' : BOUNDED_SCOPE;
+  return makeDecision(contract, matching, policy.policyVersion, 'SOSTENIDA', reasons, [...baseMet, ...(coverageComplete ? ['global_coverage_established'] : []), ...(uniquenessMeasured ? ['global_uniqueness_established'] : [])], stillMissing, [], 'CURRENT', scope);
 }

@@ -1,6 +1,6 @@
 {
   "alias": "U3",
-  "basis": "SYNTHETIC_FIXTURE shaped like the U3 metadata schema; no DBpedia, Forbes or FullContact values. U3 declares no relations, so no adjudications exist and the probes stage is empty by construction",
+  "basis": "SYNTHETIC_FIXTURE shaped like the U3 metadata schema; no DBpedia, Forbes or FullContact values. U3 declares no relations, so no adjudications exist and the probes stage is empty by construction; the scripted COMA answers propose homologous columns (nation~region, sector~business_segment, org_name~company, assets) and one unrelated pair (established~sales_figure)",
   "chooserScript": [
     "READ_FORBES_BY_REGION",
     "READ_DBPEDIA_BY_SECTOR"
@@ -40,7 +40,7 @@
       "rows": [
         [
           "synthetic-org-01",
-          "Example Org One",
+          "OrgAlpha",
           "1990",
           "Examplia",
           "Software",
@@ -49,7 +49,7 @@
         ],
         [
           "synthetic-org-02",
-          "Example Org Two",
+          "OrgBeta",
           "1985",
           "Testland",
           "Energy",
@@ -58,7 +58,7 @@
         ],
         [
           "synthetic-org-03",
-          "Example Org Three",
+          "OrgGamma",
           "2001",
           "Examplia",
           "Retail",
@@ -101,7 +101,7 @@
       "rows": [
         [
           "synthetic-forbes-01",
-          "Example Co One",
+          "OrgAlpha",
           "example-one",
           "Examplia",
           "Software",
@@ -110,7 +110,7 @@
         ],
         [
           "synthetic-forbes-02",
-          "Example Co Two",
+          "OrgBeta",
           "example-two",
           "Testland",
           "Energy",
@@ -119,7 +119,7 @@
         ],
         [
           "synthetic-forbes-03",
-          "Example Co Three",
+          "OrgGamma",
           "example-three",
           "Otherland",
           "Retail",
@@ -145,5 +145,42 @@
       ]
     }
   },
-  "adjudications": {}
+  "adjudications": {},
+  "comaProposals": [
+    {
+      "source": "dbpedia",
+      "target": "forbes",
+      "sourceColumn": "nation",
+      "targetColumn": "region",
+      "rawScore": 0.9
+    },
+    {
+      "source": "dbpedia",
+      "target": "forbes",
+      "sourceColumn": "sector",
+      "targetColumn": "business_segment",
+      "rawScore": 0.88
+    },
+    {
+      "source": "dbpedia",
+      "target": "forbes",
+      "sourceColumn": "org_name",
+      "targetColumn": "company",
+      "rawScore": 0.86
+    },
+    {
+      "source": "dbpedia",
+      "target": "forbes",
+      "sourceColumn": "total_assets_val",
+      "targetColumn": "asset_value",
+      "rawScore": 0.8
+    },
+    {
+      "source": "dbpedia",
+      "target": "forbes",
+      "sourceColumn": "established",
+      "targetColumn": "sales_figure",
+      "rawScore": 0.6
+    }
+  ]
 }

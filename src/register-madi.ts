@@ -39,10 +39,10 @@ export async function registerMadi(){
     // Only now load credentials; Docker subprocesses never inherit them.
     loadLocalEnv();setTraceRun(runId);const z=new Zetaris();
     const databases=await z.listDatabases();result.steps.push(databases);
-    if(!databases.rows.some(r=>r[0]===cfg.database))result.steps.push(await z.runSql(`CREATE LIGHTNING DATABASE ${identifier(cfg.database)} DESCRIBE BY "MaDI Companies local evaluation only"`,1));
+    if(!databases.rows.some(r=>r[0]===cfg.database))result.steps.push(await z.runLegacyMutationSql(`CREATE LIGHTNING DATABASE ${identifier(cfg.database)} DESCRIBE BY "MaDI Companies local evaluation only"`,1,{caller:'register-madi'}));
     const tables=await z.listTables(cfg.database);result.steps.push(tables);
     for(const file of result.files){
-      if(!tables.rows.some(r=>r[0]===file.table))result.steps.push(await z.runSql(`CREATE LIGHTNING FILESTORE TABLE ${identifier(file.table)} FROM ${identifier(cfg.database)} FORMAT CSV OPTIONS (PATH "${file.path}", header "true", inferSchema "false")`,1));
+      if(!tables.rows.some(r=>r[0]===file.table))result.steps.push(await z.runLegacyMutationSql(`CREATE LIGHTNING FILESTORE TABLE ${identifier(file.table)} FROM ${identifier(cfg.database)} FORMAT CSV OPTIONS (PATH "${file.path}", header "true", inferSchema "false")`,1,{caller:'register-madi'}));
       const columns=cfg.tables[file.table].columns.map((c:any)=>identifier(c.name));
       try{
         const response=await z.runSql(`SELECT ${columns.length?columns.join(', '):'1 AS row_present'} FROM ${identifier(cfg.database)}.${identifier(file.table)} LIMIT 3`,3,{timeoutMs:60000});

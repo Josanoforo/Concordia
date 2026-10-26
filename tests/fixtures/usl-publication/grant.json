@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "grantId": "live-usl-5052b6cda5f2-1792897314420",
+  "scope": "LIVE_USL_PUBLICATION",
+  "planFingerprint": "5052b6cda5f24ad1c11d9bac536b4e988d4b1e66b10364e8d1df9275aa8db3f8",
+  "targetRef": "lightning.metastore.concordia_l4_agentpub_20261025.concordia_l4_agent_gtfs_route_v1",
+  "sourceBindingSha256": "7bf285a4c0e1f791447db8e509631c7d14a6f54da4000f73775513dc2be9fcd9",
+  "sourceBindingFingerprint": "7e4597c4746f7bd4346baaca1cb320ab6e6ee8dbf3d5570d248b5790ffad764f",
+  "operationSqlSha256s": [
+    "1f75172cbc4457f9d3ba75c14c343ba1044b7030165d3128e9c2b680e99aea52",
+    "3167468cd0daef4f5353d08928d165b8a8270e0c9a3034a2671c4ed84898595e",
+    "9c076eef1639b00ff99750b809298d564a000656f541a55acab7884c54bfd6c4",
+    "9fea614cbe8d89893f927aaa17a7085f6814a89b8a3e2eeeeb4f78a065874205",
+    "0bb7505275d55be9a1aa1f754b78fff057365af031d409da11ba7d560c7e8be6"
+  ],
+  "approvedBy": "project-owner (human approval recorded in chat)",
+  "approvedAt": "2026-10-25T03:01:53.420Z",
+  "expiresAt": "2026-10-25T03:31:54.420Z",
+  "dialectId": "zetaris-2.4.3.1-installed-parser-reviewed-usl-forms-v1",
+  "dialectEvidenceSha256": "828ee4904111a0c8a6339e6bfb2a5c8d9f4ba7792075f90035229670e16b3d9f"
+}

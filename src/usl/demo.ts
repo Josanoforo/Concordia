@@ -8,9 +8,11 @@ export function verificationTable(id:string,plans:any[]) {
   if(!table)throw new SafeError('USL_VERIFICATION_TABLE_MISSING',undefined,name);
   return table;
 }
-export async function demoUsl(id:string,client?:Pick<Zetaris,'runSql'>):Promise<any> {
+export async function demoUsl(id:string,client?:Pick<Zetaris,'runSql'|'runLegacyMutationSql'>):Promise<any> {
   if(id==='U3')return {status:'OPTIONAL_DEFERRED',reason:'Schema correspondences are not referential keys. No invented FK/PK; U3 gold evaluation takes precedence.'};
   const plan=buildCompleteUsl(id,readJson(`out/${id}/relaciones.json`).relations),z=client??new Zetaris();
+  // Creates/compiles/activates go only through the explicit legacy method; there is no fallback to runSql.
+  const mutate=(sql:string,limit:number)=>z.runLegacyMutationSql(sql,limit,{caller:'usl-demo'});
   let existing:any;
   try{existing=await z.runSql(`LOAD USL ${plan.model} NAMESPACE ${plan.namespace}`,1);}
   catch(error){
@@ -32,10 +34,10 @@ export async function demoUsl(id:string,client?:Pick<Zetaris,'runSql'>):Promise<
       priorVerification:'D2: U1 eight tables / U2 three; dates in out/<U>/usl-complete.json and U1/usl-continuation-03b.json',costExcluded:id==='U1'?['hvv']:[],recompiled:false};
     return result;
   }
-  for(const sql of ['CREATE NAMESPACE IF NOT EXISTS lightning.metastore',`CREATE NAMESPACE IF NOT EXISTS ${plan.namespace}`,`COMPILE USL IF NOT EXISTS ${plan.model} DEPLOY NAMESPACE ${plan.namespace} DDL\n${plan.ddl}`])steps.push(await z.runSql(sql,1));
+  for(const sql of ['CREATE NAMESPACE IF NOT EXISTS lightning.metastore',`CREATE NAMESPACE IF NOT EXISTS ${plan.namespace}`,`COMPILE USL IF NOT EXISTS ${plan.model} DEPLOY NAMESPACE ${plan.namespace} DDL\n${plan.ddl}`])steps.push(await mutate(sql,1));
   for(const table of plan.plans){
     if(id==='U1'&&table.name==='hvv')continue;
-    steps.push(await z.runSql(`ACTIVATE USL TABLE ${plan.fullModel}.${table.name} AS ${table.activation}`,1));
+    steps.push(await mutate(`ACTIVATE USL TABLE ${plan.fullModel}.${table.name} AS ${table.activation}`,1));
     steps.push(await z.runSql(`SELECT ${table.columns.join(', ')} FROM ${plan.fullModel}.${table.name} LIMIT 3`,3));
   }
   const result={utc:new Date().toISOString(),status:'NEW_MODEL',model:plan.fullModel,steps,recompiled:false,costExcluded:id==='U1'?['hvv']:[]};

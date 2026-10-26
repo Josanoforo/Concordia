@@ -150,12 +150,46 @@
     "productLabel": "U3",
     "plannerTask": "bounded U3 company metadata exploration",
     "observations": {
-      "observedNations": { "fromTable": "dbpedia", "column": "nation", "pattern": "^[A-Za-z0-9._-]{1,64}$", "max": 20 },
-      "observedSegments": { "fromTable": "forbes", "column": "business_segment", "pattern": "^[A-Za-z0-9._-]{1,64}$", "max": 20 }
+      "observedNations": {
+        "fromTable": "dbpedia",
+        "column": "nation",
+        "pattern": "^[A-Za-z0-9._-]{1,64}$",
+        "max": 20
+      },
+      "observedSegments": {
+        "fromTable": "forbes",
+        "column": "business_segment",
+        "pattern": "^[A-Za-z0-9._-]{1,64}$",
+        "max": 20
+      }
     },
     "actions": [
-      { "id": "READ_FORBES_BY_REGION", "kind": "KEYED_READ", "table": "forbes", "filterColumn": "region", "observation": "observedNations", "requiredColumns": ["region"], "description": "Bounded Forbes rows whose region text equals an observed DBpedia nation text" },
-      { "id": "READ_DBPEDIA_BY_SECTOR", "kind": "KEYED_READ", "table": "dbpedia", "filterColumn": "sector", "observation": "observedSegments", "requiredColumns": ["sector"], "description": "Bounded DBpedia rows whose sector text equals an observed Forbes business segment text" }
-    ]
+      {
+        "id": "READ_FORBES_BY_REGION",
+        "kind": "KEYED_READ",
+        "table": "forbes",
+        "filterColumn": "region",
+        "observation": "observedNations",
+        "requiredColumns": [
+          "region"
+        ],
+        "description": "Bounded Forbes rows whose region text equals an observed DBpedia nation text"
+      },
+      {
+        "id": "READ_DBPEDIA_BY_SECTOR",
+        "kind": "KEYED_READ",
+        "table": "dbpedia",
+        "filterColumn": "sector",
+        "observation": "observedSegments",
+        "requiredColumns": [
+          "sector"
+        ],
+        "description": "Bounded DBpedia rows whose sector text equals an observed Forbes business segment text"
+      }
+    ],
+    "postComa": {
+      "blind": true,
+      "maxProbes": 6
+    }
   }
 }

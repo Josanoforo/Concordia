@@ -146,3 +146,53 @@ test('receipt resolution requires exact id and measured metadata', () => {
   assert.equal(resolveReceipt(routed, 'fixture-1').winner, 'sonnet-fixture');
   assert.equal(resolveReceipt(routed, 'fixture-1').routingReason, 'cold-explore');
 });
+
+async function mockedChat(reply: object, options: object) {
+  const temp = fs.mkdtempSync(path.join(ROOT, '.concordia', 'nightshift-body-'));
+  const budgetFile = path.join(temp, 'canonical-budget.json'), previousBudget = process.env.CONCORDIA_BUDGET_FILE;
+  const traceFile = path.join(ROOT, 'evidence/trace.jsonl'), generationIndex = path.join(ROOT, 'evidence/generations.json');
+  const previousTrace = fs.existsSync(traceFile) ? fs.readFileSync(traceFile) : undefined, previousIndex = fs.existsSync(generationIndex) ? fs.readFileSync(generationIndex) : undefined;
+  const originalFetch = globalThis.fetch;
+  let sent = '';
+  fs.writeFileSync(budgetFile, JSON.stringify({ limit: null, consumed: 0, attempts: [] }));
+  process.env.CONCORDIA_BUDGET_FILE = budgetFile;
+  globalThis.fetch = async (input, init) => {
+    if (String(input).includes('/chat/completions')) { sent = String(init?.body); return new Response(JSON.stringify({ ...reply, meterless: { receipt_id: 'r1' } }), { status: 200 }); }
+    return new Response(JSON.stringify({ data: [{ receipt_id: 'r1', winning_route: { provider: 'anthropic', model: 'claude-haiku-fixture' }, usage: { prompt_tokens: 1, completion_tokens: 1 }, latency_ms: 1, app_policy: { requested_mode: 'cheap', routed_mode: 'cheap', mode_coerced: false } }] }), { status: 200 });
+  };
+  try {
+    const client = new Nightshift({ base: 'http://127.0.0.1:8088', token: 'fixture', route: 'meterless/cheap' });
+    const result = await client.chat([{ role: 'user', content: 'p' }], { maxTokens: 100, route: 'meterless/cheap', ...options });
+    return { sent, result };
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousBudget === undefined) delete process.env.CONCORDIA_BUDGET_FILE; else process.env.CONCORDIA_BUDGET_FILE = previousBudget;
+    if (previousTrace === undefined) { if (fs.existsSync(traceFile)) fs.rmSync(traceFile); } else fs.writeFileSync(traceFile, previousTrace);
+    if (previousIndex === undefined) { if (fs.existsSync(generationIndex)) fs.rmSync(generationIndex); } else fs.writeFileSync(generationIndex, previousIndex);
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+}
+const textReply = { choices: [{ message: { content: 'hola' } }] };
+
+test('default chat body is byte-identical to the historical one and carries no structured-output fields', async () => {
+  const { sent, result } = await mockedChat(textReply, {});
+  assert.equal(sent, JSON.stringify({ model: 'meterless/cheap', messages: [{ role: 'user', content: 'p' }], max_tokens: 100, stream: false }));
+  assert.equal(result.text, 'hola'); assert.equal('toolCall' in result, false);
+});
+
+test('response_format, tools and tool_choice are sent only when passed', async () => {
+  const responseFormat = { type: 'json_object' }, tools = [{ type: 'function', function: { name: 'pick', parameters: { type: 'object' } } }], toolChoice = { type: 'function', function: { name: 'pick' } };
+  const only = JSON.parse((await mockedChat(textReply, { responseFormat })).sent);
+  assert.deepEqual(only.response_format, responseFormat); assert.equal('tools' in only, false); assert.equal('tool_choice' in only, false);
+  const both = JSON.parse((await mockedChat(textReply, { tools, toolChoice })).sent);
+  assert.deepEqual(both.tools, tools); assert.deepEqual(both.tool_choice, toolChoice); assert.equal('response_format' in both, false);
+  assert.equal(both.max_tokens, 100); assert.equal(both.stream, false);
+});
+
+test('a tool_calls response returns the first call arguments as text plus toolCall; ledger and receipt path unchanged', async () => {
+  const reply = { choices: [{ message: { content: null, tool_calls: [{ function: { name: 'pick', arguments: '{"a":1}' } }, { function: { name: 'other', arguments: '{"b":2}' } }] } }] };
+  const { result } = await mockedChat(reply, { tools: [{ type: 'function', function: { name: 'pick' } }] });
+  assert.equal(result.text, '{"a":1}'); assert.deepEqual(result.toolCall, { name: 'pick' });
+  assert.equal(result.receipt.receiptId, 'r1'); assert.equal(result.receipt.fromCache, false);
+  await assert.rejects(mockedChat({ choices: [{ message: { content: null } }] }, {}), /NO_GENERATED_TEXT/);
+});

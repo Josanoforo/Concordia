@@ -16,6 +16,7 @@
     "discover-coma": "node scripts/run-tsx.mjs src/cli.ts discover-coma",
     "agent": "node scripts/run-tsx.mjs src/cli.ts agent",
     "eval-agent": "node scripts/run-tsx.mjs src/cli.ts eval-agent",
+    "agent-multi": "node scripts/run-tsx.mjs src/cli.ts agent-multi",
     "agent-u2": "node scripts/run-tsx.mjs src/cli.ts agent-u2",
     "recover-u2-coma": "node scripts/run-tsx.mjs src/cli.ts recover-u2-coma",
     "probe": "node scripts/run-tsx.mjs src/cli.ts probe",
@@ -34,6 +35,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node scripts/run-tsx.mjs --import ./tests/helpers/isolated-freshness.ts --test tests/*.test.ts",
     "check-secrets": "node scripts/check-secrets.mjs",
+    "gate:clean": "node scripts/gate-clean.mjs",
     "fetch-madi": "node scripts/fetch-madi.mjs",
     "usl-dossier": "node scripts/run-tsx.mjs src/cli.ts usl-dossier"
   },

@@ -6,6 +6,7 @@ import { readJson, writeJson, ROOT, trace, setTraceRun, traceFileForRun, failure
 import { normalizeKey, quotedValues, type NormalizationMode } from '../universe.ts';
 import { sourceQuery } from '../universe-pipeline.ts';
 import { writeRelations } from '../probe/verdicts.ts';
+import { pickDispersed } from '../probe/sampling.ts';
 import type { DataOrigin, Decision, EvidenceBundle, EvidenceObservation, RelationContract } from '../contracts/types.ts';
 import { validateEvidenceBundle, validateRelationContract } from '../contracts/validate.ts';
 import { evaluateRelation, type RelationPolicy } from '../relations/decision.ts';
@@ -169,7 +170,7 @@ function buildCounterPlan(contract: RelationContract, config: any, inventory: an
   return { plan, sourceSpec: fromSpec, allowlist };
 }
 
-async function runTypedCounterprobe(input: {
+export async function runTypedCounterprobe(input: {
   contract: RelationContract; baseEvidence: EvidenceBundle; previousCompleteEvidence?: EvidenceBundle; policy: RelationPolicy; config: any; inventory: any; thresholds: any;
   client: Pick<Zetaris, 'runSql'>; executionMode: 'LIVE' | 'LOCAL' | 'REPLAY' | 'UNKNOWN'; dataOrigin: DataOrigin; now: string; runId: string;
 }): Promise<TypedCriticOutcome> {
@@ -180,7 +181,8 @@ async function runTypedCounterprobe(input: {
   const baselineValues = rawFilterValues(baseFrom.tuples);
   if (!baselineValues?.length) return insufficient('zero_or_non_scalar_source_seeds; no source reads issued', baseCheck.baseDecision);
   const limit = input.thresholds.criticProbeLimit ?? 50;
-  if (!Number.isInteger(limit) || limit < 1 || limit > 50) return insufficient('critic_probe_limit_invalid', baseCheck.baseDecision);
+  // The target lookup carries at most limit-1 keys (see `fringeKeyCap`), so a limit of 1 could never be read as complete.
+  if (!Number.isInteger(limit) || limit < 2 || limit > 50) return insufficient('critic_probe_limit_invalid', baseCheck.baseDecision);
   const sourceColumn = input.contract.from.orderedColumns[0];
   let initial: ReturnType<typeof buildCounterPlan>;
   try { initial = buildCounterPlan(input.contract, input.config, input.inventory, limit, []); }
@@ -191,7 +193,9 @@ async function runTypedCounterprobe(input: {
   if (!initial.allowlist[sourceEndpoint.objectId]?.includes(sourceColumn)) return insufficient('critic_source_key_outside_allowlist', baseCheck.baseDecision);
   const sourceProjection = sourceEndpoint.columns.map(identifier).join(', ');
   const tableSql = sourceQuery(source);
-  const sourceSql = `SELECT ${sourceProjection} FROM ${tableSql} WHERE (${identifier(sourceColumn)} NOT IN (${quotedValues(baselineValues)}) OR ${identifier(sourceColumn)} IS NULL) LIMIT ${limit}`;
+  // NULL keys are excluded in the read itself: a nullable foreign key is normal, a NULL is no membership evidence, and (R10 live) NULL rows filled the whole LIMIT on
+  // nullable fact columns, leaving "no usable non-null typed tuple". The global null ratio is the profile's business (F1), not this fringe's.
+  const sourceSql = `SELECT ${sourceProjection} FROM ${tableSql} WHERE ${identifier(sourceColumn)} IS NOT NULL AND ${identifier(sourceColumn)} NOT IN (${quotedValues(baselineValues)}) LIMIT ${limit}`;
   let sourceRead: Awaited<ReturnType<Zetaris['runSql']>>;
   try { sourceRead = await input.client.runSql(sourceSql, limit); }
   catch (error) {
@@ -199,12 +203,21 @@ async function runTypedCounterprobe(input: {
     return { status: 'ERROR', reason: 'source counterprobe transport failed; baseline remains current', baseDecision: baseCheck.baseDecision,
       transportFailures: [{ sourceRef: input.contract.from.sourceId, code: diagnostic.code ?? 'SOURCE_COUNTERPROBE_FAILED', http: diagnostic.http, retryAfter: diagnostic.retryAfter, requestId: (error as any)?.requestId }] };
   }
-  const sourceTuples = sourceRead.rows;
-  const fringeValues = rawFilterValues(sourceTuples.filter(row => row[0] !== null && row[0] !== undefined).map(row => [row[0]]));
-  if (!fringeValues?.length) {
-    const counterprobe = { strategy: 'typed unseen source key fringe', sql: sourceSql, requestId: sourceRead.requestId, sourceRows: sourceTuples.length, sourceTruncated: sourceTuples.length >= limit };
-    return { status: 'INSUFFICIENT', classification: sourceTuples.length ? undefined : 'REPEATED', reason: sourceTuples.length ? 'fringe contained no usable non-null typed tuple' : 'no new source tuples; repeated bounded request', baseDecision: baseCheck.baseDecision, counterprobe };
+  const sourceRows = sourceRead.rows, sourceReadFilled = sourceRows.length >= limit;
+  const readValues = rawFilterValues(sourceRows.filter(row => row[0] !== null && row[0] !== undefined).map(row => [row[0]]));
+  if (!readValues?.length) {
+    const counterprobe = { strategy: 'typed unseen source key fringe', sql: sourceSql, requestId: sourceRead.requestId, sourceRows: sourceRows.length, sourceTruncated: sourceReadFilled };
+    return { status: 'INSUFFICIENT', classification: sourceRows.length ? undefined : 'REPEATED', reason: sourceRows.length ? 'fringe contained no usable non-null typed tuple' : 'no new source tuples; repeated bounded request', baseDecision: baseCheck.baseDecision, counterprobe };
   }
+  // R10 live: 71 of 92 came back TRUNCATED with matchedKeys 0. (1) The fringe read fills its LIMIT on any large table, and (2) a lookup of `limit` keys over a unique target
+  // returns exactly `limit` rows, which the adapter reads as "reached the limit". Both flagged a complete lookup as truncated. The main probe avoids it by seeding K < limit keys;
+  // the critic does the same: the evidence is the K = limit-1 (at most) unseen keys chosen from the bounded read, observed in the source and looked up in the target.
+  // A target that really holds more than K rows for those keys (duplicates) still reaches the limit and is still reported as truncated.
+  const fringeKeyCap = limit - 1;
+  const fringeSeed = `${input.runId}:${input.contract.id}`;
+  const fringeValues = (readValues.length > fringeKeyCap ? pickDispersed(readValues, fringeKeyCap, fringeSeed) : readValues) as (string | number | boolean)[];
+  const fringeTokens = new Set(fringeValues.map(value => canonical([typeof value, value])));
+  const sourceTuples = sourceRows.filter(row => fringeTokens.has(canonical([typeof row[0], row[0]])));
   let targetPlan: ReturnType<typeof buildCounterPlan>;
   try { targetPlan = buildCounterPlan(input.contract, input.config, input.inventory, limit, fringeValues); }
   catch (error) { return insufficient(error instanceof Error ? error.message : 'critic_target_plan_invalid', baseCheck.baseDecision); }
@@ -213,14 +226,15 @@ async function runTypedCounterprobe(input: {
     adapterId: 'typed-critic-counterprobe',
     async read(request) {
       if (request.sourceId === input.contract.from.sourceId && request.objectId === input.contract.from.objectId) {
-        return { tuples: sourceTuples, requestId: sourceRead.requestId, observedAt: sourceRead.utc, requestedAt: sourceRead.utc, statement: sourceSql, queryId: sourceRead.queryId, durationMs: sourceRead.durationMs, truncated: sourceTuples.length >= limit };
+        // The observation is of the K selected keys (filters below say so), not of the whole fringe; the cap of the read is kept as `sourceReadFilled` in the counterprobe.
+        return { tuples: sourceTuples, requestId: sourceRead.requestId, observedAt: sourceRead.utc, requestedAt: sourceRead.utc, statement: sourceSql, queryId: sourceRead.queryId, durationMs: sourceRead.durationMs, truncated: false };
       }
       return targetAdapter.read(request);
     }
   };
-  const execution = await executeProbe(targetPlan.plan, adapter, { runId: input.runId, checkedAt: input.now, scope: 'bounded typed unseen source tuples and target key lookup', executionMode: input.executionMode, dataOrigin: input.dataOrigin });
+  const execution = await executeProbe(targetPlan.plan, adapter, { runId: input.runId, checkedAt: input.now, scope: `${fringeValues.length} unseen source keys chosen from a bounded read of ${sourceRows.length} rows (limit ${limit}); target read completely for those keys`, executionMode: input.executionMode, dataOrigin: input.dataOrigin });
   const sourceObservation = execution.bundle.observations.find(observation => observation.sourceRef === input.contract.from.sourceId);
-  if (sourceObservation) sourceObservation.filters = [`${sourceColumn} NOT IN (${baselineValues.length} prior typed values)`, `${sourceColumn} IS NULL`];
+  if (sourceObservation) sourceObservation.filters = [`${sourceColumn} IS NOT NULL`, `${sourceColumn} NOT IN (${baselineValues.length} prior typed values)`, `${sourceColumn} IN (${fringeValues.length} keys selected from the bounded read${sourceReadFilled ? ', read filled its limit' : ''})`];
   const targetObservation = execution.bundle.observations.find(observation => observation.sourceRef === input.contract.to.sourceId);
   if (targetObservation) {
     const keyIndexes = input.contract.to.orderedColumns.map(column => targetObservation.projection.indexOf(column));
@@ -235,7 +249,12 @@ async function runTypedCounterprobe(input: {
   const outcome = evaluateTypedCounterprobe({ contract: input.contract, baseEvidence: input.baseEvidence, counterEvidence: execution.bundle,
     previousCompleteEvidence: input.previousCompleteEvidence, policy: input.policy });
   const targetRead = execution.reads.find(read => read.sourceId === input.contract.to.sourceId);
-  const metrics = { seedKeys: baseFrom.tuples.length, sourceRows: sourceTuples.length, matchedKeys: outcome.novelty?.newlySupportedTuples ?? 0,
+  // matchedKeys is MEASURED from the target read (selected keys found in it), never defaulted: an evaluation that stops early (incomplete evidence) used to report 0 here.
+  const keyIndex = targetRead ? targetRead.projection.indexOf(input.contract.to.orderedColumns[0]) : -1;
+  const targetKeys = targetRead && keyIndex >= 0 ? new Set(targetRead.tuples.map(row => String(row[keyIndex]))) : undefined;
+  const metrics = { seedKeys: baseFrom.tuples.length, sourceRows: sourceRows.length, fringeKeys: fringeValues.length, sourceReadFilled,
+    matchedKeys: targetKeys ? fringeValues.filter(value => targetKeys.has(String(value))).length : 'UNKNOWN' as const,
+    newlySupportedTuples: outcome.novelty?.newlySupportedTuples ?? 'UNKNOWN' as const,
     newSourceTuples: outcome.novelty?.newSourceTuples ?? 0, newTargetTuples: outcome.novelty?.newTargetTuples ?? 0,
     duplicateKeys: execution.bundle.observations.find(observation => observation.sourceRef === input.contract.to.sourceId)?.duplicateCount ?? 'UNKNOWN' };
   const counterprobe = { strategy: 'typed unseen source key fringe → bounded target lookup', sql: targetRead?.statement ?? sourceSql,

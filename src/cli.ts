@@ -41,13 +41,19 @@ import { runComaDiscovery } from './eval/coma-run.ts';
 import { recoverU2ComaFromSnapshot, runU2Agent } from './agent/u2.ts';
 import { readSealedBindingBytes } from './usl/sealed-binding.ts';
 import { originateUslPlan } from './agent/usl-plan.ts';
-import { helpHint, usageFor, wantsHelp } from './agent/cli-help.ts';
-import { continueAgentCommand, runAgentCommand, runOfflineAgentCommand } from './agent/cli-run.ts';
+import { runMultiAgentCommand } from './agent/multi-run.ts';
+import { exportNegativeCommand, exportOdcsCommand, exportUslOdcsCommand } from './agent/cli-export.ts';
+import { helpHint, usageFor, wantsHelp, agentFlagOptions } from './agent/cli-help.ts';
+import { runDemoTpcds } from './agent/demo-tpcds.ts';
+import { continueAgentCommand, evalAgentExitCode, runAgentCommand, runOfflineAgentCommand } from './agent/cli-run.ts';
+import { runMemorySealLegacyCommand } from './agent/cli-memory-seal.ts';
+import { runMemoryResolveStaleCommand } from './agent/cli-memory-stale.ts';
 import { evaluateAgentLoop } from './eval/agent-eval.ts';
 import { writeAgentRunComparison, writeAgentRunReport } from './report/agent-run-report.ts';
+import { writeAgentRunsComparison } from './report/agent-run-multi-compare.ts';
 try {
   const command = process.argv[2];
-  const option = (name:string) => { const eq=process.argv.find(x=>x.startsWith('--'+name+'=')); const i=process.argv.indexOf('--'+name); return eq?.slice(name.length+3)??(i>=0?process.argv[i+1]:undefined); };
+  const option = (name:string) => { const eq=process.argv.find(x=>x.startsWith('--'+name+'=')); const i=process.argv.indexOf('--'+name); const next = i >= 0 ? process.argv[i + 1] : undefined; return eq?.slice(name.length+3)??(next !== undefined && next.startsWith('--') ? undefined : next); };
   const maxTokensOption = () => { const raw = option('max-tokens'); return raw === undefined ? undefined : Number(raw); };
   if (wantsHelp(process.argv) && usageFor(process.argv)) console.log(usageFor(process.argv));
   else if (command === 'agent-u2') {
@@ -58,6 +64,15 @@ try {
     await runU2Agent({ runId, task: option('task') ?? 'Prepare a sourced company brief from configured U2 evidence.',
       ...(isContinue ? { continueRunId: requestedRunId! } : {}), resumeAdaptive: process.argv.includes('--resume-adaptive'),
       enrich: process.argv.includes('--enrich'), resume: process.argv.includes('--resume'), decision: option('decide'), actor: option('actor') });
+  } else if (command === 'demo-tpcds') {
+    const out = await runDemoTpcds({ reviewFile: 'universes/reviews/TPCDS.review.json' });
+    console.log(JSON.stringify({ script: path.relative(ROOT, out.scriptPath).split(path.sep).join('/'), summary: path.relative(ROOT, out.summaryPath).split(path.sep).join('/'), runs: out.runs, facts: out.facts }));
+  } else if (command === 'export-odcs') {
+    exportOdcsCommand(option('run-id'), option('out'));
+  } else if (command === 'export-usl-odcs') {
+    exportUslOdcsCommand({ plan: option('plan'), run: option('run'), grant: option('grant'), out: option('out') });
+  } else if (command === 'export-negative') {
+    exportNegativeCommand(option('run-id'), option('out'));
   } else if (command === 'agent-report') {
     const runId = option('run-id');
     if (!runId) throw new SafeError('AGENT_RUN_ID_REQUIRED');
@@ -68,6 +83,16 @@ try {
     if (!runA || !runB) throw new SafeError('AGENT_COMPARE_RUN_IDS_REQUIRED');
     const out = writeAgentRunComparison(runA, runB);
     console.log(JSON.stringify({ runA, runB, files: out.files.map(f => `.concordia/agent-runs/${f}`) }));
+  } else if (command === 'memory-seal-legacy') {
+    runMemorySealLegacyCommand({ dryRun: process.argv.includes('--dry-run'), root: option('root') });
+  } else if (command === 'memory-resolve-stale') {
+    runMemoryResolveStaleCommand({ universe: option('universe'), claim: option('claim'), decision: option('decision'), reviewer: option('reviewer'), reason: option('reason'), dryRun: process.argv.includes('--dry-run'),
+      executionMode: option('execution-mode'), dataOrigin: option('data-origin'), dir: option('dir') });
+  } else if (command === 'agent-compare-multi') {
+    const runs = (option('runs') ?? '').split(',').map(item => item.trim()).filter(Boolean);
+    if (!runs.length) throw new SafeError('AGENT_COMPARE_RUNS_REQUIRED');
+    const out = writeAgentRunsComparison(runs);
+    console.log(JSON.stringify({ runs, files: out.files.map(f => `.concordia/agent-runs/${f}`) }));
   } else if (command === 'agent-usl-plan') {
     // Plan-only: reads a sealed publication envelope, retargets it to an approved namespace and writes the lifecycle plan. No SQL, no grant, no apply.
     const inputPath = option('input'), name = option('name'), namespace = option('namespace'), model = option('model');
@@ -88,15 +113,21 @@ try {
   } else if (command === 'eval-agent') {
     const result = await evaluateAgentLoop();
     writeJson('out/agent-eval/report.json', result);
-    console.log(JSON.stringify({ registry: result.registry, runs: result.runs, metrics: result.evaluation.metrics.map(metric => ({ universeId: metric.universeId, methodId: metric.methodId, denominator: metric.denominator, counts: metric.counts })) }));
+    console.log(JSON.stringify({ registry: result.registry, runs: result.runs, metrics: result.evaluation.metrics.map(metric => ({ universeId: metric.universeId, methodId: metric.methodId, denominator: metric.denominator, counts: metric.counts })), mode: result.mode, dataOrigin: result.dataOrigin, selective: result.selective,
+      criteria: { passed: result.criteria.passed, failures: result.criteria.failures, byUniverse: Object.fromEntries(Object.entries<any>(result.criteria.byUniverse).map(([alias, entry]) => [alias, { ...entry, mode: result.mode, dataOrigin: result.dataOrigin }])) } }));
+    process.exitCode = evalAgentExitCode(result);
   } else if (command === 'agent' && process.argv[3] === 'continue') {
     const runId = option('run-id');
     if (!runId) throw new SafeError('AGENT_RUN_ID_REQUIRED');
     await continueAgentCommand(option('universe') ?? '', runId, Number(option('attempt') ?? 1), maxTokensOption());
   } else if (command === 'agent' && process.argv.includes('--offline')) {
-    await runOfflineAgentCommand(option('universe') ?? '', { runId: option('run-id'), memory: process.argv.includes('--memory') });
+    await runOfflineAgentCommand(option('universe') ?? '', { runId: option('run-id'), memory: process.argv.includes('--memory'), ...agentFlagOptions(process.argv, option('probe-limit'), option('review'), option('negative-control'), option('run-id')) });
   } else if (command === 'agent') {
-    await runAgentCommand(option('universe') ?? '', { runId: option('run-id'), model: !process.argv.includes('--no-model'), coma: !process.argv.includes('--no-coma'), maxTokens: maxTokensOption(), memory: process.argv.includes('--memory') });
+    await runAgentCommand(option('universe') ?? '', { runId: option('run-id'), model: !process.argv.includes('--no-model'), coma: !process.argv.includes('--no-coma'), maxTokens: maxTokensOption(), memory: process.argv.includes('--memory'), ...agentFlagOptions(process.argv, option('probe-limit'), option('review'), option('negative-control'), option('run-id')) });
+  } else if (command === 'agent-multi') {
+    const cross = option('cross');
+    if (!cross) throw new SafeError('AGENT_MULTI_CROSS_REQUIRED');
+    await runMultiAgentCommand(cross, { runId: option('run-id') });
   } else if (command === 'discover-coma') {
     const runId = option('run-id');
     if (!runId) throw new SafeError('COMA_RUN_ID_REQUIRED');

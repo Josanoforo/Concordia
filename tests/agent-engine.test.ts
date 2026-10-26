@@ -134,7 +134,7 @@ test('generic agent loop runs discovery, COMA, exploration, budgeted probes, cri
   assert.equal(JSON.stringify(bridgeInputs).includes('Ana'), false, 'COMA receives schema only');
   assert.deepEqual(report.phases.exploration.actions.map((item: any) => item.action), ['READ_CUSTOMER_PROFILE', 'READ_REGION_REFERENCE', 'STOP_EXPLORATION']);
   assert.ok(report.phases.exploration.actions.every((item: any) => ['PASS', 'NOT_REQUIRED'].includes(item.execution)));
-  assert.deepEqual(report.phases.probes.selected, ['orders_customer', 'orders_region', 'orders_order_trap']);
+  assert.deepEqual([...report.phases.probes.selected].sort(), ['orders_customer', 'orders_order_trap', 'orders_region'], 'the order follows the exploration hints (P6)');
   assert.equal(report.decisions.length, 3);
   assert.ok(report.decisions.every((item: any) => typeof item.verdict === 'string'));
   assert.equal(report.phases.critic.status, 'EVALUATED');
@@ -208,7 +208,7 @@ test('post-COMA turns out-of-scope proposals into budgeted coverage probes that 
   const report = await runAgent('AGENTFX', 'agent-agentfx-offline-7', { client: fakeClient(log) as any, chooser: new DeterministicChooser(), comaBridge: bridge, executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', persist: false, critic: false });
   const post = report.postComa;
   assert.equal(post.status, 'EXECUTED');
-  assert.deepEqual(post.policy, { maxProbes: 2, ranking: 'rawScore desc, then proposalId', costPerProbe: 1, equality: 'literal text equality of sampled values' });
+  assert.deepEqual(post.policy, { maxProbes: 2, ranking: 'rawScore desc, then proposalId', costPerProbe: 1, equality: 'literal text equality of sampled values', estimatedQueries: 3, queriesAvailable: 3, f4Reads: 1 });
   assert.deepEqual(post.proposals.map((item: any) => item.proposalId), ['customers.customer_id__orders.customer_id', 'orders.customer_id__customers.customer_id', 'orders.order_id__regions.region_code']);
   const [top, second, third] = post.proposals;
   assert.equal(top.coverageProbe.status, 'EXECUTED');
@@ -218,7 +218,7 @@ test('post-COMA turns out-of-scope proposals into budgeted coverage probes that 
   assert.equal(third.coverageProbe.status, 'SUGGESTED'); assert.equal(third.coverageProbe.reason, 'NOT_SELECTED_MAX_PROBES');
   assert.deepEqual(post.counts, { proposals: 3, executed: 2, suggested: 1, notExecutable: 0, skippedBudget: 0, failed: 0 });
   assert.ok(post.proposals.every((item: any) => item.verificationStatus === 'NO VERIFICADO/UNKNOWN' && item.reviewState === 'PENDING'));
-  assert.deepEqual(report.decisions.map((item: any) => item.relationId), ['orders_customer', 'orders_region', 'orders_order_trap'], 'verdicts cover only the configured relations');
+  assert.deepEqual(report.decisions.map((item: any) => item.relationId).sort(), ['orders_customer', 'orders_order_trap', 'orders_region'], 'verdicts cover only the configured relations');
   assert.ok(report.budget.used.queries === log.length && report.budget.used.queries <= 25, 'coverage probes are charged to the run budget');
   assert.ok(log.filter(sql => /AGENT_FIXTURE\.orders\) concordia_source WHERE customer_id IN/.test(sql)).length >= 1);
   const none = await runAgent('AGENTFX', 'agent-agentfx-offline-8', { client: fakeClient() as any, executionMode: 'LOCAL', persist: false, critic: false });
@@ -262,4 +262,13 @@ test('the agent command ranks probes with the model only when --probe-model is g
   assert.equal(probeChooserFor(chooser, ['agent', '--universe', 'U1', '--probe-model']), chooser);
   assert.equal(probeChooserFor(chooser, ['agent', '--probe-model'], false), undefined, 'an explicit option wins');
   assert.equal(probeChooserFor(undefined, ['agent', '--probe-model']), undefined, 'no model, no ranking');
+});
+
+test('N8 three valid reads, then the step cap: the fourth decision is never asked and the run records the cap', async () => {
+  const chooser = new ScriptedChooser(['READ_CUSTOMER_PROFILE', 'READ_REGION_REFERENCE', 'READ_ORDERS_BY_REGION', 'STOP_EXPLORATION']);
+  const report = await runAgent('AGENTFX', 'agent-agentfx-three-steps', { client: fakeClient() as any, chooser, executionMode: 'LOCAL', persist: false, critic: false });
+  assert.deepEqual(report.phases.exploration.actions.map((item: any) => [item.action, item.execution]), [['READ_CUSTOMER_PROFILE', 'PASS'], ['READ_REGION_REFERENCE', 'PASS'], ['READ_ORDERS_BY_REGION', 'PASS']]);
+  assert.equal(chooser.seen.length, 3, 'the cap is reached after three valid decisions: the fourth is never requested');
+  assert.equal(report.budget.used.steps, 3); assert.ok(report.budget.exhausted.includes('steps'));
+  assert.equal(report.phases.exploration.plannerError, null);
 });

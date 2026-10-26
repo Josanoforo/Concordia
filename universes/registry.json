@@ -534,5 +534,93 @@
         "maxSteps": 2
       }
     }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.tpcds",
+    "version": "1.0.0",
+    "aliases": [
+      "TPCDS"
+    ],
+    "source": {
+      "sourceId": "tpcds-lightning-source",
+      "adapterId": "zetaris",
+      "configPath": "universes/TPCDS.json",
+      "dataOrigin": "PUBLIC"
+    },
+    "capabilities": [
+      "DISCOVERY",
+      "BOUNDED_RELATION_PROBE",
+      "RELATION_EVALUATION",
+      "AGENT_EXPLORATION"
+    ],
+    "relationIds": [],
+    "capabilityBounds": {
+      "DISCOVERY": {
+        "sampleLimit": 20
+      },
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 200,
+        "maxKeyColumns": 3
+      },
+      "AGENT_EXPLORATION": {
+        "maxQueriesPerRun": 4200,
+        "readLimit": 20,
+        "maxTokensPerRun": 3000000,
+        "maxSteps": 3
+      }
+    },
+    "fullEvidence": true,
+    "reviewMode": "MODEL_ADVERSARIAL",
+    "consistency": {
+      "enabled": true
+    },
+    "tieBreak": {
+      "enabled": true
+    },
+    "fullEvidenceExtendedProfile": true,
+    "reviewCascade": {
+      "enabled": true
+    }
+  },
+  {
+    "schemaVersion": 1,
+    "manifestId": "concordia.universe.nwch",
+    "version": "1.0.0",
+    "aliases": [
+      "NWCH"
+    ],
+    "source": {
+      "sourceId": "nwch-lightning-source",
+      "adapterId": "zetaris",
+      "configPath": "universes/NWCH.json",
+      "dataOrigin": "PUBLIC"
+    },
+    "capabilities": [
+      "DISCOVERY",
+      "BOUNDED_RELATION_PROBE",
+      "RELATION_EVALUATION",
+      "AGENT_EXPLORATION"
+    ],
+    "relationIds": [],
+    "capabilityBounds": {
+      "DISCOVERY": {
+        "sampleLimit": 20
+      },
+      "BOUNDED_RELATION_PROBE": {
+        "probeLimit": 50,
+        "maxRelationsPerRun": 40,
+        "maxKeyColumns": 3
+      },
+      "AGENT_EXPLORATION": {
+        "maxQueriesPerRun": 500,
+        "readLimit": 20,
+        "maxTokensPerRun": 400000,
+        "maxSteps": 3
+      }
+    },
+    "reviewMode": "MODEL_ADVERSARIAL",
+    "fullEvidence": true
   }
 ]

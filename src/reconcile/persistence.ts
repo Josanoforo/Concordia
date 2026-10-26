@@ -5,6 +5,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { ROOT, SafeError } from '../runtime.ts';
 import { validateStateManifest, type StateManifest } from './state-manifest.ts';
 import type { Claim, Conflict } from './index.ts';
+import { isTrustedSustained } from './trusted-sustained.ts';
 import type { LedgerEntry, MemoryRecord } from '../hmem/types.ts';
 
 export interface ReconcileSnapshotBody {
@@ -124,8 +125,10 @@ export function readScopedRegularFile(scope:string,name:string):Buffer|null {
   try{const opened=fs.fstatSync(fd);if(!opened.isFile()||opened.dev!==stat.dev||opened.ino!==stat.ino)throw new SafeError('RECONCILE_STATE_FILE_INVALID');return fs.readFileSync(fd);}finally{fs.closeSync(fd);}
 }
 export function buildReconcileSnapshot(body: ReconcileSnapshotBody): ReconcileSnapshot { return { ...body, checksum: hash(body) }; }
-export function validateReconcileSnapshotContent(state:Pick<ReconcileSnapshotBody,'universeId'|'namespace'|'manifest'|'claims'|'conflicts'|'memoryState'|'ledger'>):void {
+export function validateReconcileSnapshotContent(state:Pick<ReconcileSnapshotBody,'universeId'|'namespace'|'manifest'|'claims'|'conflicts'|'memoryState'|'ledger'>,options:{strictSustained?:boolean}={}):void {
   const invalid=()=>{throw new SafeError('RECONCILE_SNAPSHOT_INVALID');};
+  // Strict scopes: a SOSTENIDA claim that declares a review state must be REVIEWED and carry its run id and receipt. Claims written before the gate carry no review state and are read as legacy (never trusted for reuse).
+  if(options.strictSustained)for(const claim of state.claims)if(claim.entity?.startsWith('relation:')&&claim.attribute==='status'&&claim.value==='SOSTENIDA'&&claim.reviewState!==undefined&&!isTrustedSustained(claim))throw new SafeError('SOSTENIDA_WITHOUT_RECEIPT_OR_REVIEW');
   if(!validateStateManifest(state.manifest)||state.universeId!==state.manifest.universeId||state.namespace!==state.manifest.namespace)invalid();
   const claimsById=new Map<string,Claim>(),recordsById=new Map<string,MemoryRecord>();
   for(const claim of state.claims){if(!claim||typeof claim.id!=='string'||claimsById.has(claim.id)||claim.domain!==state.universeId||typeof claim.entity!=='string'||typeof claim.attribute!=='string'||typeof claim.value!=='string'||typeof claim.source!=='string')invalid();claimsById.set(claim.id,claim);}

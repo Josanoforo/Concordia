@@ -21,7 +21,7 @@ test('U1 config declares the approved review state and identifier spaces, with t
       assert.equal(relation.kind, 'FOREIGN_KEY'); assert.equal(relation.reviewState, 'REVIEWED'); assert.equal(relation.identifierSpace, APPROVED[relation.id]);
       assert.equal(relation.normalizationVersion, 'integer-v1'); assert.equal(relation.normalizationLossless, true); assert.equal(relation.normalizationAdapterCapability, 'integer');
       assert.deepEqual([relation.reviewAuthorization.approver, relation.reviewAuthorization.approvedAt, relation.reviewAuthorization.quote], ['project-owner', '2026-10-25', 'Aprobado']);
-    } else for (const field of ['kind', 'reviewState', 'identifierSpace', 'reviewAuthorization']) assert.equal(relation[field], undefined, `${relation.id}.${field}`);
+    } else if (relation.id !== 'taxi_zones_zones_trap') for (const field of ['kind', 'reviewState', 'identifierSpace', 'reviewAuthorization']) assert.equal(relation[field], undefined, `${relation.id}.${field}`);
   }
   assert.notEqual(APPROVED.trips_pickup_zones, APPROVED.yellow_pu_taxi_zones, 'trips has its own space, distinct from the TLC one');
   const contract = legacyRelationContract(cfg.relations.find((r: any) => r.id === 'trips_pickup_zones'), 'U1', '2.0', 'integer', 3);
@@ -42,4 +42,19 @@ test('no verdict of the stored live run agent-u1-live-01 changes, with the store
     assert.equal(after.verdict, run.decisions.find((item: any) => item.relationId === probe.relationId).verdict);
   }
   assert.ok(cfg.relations.length === artifacts.probes.length);
+});
+
+test('F-04: the trap taxi_zones_zones_trap declares no common space, with the authorization recorded, and can never reach SOSTENIDA', async () => {
+  const cfg = universeConfig('U1'), trap = cfg.relations.find((relation: any) => relation.id === 'taxi_zones_zones_trap');
+  assert.equal(trap.noCommonSpace, true);
+  assert.deepEqual([trap.reviewAuthorization.approver, trap.reviewAuthorization.approvedAt, trap.reviewAuthorization.quote], ['project-owner', '2026-10-25', 'Aprobado']);
+  for (const field of ['identifierSpace', 'kind', 'reviewState']) assert.equal(trap[field], undefined, field);
+  const contract = legacyRelationContract(trap, 'U1', '2.0', 'integer', 3);
+  assert.deepEqual([contract.identifierSpace, contract.kind, contract.reviewState], [{ state: 'UNKNOWN' }, 'UNKNOWN', 'PENDING']);
+  const artifacts = JSON.parse(fs.readFileSync(path.join(dir, 'artifacts.json'), 'utf8')), policy = relationPolicyFromConfig(readJson('config/thresholds.json'));
+  const stored = artifacts.probes.find((probe: any) => probe.relationId === 'taxi_zones_zones_trap').evidence;
+  assert.notEqual(evaluateRelation(stored.relationContract, [stored.typedEvidence], policy).verdict, 'SOSTENIDA');
+  // Even with perfect membership evidence the declared control stays below SOSTENIDA, because it has no known space, kind or review.
+  const widened = evaluateRelation(contract, [stored.typedEvidence], policy);
+  assert.notEqual(widened.verdict, 'SOSTENIDA'); assert.ok(widened.reasonCodes.length > 0);
 });

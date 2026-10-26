@@ -2,10 +2,17 @@ import type { DataOrigin, Decision, EvidenceBundle, EvidenceObservation, Executi
 import type { NormalizationMode } from '../universe.ts';
 import { executeProbe, planProbe, type ProbeFilter, type ProbePlan, type ProbeReadRequest } from './probes.ts';
 import { evaluateRelation } from './decision.ts';
+import { SafeError } from '../runtime.ts';
 import { relationPolicyFromConfig } from './policy.ts';
 
+/** R-seal: who reviewed the contract. A REVIEWED relation declares it (HUMAN_REVIEWED | MODEL_REVIEWED) or, declaring none, is human; without a REVIEWED state there is no origin. An unknown value is refused. */
+function reviewOriginOf(relation: { reviewState?: string; reviewOrigin?: string }): { reviewOrigin?: 'HUMAN_REVIEWED' | 'MODEL_REVIEWED' } {
+  if (relation.reviewOrigin !== undefined && relation.reviewOrigin !== 'HUMAN_REVIEWED' && relation.reviewOrigin !== 'MODEL_REVIEWED') throw new SafeError('REVIEW_ORIGIN_INVALID');
+  return relation.reviewState === 'REVIEWED' ? { reviewOrigin: relation.reviewOrigin ?? 'HUMAN_REVIEWED' } : {};
+}
+
 type LegacyEndpoint = { db: string; table: string; column: string };
-type LegacyRelation = { id: string; from: LegacyEndpoint; to: LegacyEndpoint; minDistinctKeys?: number; kind?: RelationKindValue; identifierSpace?: string; normalizationVersion?: string; normalizationLossless?: boolean; normalizationAdapterCapability?: string; reviewState?: 'PENDING' | 'REVIEWED' | 'UNKNOWN' };
+type LegacyRelation = { reviewOrigin?: string; id: string; from: LegacyEndpoint; to: LegacyEndpoint; minDistinctKeys?: number; kind?: RelationKindValue; identifierSpace?: string; normalizationVersion?: string; normalizationLossless?: boolean; normalizationAdapterCapability?: string; reviewState?: 'PENDING' | 'REVIEWED' | 'UNKNOWN' };
 type LegacyProbe = {
   relation: LegacyRelation; utc: string; status: string; normalization?: string;
   typeCompat?: { normalization?: string; castable?: boolean };
@@ -38,13 +45,14 @@ export function legacyRelationContract(relation: LegacyRelation, universeId: str
     }],
     semanticContext: { grain: unknown(), unit: unknown(), scale: unknown(), period: unknown(), timezone: unknown() }, assertions: [],
     evidencePolicy: { requiredObservationTypes: ['KEY_MEMBERSHIP'], minimumCompleteness: 'COMPLETE_FOR_SCOPE', nulls: 'UNKNOWN', cardinality: 'UNKNOWN', declarationsAdmissible: 'UNKNOWN', minimumDistinctKeys },
-    reviewState: relation.reviewState && ['PENDING', 'REVIEWED', 'UNKNOWN'].includes(relation.reviewState) ? relation.reviewState : 'PENDING'
-  };
+    reviewState: relation.reviewState && ['PENDING', 'REVIEWED', 'UNKNOWN'].includes(relation.reviewState) ? relation.reviewState : 'PENDING',
+    ...reviewOriginOf(relation)
+  } as RelationContract;
 }
 
 /** Common allowlist/LIMIT planning used before U1 and U2 legacy source reads. */
-export function planLegacyProbe(relation: LegacyRelation, universeId: string, contractVersion: string, mode: NormalizationMode, minimumDistinctKeys: number, allowlist: Record<string, readonly string[]>, limit: number, additionalColumns: Record<string, readonly string[]> = {}, filters: Record<string, ProbeFilter> = {}): ProbePlan {
-  return planProbe(legacyRelationContract(relation, universeId, contractVersion, mode, minimumDistinctKeys), allowlist, limit, 50, additionalColumns, filters);
+export function planLegacyProbe(relation: LegacyRelation, universeId: string, contractVersion: string, mode: NormalizationMode, minimumDistinctKeys: number, allowlist: Record<string, readonly string[]>, limit: number, additionalColumns: Record<string, readonly string[]> = {}, filters: Record<string, ProbeFilter> = {}, maxLimit = 50): ProbePlan {
+  return planProbe(legacyRelationContract(relation, universeId, contractVersion, mode, minimumDistinctKeys), allowlist, limit, maxLimit, additionalColumns, filters);
 }
 
 /** Converts a captured legacy probe into common DTOs; callers supply identity and provenance explicitly. */

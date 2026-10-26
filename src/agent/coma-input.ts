@@ -55,15 +55,38 @@ export function comaInputHash(input: Pick<ComaSchemaInput, 'tableDatabases' | 'p
   return sha(v === 1 ? legacy : { comaInputVersion: v, ...legacy });
 }
 
-export interface ComaPhaseResult { status: 'NOT_CONFIGURED' | 'RAN'; comaInputVersion?: ComaInputVersion; inputHash?: string; input?: ComaSchemaInput; production?: CandidateProductionEnvelope }
+/** What the blind input covered: recorded so a capped candidate search is never mistaken for an exhaustive one. */
+export interface BlindComaCoverage { tablePairs: number; pairs: number; cap: number; capped: boolean; order: 'source<target lexicographic' }
+/** Upper bound of table pairs sent to COMA in blind discovery (the bridge itself accepts 1000). 24 tables make 276 pairs, inside it. */
+export const BLIND_COMA_MAX_PAIRS = 300;
+
+/**
+ * Blind discovery (catalog.postComa.blind with no configured relations): COMA is asked about every pair of discovered tables with NOTHING in scope
+ * (allowed: []), so every column match it returns is an out-of-scope proposal, never a contribution. Pairs are ordered source<target lexicographically
+ * and cut deterministically at `cap`; the cut is reported in BlindComaCoverage. Relation-configured universes never take this path.
+ */
+export function comaInputBlind(cfg: any, tables: ComaSchemaInput['tables'], cap = BLIND_COMA_MAX_PAIRS): { input: ComaSchemaInput; coverage: BlindComaCoverage } {
+  const names = Object.keys(tables).sort((x, y) => x.localeCompare(y, 'en')), all: [string, string][] = [];
+  for (let i = 0; i < names.length; i++) for (let j = i + 1; j < names.length; j++) all.push([names[i], names[j]]);
+  const chosen = all.slice(0, cap), mode = cfg.normalizationContract?.defaultMode ?? 'text';
+  const tableDatabases = Object.fromEntries(Object.keys(tables).map(name => [name, cfg.tables[name].db]));
+  const input: ComaSchemaInput = { tableDatabases, normalizationMode: 'text', tables,
+    pairs: chosen.map(([source, target]) => ({ source, target, sourceDb: cfg.tables[source].db, targetDb: cfg.tables[target].db, normalizationMode: mode, allowed: [] })) };
+  return { input, coverage: { tablePairs: all.length, pairs: chosen.length, cap, capped: chosen.length < all.length, order: 'source<target lexicographic' } };
+}
+
+export interface ComaPhaseResult { status: 'NOT_CONFIGURED' | 'RAN'; comaInputVersion?: ComaInputVersion; inputHash?: string; input?: ComaSchemaInput; production?: CandidateProductionEnvelope; blind?: BlindComaCoverage }
 
 /** Runs COMA as a normal candidate provider for any universe. No bridge means the phase is recorded as not configured. */
 export async function runComaPhase(o: { universeId: string; cfg: any; catalog?: ExplorationCatalog; discovery: any; sourceColumns: Record<string, Column[]>;
   relations: readonly any[]; bridge?: ComaBridge; expectedInputHash?: string; comaInputVersion?: number; executionMode: 'LIVE' | 'REPLAY' | 'LOCAL'; dataOrigin: 'SYNTHETIC' | 'PUBLIC' | 'USER' | 'UNKNOWN' }): Promise<ComaPhaseResult> {
-  const comaInputVersion = normalizeComaInputVersion(o.comaInputVersion);
+  const blindMode = o.catalog?.postComa?.blind === true && (o.cfg.relations ?? []).length === 0;
+  // Blind discovery always uses the explicit v2 input; every other universe keeps the version its caller asked for (v1 is the frozen legacy form).
+  const comaInputVersion = blindMode ? 2 as ComaInputVersion : normalizeComaInputVersion(o.comaInputVersion);
   if (!o.bridge) return { status: 'NOT_CONFIGURED' };
   const tables = comaTables(allowlistedColumns(o.cfg, o.catalog, o.discovery, o.sourceColumns));
-  const input = comaInputFromRelations(o.cfg, o.relations, tables);
+  const blind = blindMode ? comaInputBlind(o.cfg, tables) : undefined;
+  const input = blind ? blind.input : comaInputFromRelations(o.cfg, o.relations, tables);
   if (!input.pairs.length) return { status: 'NOT_CONFIGURED' };
   const inputHash = comaInputHash(input, comaInputVersion);
   if (o.expectedInputHash && inputHash !== o.expectedInputHash) throw new SafeError('U2_COMA_RECOVERY_INPUT_HASH_MISMATCH');
@@ -75,7 +98,7 @@ export async function runComaPhase(o: { universeId: string; cfg: any; catalog?: 
     tableMetadata: Object.fromEntries(Object.entries(tables).map(([name, table]) => [name, { columns: table.columns.map(column => ({ name: column, type: table.types[column] ?? 'unknown' })),
       keyColumns: o.cfg.tables[name].keyColumns ?? [], role: o.cfg.tables[name].role ?? 'dimension' }])),
     evidenceRefs: Object.values<any>(o.discovery.tables).flatMap((table: any) => [table.sourceMetadata?.requestId, table.sample?.requestId].filter(Boolean)),
-    metadata: { databases, scope: `${o.universeId} configured relations`, schemaOnly: true } }, [provider]);
+    metadata: { databases, scope: blind ? `${o.universeId} blind discovery: ${blind.coverage.pairs} of ${blind.coverage.tablePairs} table pairs${blind.coverage.capped ? ' (capped)' : ''}, nothing in scope` : `${o.universeId} configured relations`, schemaOnly: true } }, [provider]);
   trace({ kind: 'agent-coma', universeId: o.universeId, providerState: production.providerStates, candidates: production.candidates.length, inputHash });
-  return { status: 'RAN', comaInputVersion, inputHash, input, production };
+  return { status: 'RAN', comaInputVersion, inputHash, input, production, ...(blind ? { blind: blind.coverage } : {}) };
 }

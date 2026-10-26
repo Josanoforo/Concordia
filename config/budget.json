@@ -1,6 +1,6 @@
 {
   "phase": "default",
   "generationCountPolicy": "unlimited",
-  "maxTokensPerGeneration": 2000,
+  "maxTokensPerGeneration": 3000,
   "automaticRetries": 0
 }

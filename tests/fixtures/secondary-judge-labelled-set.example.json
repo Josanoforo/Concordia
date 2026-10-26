@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "description": "SYNTHETIC EXAMPLE of the labelled-set format. Not evidence. Replace with human-labelled cases and recorded Nightshift receipts (origin LIVE) once the project-owner authorises live recording.",
+  "cases": [
+    {
+      "id": "syn-01",
+      "question": "Synthetic ambiguous choice 1",
+      "candidates": [
+        "READ_A",
+        "READ_B"
+      ],
+      "label": "READ_A",
+      "electorChoice": "READ_A",
+      "judgeResponse": "{\"choice\": \"READ_A\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-02",
+      "question": "Synthetic ambiguous choice 2",
+      "candidates": [
+        "PROBE_X",
+        "PROBE_Y"
+      ],
+      "label": "PROBE_X",
+      "electorChoice": "PROBE_X",
+      "judgeResponse": "{\"choice\": \"PROBE_X\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-03",
+      "question": "Synthetic ambiguous choice 3",
+      "candidates": [
+        "JOIN_P",
+        "JOIN_Q"
+      ],
+      "label": "NONE",
+      "electorChoice": "JOIN_P",
+      "judgeResponse": "{\"choice\": \"NONE\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-04",
+      "question": "Synthetic ambiguous choice 4",
+      "candidates": [
+        "READ_C",
+        "READ_D"
+      ],
+      "label": "READ_C",
+      "electorChoice": "READ_D",
+      "judgeResponse": "{\"choice\": \"READ_C\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-05",
+      "question": "Synthetic ambiguous choice 5",
+      "candidates": [
+        "READ_A",
+        "READ_B"
+      ],
+      "label": "READ_A",
+      "electorChoice": "READ_A",
+      "judgeResponse": "{\"choice\": \"READ_B\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-06",
+      "question": "Synthetic ambiguous choice 6",
+      "candidates": [
+        "PROBE_X",
+        "PROBE_Y"
+      ],
+      "label": "NONE",
+      "electorChoice": "PROBE_X",
+      "judgeResponse": "{\"choice\": \"NONE\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-07",
+      "question": "Synthetic ambiguous choice 7",
+      "candidates": [
+        "JOIN_P",
+        "JOIN_Q"
+      ],
+      "label": "JOIN_P",
+      "electorChoice": "JOIN_P",
+      "judgeResponse": "{\"choice\": \"JOIN_P\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-08",
+      "question": "Synthetic ambiguous choice 8",
+      "candidates": [
+        "READ_C",
+        "READ_D"
+      ],
+      "label": "READ_C",
+      "electorChoice": "READ_D",
+      "judgeResponse": "not json",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-09",
+      "question": "Synthetic ambiguous choice 9",
+      "candidates": [
+        "READ_A",
+        "READ_B"
+      ],
+      "label": "NONE",
+      "electorChoice": "READ_A",
+      "judgeResponse": "{\"choice\": \"NONE\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-10",
+      "question": "Synthetic ambiguous choice 10",
+      "candidates": [
+        "PROBE_X",
+        "PROBE_Y"
+      ],
+      "label": "PROBE_X",
+      "electorChoice": "PROBE_X",
+      "judgeResponse": "{\"choice\": \"PROBE_Y\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-11",
+      "question": "Synthetic ambiguous choice 11",
+      "candidates": [
+        "JOIN_P",
+        "JOIN_Q"
+      ],
+      "label": "JOIN_P",
+      "electorChoice": "JOIN_P",
+      "judgeResponse": "{\"choice\": \"JOIN_P\"}",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "syn-12",
+      "question": "Synthetic ambiguous choice 12",
+      "candidates": [
+        "READ_C",
+        "READ_D"
+      ],
+      "label": "NONE",
+      "electorChoice": "READ_D",
+      "judgeResponse": "{\"choice\": \"NONE\"}",
+      "origin": "SYNTHETIC"
+    }
+  ]
+}

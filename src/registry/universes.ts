@@ -1,5 +1,8 @@
 import { readJson } from '../runtime.ts';
 import { validateExplorationCatalog } from '../agent/catalog.ts';
+import { isReviewMode } from './review-mode.ts';
+import { RUN_BUDGET_CEILINGS } from '../agent/run-budget.ts';
+import { validateKeyContractDeclaration } from '../relations/key-contract.ts';
 
 export type UniverseCapability = 'DISCOVERY' | 'BOUNDED_RELATION_PROBE' | 'LIVE_RELATION_PROBE' | 'RELATION_EVALUATION' | 'USL' | 'SCHEMA_MATCHING' | 'LOCAL_EVALUATION' | 'METADATA_ONLY' | 'AGENT_EXPLORATION';
 export type CapabilityBounds = Record<string, number>;
@@ -12,6 +15,18 @@ export interface UniverseManifest {
   capabilities: readonly UniverseCapability[];
   relationIds: readonly string[];
   capabilityBounds?: Partial<Record<UniverseCapability, CapabilityBounds>>;
+  /** R-config: required review (HUMAN default) for the universe and, optionally, per relation id. Declared config; see review-mode.ts. */
+  /** P3: whole-table evidence (global profile, duplicates, anti-join) for the contract probes; the engine reads manifest.fullEvidence === true. Off unless declared. */
+  fullEvidence?: boolean;
+  /** E2-03: global consistency pass between the model review and the contract probes (the engine reads manifest.consistency.enabled === true). Off unless declared. `aliases`: a source column (`table.column`) that may reference several targets (`table.column` or `table`). */
+  consistency?: { enabled: boolean; aliases?: { source: string; targets: string[] }[] };
+  /** F1x: extended whole-table profile (MIN, MAX, AVG length) with the full evidence. A separate declaration; `fullEvidence` keeps its meaning. Off unless declared. */
+  fullEvidenceExtendedProfile?: boolean;
+  /** E2-02: tie-break between sibling candidates of one source column. Off unless declared. */
+  tieBreak?: { enabled: boolean };
+  reviewCascade?: { enabled: boolean };
+  reviewMode?: 'HUMAN' | 'MODEL_ADVERSARIAL' | 'HUMAN_OR_MODEL' | 'BOTH';
+  reviewModeByRelation?: Record<string, 'HUMAN' | 'MODEL_ADVERSARIAL' | 'HUMAN_OR_MODEL' | 'BOTH'>;
 }
 
 /** Registry is data-driven; validation remains a pure function over supplied manifests. */
@@ -37,7 +52,7 @@ const boundRequirements: Partial<Record<UniverseCapability, readonly string[]>> 
   SCHEMA_MATCHING: ['sampleLimit', 'probeLimit', 'maxCandidatesPerRun'], LOCAL_EVALUATION: ['sampleLimit', 'probeLimit', 'maxRelationsPerRun', 'maxKeyColumns'],
   AGENT_EXPLORATION: ['maxQueriesPerRun', 'readLimit', 'maxTokensPerRun', 'maxSteps']
 };
-const boundCeilings: Record<string, number> = { sampleLimit: 1000, probeLimit: 50, maxRelationsPerRun: 500, maxCandidatesPerRun: 10000, maxKeyColumns: 32, maxQueriesPerRun: 200, readLimit: 1000, maxTokensPerRun: 200000, maxSteps: 20 };
+const boundCeilings: Record<string, number> = { sampleLimit: 1000, probeLimit: 50, maxRelationsPerRun: 500, maxCandidatesPerRun: 10000, maxKeyColumns: 32, maxQueriesPerRun: RUN_BUDGET_CEILINGS.maxQueriesPerRun, readLimit: RUN_BUDGET_CEILINGS.readLimit, maxTokensPerRun: RUN_BUDGET_CEILINGS.maxTokensPerRun, maxSteps: RUN_BUDGET_CEILINGS.maxSteps };
 
 /** Pure registry validation. It does not read manifests, configs or any source. */
 export function validateUniverseRegistry(manifests: readonly UniverseManifest[]): RegistryIssue[] {
@@ -87,6 +102,30 @@ export function validateUniverseRegistry(manifests: readonly UniverseManifest[])
       const identity = normalizedIdentity(relationId), owner = relationOwners.get(identity);
       if (owner !== undefined && owner !== index) issues.push({ path: `${path}.relationIds`, code: 'DUPLICATE_RELATION_ID' }); else relationOwners.set(identity, index);
     }
+    if (manifest.fullEvidence !== undefined && (typeof manifest.fullEvidence !== 'boolean' || (manifest.fullEvidence === true && !(Array.isArray(manifest.capabilities) && manifest.capabilities.includes('BOUNDED_RELATION_PROBE'))))) issues.push({ path: `${path}.fullEvidence`, code: 'INVALID_FULL_EVIDENCE' });
+    if (manifest.consistency !== undefined) {
+      const c: any = manifest.consistency, ok = (v: unknown) => typeof v === 'string' && /^[A-Za-z0-9_]+(\.[A-Za-z0-9_]+)?$/.test(v);
+      const aliasesOk = c?.aliases === undefined || (Array.isArray(c.aliases) && c.aliases.every((a: any) => a && typeof a === 'object' && typeof a.source === 'string' && /^[A-Za-z0-9_]+\.[A-Za-z0-9_]+$/.test(a.source) && Array.isArray(a.targets) && a.targets.length > 0 && a.targets.every(ok)));
+      if (!c || typeof c !== 'object' || Array.isArray(c) || typeof c.enabled !== 'boolean' || !aliasesOk) issues.push({ path: `${path}.consistency`, code: 'INVALID_CONSISTENCY' });
+    }
+    if (manifest.fullEvidenceExtendedProfile !== undefined && (typeof manifest.fullEvidenceExtendedProfile !== 'boolean' || (manifest.fullEvidenceExtendedProfile === true && !(Array.isArray(manifest.capabilities) && manifest.capabilities.includes('BOUNDED_RELATION_PROBE'))))) issues.push({ path: `${path}.fullEvidenceExtendedProfile`, code: 'INVALID_FULL_EVIDENCE_EXTENDED_PROFILE' });
+    if (manifest.tieBreak !== undefined) {
+      const t: any = manifest.tieBreak;
+      if (!t || typeof t !== 'object' || Array.isArray(t) || typeof t.enabled !== 'boolean') issues.push({ path: `${path}.tieBreak`, code: 'INVALID_TIE_BREAK' });
+    }
+    if (manifest.reviewCascade !== undefined) {
+      const r: any = manifest.reviewCascade;
+      if (!r || typeof r !== 'object' || Array.isArray(r) || typeof r.enabled !== 'boolean') issues.push({ path: `${path}.reviewCascade`, code: 'INVALID_REVIEW_CASCADE' });
+    }
+    if (manifest.reviewMode !== undefined && !isReviewMode(manifest.reviewMode)) issues.push({ path: `${path}.reviewMode`, code: 'INVALID_REVIEW_MODE' });
+    if (manifest.reviewModeByRelation !== undefined) {
+      const byRelation = manifest.reviewModeByRelation;
+      if (!byRelation || typeof byRelation !== 'object' || Array.isArray(byRelation)) issues.push({ path: `${path}.reviewModeByRelation`, code: 'INVALID_REVIEW_MODE_BY_RELATION' });
+      else for (const [relationId, mode] of Object.entries(byRelation)) {
+        if (!safeId(relationId)) issues.push({ path: `${path}.reviewModeByRelation`, code: 'INVALID_REVIEW_MODE_RELATION_ID' });
+        if (!isReviewMode(mode)) issues.push({ path: `${path}.reviewModeByRelation.${relationId}`, code: 'INVALID_REVIEW_MODE' });
+      }
+    }
     const bounds = manifest.capabilityBounds ?? {};
     if (!bounds || typeof bounds !== 'object' || Array.isArray(bounds)) issues.push({ path: `${path}.capabilityBounds`, code: 'INVALID_CAPABILITY_BOUNDS' });
     else {
@@ -123,6 +162,11 @@ export function validateUniverseConfig(manifest: UniverseManifest, config: unkno
     columnsByTable.set(tableId, new Set(columns.filter(safeColumn)));
     if (table.db !== undefined && !safeId(table.db)) issues.push({ path: `${path}.tables.${tableId}.db`, code: 'INVALID_TABLE_NAMESPACE' });
     if (table.keyColumns !== undefined && (!Array.isArray(table.keyColumns) || table.keyColumns.some((column: unknown) => !safeColumn(column) || !columnsByTable.get(tableId)?.has(column as string)))) issues.push({ path: `${path}.tables.${tableId}.keyColumns`, code: 'INVALID_TABLE_KEY_COLUMNS' });
+    // N41: a declared key contract is validated here, and may only name columns of the table's own allowlist.
+    if (table.keyContract !== undefined) {
+      issues.push(...validateKeyContractDeclaration(table.keyContract, `${path}.tables.${tableId}.keyContract`));
+      if (table.keyContract && typeof table.keyContract === 'object' && !Array.isArray(table.keyContract)) for (const column of Object.keys(table.keyContract)) if (!columnsByTable.get(tableId)?.has(column)) issues.push({ path: `${path}.tables.${tableId}.keyContract.${column}`, code: 'KEY_CONTRACT_COLUMN_OUTSIDE_ALLOWLIST' });
+    }
     if (table.fixtureRows !== undefined && (!Array.isArray(table.fixtureRows) || table.fixtureRows.some((row: unknown) => !Array.isArray(row) || row.length !== columns.length))) issues.push({ path: `${path}.tables.${tableId}.fixtureRows`, code: 'INVALID_FIXTURE_ROWS' });
   }
   const capabilities = new Set(manifest.capabilities);
@@ -167,6 +211,7 @@ export function validateUniverseConfig(manifest: UniverseManifest, config: unkno
       if (!hasOrderedKey(relation?.from)) issues.push({ path: `${path}.relations[${index}].from.column`, code: 'MISSING_RELATION_KEY' });
       if (!hasOrderedKey(relation?.to)) issues.push({ path: `${path}.relations[${index}].to.column`, code: 'MISSING_RELATION_KEY' });
       endpoint(relation, 'from', index); endpoint(relation, 'to', index);
+      if (relation?.reviewMode !== undefined && !isReviewMode(relation.reviewMode)) issues.push({ path: `${path}.relations[${index}].reviewMode`, code: 'INVALID_REVIEW_MODE' });
       if (relation?.normalization !== undefined && !cfg.normalizationContract?.modes?.[relation.normalization]) issues.push({ path: `${path}.relations[${index}].normalization`, code: 'NORMALIZATION_NOT_IN_CONFIG' });
     });
   }
@@ -174,6 +219,19 @@ export function validateUniverseConfig(manifest: UniverseManifest, config: unkno
     if (!capabilities.has(capability)) continue;
     const maxRelations = bounds[capability]?.maxRelationsPerRun;
     if (Number.isInteger(maxRelations) && relationList.length > maxRelations!) issues.push({ path: `${path}.relations`, code: 'RELATION_COUNT_EXCEEDS_CAPABILITY_BOUND' });
+  }
+  // Opt-in probe mode (approved for TPCDS only in practice): the only value is "distinct-keys"; absence keeps the default probe for every other universe.
+  if (cfg.probeMode !== undefined && cfg.probeMode !== 'distinct-keys') issues.push({ path: `${path}.probeMode`, code: 'UNKNOWN_PROBE_MODE' });
+  if (cfg.probeMode !== undefined && !(manifest.capabilities as string[]).includes('BOUNDED_RELATION_PROBE')) issues.push({ path: `${path}.probeMode`, code: 'PROBE_MODE_REQUIRES_BOUNDED_RELATION_PROBE' });
+  // M7-6: an optional declaration that the schema is a known public benchmark; only these two keys, as plain text.
+  if (cfg.publicBenchmark !== undefined) {
+    const declared = cfg.publicBenchmark;
+    if (!declared || typeof declared !== 'object' || Array.isArray(declared)) issues.push({ path: `${path}.publicBenchmark`, code: 'INVALID_PUBLIC_BENCHMARK' });
+    else {
+      for (const key of Object.keys(declared)) if (!['name', 'note'].includes(key)) issues.push({ path: `${path}.publicBenchmark.${key}`, code: 'UNKNOWN_PUBLIC_BENCHMARK_KEY' });
+      if (typeof declared.name !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9 ._-]{0,39}$/.test(declared.name)) issues.push({ path: `${path}.publicBenchmark.name`, code: 'INVALID_PUBLIC_BENCHMARK' });
+      if (typeof declared.note !== 'string' || !declared.note.trim() || declared.note.length > 300 || /[ -]/.test(declared.note)) issues.push({ path: `${path}.publicBenchmark.note`, code: 'INVALID_PUBLIC_BENCHMARK' });
+    }
   }
   if (capabilities.has('AGENT_EXPLORATION')) {
     issues.push(...validateExplorationCatalog(cfg, `${path}.explorationCatalog`));
@@ -234,3 +292,55 @@ export function validateThirdPartyUniverseManifest(manifest: UniverseManifest, e
 }
 
 assertValidUniverseRegistry();
+
+export interface CrossSide { manifest: UniverseManifest; config: any }
+
+/**
+ * R5-1: pure validation of a cross-universe config (universes/cross/<id>.json) against the allowlists of the universes it names.
+ * A cross relation compares keys read by each side's own client; the declaration can never widen either side's table or column allowlist,
+ * and a REVIEWED declaration must carry the human authorization that makes it so.
+ */
+export function validateCrossConfig(cross: unknown, resolve: (alias: string) => CrossSide | undefined, knownRelationIds: ReadonlySet<string> = new Set()): RegistryIssue[] {
+  const issues: RegistryIssue[] = [], path = 'cross';
+  if (!cross || typeof cross !== 'object' || Array.isArray(cross)) return [{ path, code: 'EXPECTED_CROSS_OBJECT' }];
+  const c = cross as any;
+  if (c.schemaVersion !== 1) issues.push({ path: `${path}.schemaVersion`, code: 'UNSUPPORTED_CROSS_SCHEMA' });
+  if (!safeId(c.id)) issues.push({ path: `${path}.id`, code: 'INVALID_CROSS_ID' });
+  const aliases: unknown = c.universes;
+  if (!Array.isArray(aliases) || aliases.length < 2 || aliases.length > 4 || aliases.some(alias => !safeId(alias)) || new Set(aliases.map(alias => String(alias).toLowerCase())).size !== aliases.length) { issues.push({ path: `${path}.universes`, code: 'INVALID_CROSS_UNIVERSES' }); return issues; }
+  const sides = new Map<string, CrossSide>();
+  for (const alias of aliases as string[]) {
+    const side = resolve(alias);
+    if (!side) { issues.push({ path: `${path}.universes.${alias}`, code: 'CROSS_UNIVERSE_UNKNOWN' }); continue; }
+    if (!side.manifest.capabilities.includes('AGENT_EXPLORATION')) issues.push({ path: `${path}.universes.${alias}`, code: 'CROSS_UNIVERSE_LACKS_AGENT_EXPLORATION' });
+    sides.set(alias, side);
+  }
+  const ceiling = Math.min(50, ...[...sides.values()].map(side => side.manifest.capabilityBounds?.BOUNDED_RELATION_PROBE?.probeLimit ?? side.manifest.capabilityBounds?.LOCAL_EVALUATION?.probeLimit ?? 0));
+  if (!Number.isInteger(c.probeLimit) || c.probeLimit < 1 || c.probeLimit > ceiling) issues.push({ path: `${path}.probeLimit`, code: 'CROSS_PROBE_LIMIT_INVALID' });
+  const modes = c.normalizationContract?.modes;
+  if (!modes || typeof modes !== 'object' || Array.isArray(modes) || !Object.keys(modes).length) issues.push({ path: `${path}.normalizationContract`, code: 'CROSS_NORMALIZATION_CONTRACT_REQUIRED' });
+  if (!Array.isArray(c.relations) || !c.relations.length) { issues.push({ path: `${path}.relations`, code: 'EXPECTED_CROSS_RELATION_LIST' }); return issues; }
+  const seen = new Set<string>();
+  c.relations.forEach((relation: any, index: number) => {
+    const here = `${path}.relations[${index}]`;
+    if (!relation || typeof relation !== 'object' || Array.isArray(relation)) { issues.push({ path: here, code: 'INVALID_CROSS_RELATION' }); return; }
+    if (!safeId(relation.id) || seen.has(String(relation.id).toLowerCase()) || knownRelationIds.has(String(relation.id).toLowerCase())) issues.push({ path: `${here}.id`, code: 'INVALID_OR_DUPLICATE_CROSS_RELATION_ID' });
+    else seen.add(String(relation.id).toLowerCase());
+    for (const side of ['from', 'to'] as const) {
+      const ref = relation[side], owner = sides.get(ref?.universe);
+      if (!owner) { issues.push({ path: `${here}.${side}.universe`, code: 'CROSS_ENDPOINT_UNIVERSE_NOT_LISTED' }); continue; }
+      const table = owner.config?.tables?.[ref.table];
+      if (!table) { issues.push({ path: `${here}.${side}.table`, code: 'CROSS_ENDPOINT_OUTSIDE_ALLOWLIST' }); continue; }
+      const columns = (table.columns ?? []).map((column: any) => typeof column === 'string' ? column : column?.name);
+      if (!columns.includes(ref.column) || !safeColumn(ref.column)) issues.push({ path: `${here}.${side}.column`, code: 'CROSS_ENDPOINT_OUTSIDE_ALLOWLIST' });
+    }
+    if (relation.from?.universe === relation.to?.universe) issues.push({ path: here, code: 'CROSS_RELATION_NOT_CROSS_UNIVERSE' });
+    if (!modes?.[relation.normalization]) issues.push({ path: `${here}.normalization`, code: 'NORMALIZATION_NOT_IN_CONFIG' });
+    if (relation.reviewState === 'REVIEWED') {
+      const auth = relation.reviewAuthorization;
+      if (!auth || typeof auth.approver !== 'string' || typeof auth.approvedAt !== 'string' || typeof auth.quote !== 'string' || !auth.approver || !auth.approvedAt || !auth.quote) issues.push({ path: `${here}.reviewAuthorization`, code: 'CROSS_REVIEW_WITHOUT_AUTHORIZATION' });
+      if (relation.kind !== 'FOREIGN_KEY' || typeof relation.identifierSpace !== 'string' || typeof relation.sharedNamespace !== 'string') issues.push({ path: here, code: 'CROSS_REVIEW_REQUIRES_KIND_SPACE_AND_NAMESPACE' });
+    }
+  });
+  return issues;
+}

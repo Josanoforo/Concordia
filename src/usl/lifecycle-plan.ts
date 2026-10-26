@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import type { RelationContract } from '../contracts/types.ts';
 import { validateJson2LiveBinding, type Json2LiveBindingDocument } from '../relations/adapters/zetaris-json2.ts';
 import {
-  checkPublicationPlanPreconditions, type PublicationManifest, type PublicationPlanInput
+  checkPublicationPlanPreconditions, EXACT_TEXT_VERSIONS, type PublicationManifest, type PublicationPlanInput
 } from './publication-plan.ts';
 
 export const L4_OBSERVED_RELATION_NAMESPACE = 'lightning.metastore.concordia_l4_json2_20261023';
@@ -160,7 +160,7 @@ export function compileUslLifecyclePlan(manifest: PublicationManifest, input: Pu
   if (!/^concordia_l4_[a-z0-9_]+_v[1-9][0-9]*$/.test(target.model)) reasons.add('target_model_must_be_new_and_versioned');
   if (!validBindingShape(binding)) reasons.add('sealed_read_only_source_binding_required');
   if (contract.kind !== 'FOREIGN_KEY') reasons.add('foreign_key_relation_required');
-  if (contract.normalization.length !== contract.from.orderedColumns.length || contract.from.orderedColumns.length !== contract.to.orderedColumns.length || !contract.normalization.every((component, index) => component.componentIndex === index && component.operation.state === 'KNOWN' && component.operation.value === 'text' && component.version.state === 'KNOWN' && component.version.value === '1' && component.lossless.state === 'KNOWN' && component.lossless.value === true && component.adapterCapability.state === 'KNOWN' && component.adapterCapability.value === 'exact-text')) reasons.add('exact_text_v1_contract_required');
+  if (contract.normalization.length !== contract.from.orderedColumns.length || contract.from.orderedColumns.length !== contract.to.orderedColumns.length || !contract.normalization.every((component, index) => component.componentIndex === index && component.operation.state === 'KNOWN' && component.operation.value === 'text' && component.version.state === 'KNOWN' && EXACT_TEXT_VERSIONS.includes(component.version.value as string) && component.lossless.state === 'KNOWN' && component.lossless.value === true && component.adapterCapability.state === 'KNOWN' && component.adapterCapability.value === 'exact-text')) reasons.add('exact_text_v1_contract_required');
   const safeBinding = validBindingShape(binding) ? binding : undefined;
   const from = safeBinding && resolveMapping(safeBinding, contract.from), to = safeBinding && resolveMapping(safeBinding, contract.to);
   const fromResolved = safeBinding && resolvedKeys(safeBinding, contract.from), toResolved = safeBinding && resolvedKeys(safeBinding, contract.to);
@@ -227,6 +227,20 @@ export function compileUslLifecyclePlan(manifest: PublicationManifest, input: Pu
       localClientPointerOnly: true as const, otherClientsMayStillReachNewVersion: true as const, firstPublicationHasNoPreviousVersion: true as const }
   };
   return { ...body, fingerprint: hash(body) };
+}
+
+/** Per-operation SQL binding of a plan: which statement (by operationId) a human approval covers, in plan order. */
+export const uslOperationBindings = (plan: UslLifecyclePlan): { operationId: string; sqlSha256: string }[] =>
+  plan.operations.flatMap(operation => operation.sqlSha256 ? [{ operationId: operation.operationId, sqlSha256: operation.sqlSha256 }] : []);
+
+/** Every statement in the plan must hash to its own sqlSha256; a plan whose text and recorded hash disagree is never approvable (R6-Z1). */
+export function uslPlanSqlIntegrityIssue(plan: UslLifecyclePlan): string | null {
+  if (!plan || !Array.isArray(plan.operations)) return 'PLAN_SQL_HASH_MISMATCH';
+  for (const operation of plan.operations) {
+    if (operation.sql === null || operation.sql === undefined) { if (operation.sqlSha256 !== null) return 'PLAN_SQL_HASH_MISMATCH'; continue; }
+    if (typeof operation.sql !== 'string' || operation.sqlSha256 !== hashSql(operation.sql)) return 'PLAN_SQL_HASH_MISMATCH';
+  }
+  return null;
 }
 
 export function isUslLifecyclePlanFingerprintValid(plan: unknown): plan is UslLifecyclePlan {

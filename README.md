@@ -18,7 +18,9 @@ The agent discovers the configured tables, proposes candidates (deterministic ru
 | Synthetic orders fixture | `AGENTFX` | enrolled, runs fully offline in tests |
 | Synthetic local-files orders | `AGENTLOCAL` | enrolled, runs over its own local rows, offline |
 | GTFS trips + routes (synthetic subset, JSON2 binding) | `GTFSAGENT` | enrolled; live reads go through a binding guard |
-| Chinook and other fixtures | ... | not enrolled yet; use the historical commands below |
+| TPC-DS public schema (24 tables) | `TPCDS` | enrolled; model review (`MODEL_ADVERSARIAL`) on: [docs/TPCDS_FULL_RUN_R10.md](docs/TPCDS_FULL_RUN_R10.md) |
+| Northwind + Chinook (6 tables) | `NWCH` | enrolled; blind check of the model review: [docs/NWCH_BLIND_CHECK.md](docs/NWCH_BLIND_CHECK.md) |
+| Other fixtures | ... | not enrolled yet; use the historical commands below |
 
 Useful options: `--offline` replays the universe's synthetic fixture (no model, no network), `--max-tokens <n>` caps the run's model tokens, and `--memory` reuses relations sustained in earlier runs. Every agent command prints its usage with `--help`.
 
@@ -32,6 +34,7 @@ Details, how to enroll a universe, and the offline regression evaluation (`npm r
 - [input_examples/U3/](input_examples/U3/): synthetic schema and 30-row filestore example; no raw benchmark data or gold
 - [output_examples/sample-fixture/U1.json](output_examples/sample-fixture/U1.json): synthetic schema graph used by offline SAMPLE and compiler coverage; other generated examples remain local
 - [docs/AGENT.md](docs/AGENT.md): the agent loop, universe enrollment, budget and evaluation
+- [docs/MODEL_REVIEW.md](docs/MODEL_REVIEW.md): the model review of candidate relations (`MODEL_ADVERSARIAL`), with its live results in [docs/NWCH_BLIND_CHECK.md](docs/NWCH_BLIND_CHECK.md) and [docs/TPCDS_FULL_RUN_R10.md](docs/TPCDS_FULL_RUN_R10.md)
 - [docs/SPONSORS.md](docs/SPONSORS.md): integrations demonstrated (Zetaris, Meterless H-MEM Engine and Nightshift) with their limits
 - [docs/PUBLIC_OVERVIEW.md](docs/PUBLIC_OVERVIEW.md): public project overview
 - [data/README.md](data/README.md): notes about external data and licensing

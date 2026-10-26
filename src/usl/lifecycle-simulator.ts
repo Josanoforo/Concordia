@@ -1,11 +1,12 @@
 import { createHash, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ROOT } from '../runtime.ts';
+import { failure, ROOT } from '../runtime.ts';
 import type { PublicationManifest, PublicationPlanInput } from './publication-plan.ts';
+import { lintUslLifecyclePlan } from './ddl-lint.ts';
 import { checkPublicationPlanPreconditions } from './publication-plan.ts';
 import { readNamespacePublicationEvents, type LockedPublicationJournal, type PublicationBaselineVersion, type PublicationJournalEvent, type PublicationJournalStore } from './publication-executor.ts';
-import { checkUslLifecyclePlan, verifyLoadedUslModel, verifyObservedRelationRows, isUslLifecyclePlanFingerprintValid, type PublicationSourceBinding, type UslLifecycleOperation, type UslLifecyclePlan, verifyPublicationSourceBindingBytes } from './lifecycle-plan.ts';
+import { checkUslLifecyclePlan, verifyLoadedUslModel, verifyObservedRelationRows, isUslLifecyclePlanFingerprintValid, type PublicationSourceBinding, type UslLifecycleOperation, type UslLifecyclePlan, verifyPublicationSourceBindingBytes, uslOperationBindings, uslPlanSqlIntegrityIssue } from './lifecycle-plan.ts';
 
 export interface UslSimulationGrant {
   schemaVersion: 1;
@@ -53,6 +54,8 @@ export interface UslLiveExecutionGrant {
   schemaVersion: 1; grantId: string; scope: 'LIVE_USL_PUBLICATION'; planFingerprint: string; targetRef: string;
   sourceBindingSha256: string; sourceBindingFingerprint: string; operationSqlSha256s: string[]; approvedBy: string; approvedAt: string; expiresAt: string;
   dialectId: string; dialectEvidenceSha256: string;
+  /** Which statement each hash belongs to (R6-Z1): approval is bound to operationId + SQL hash, not just to a list of hashes. */
+  operationBindings: { operationId: string; sqlSha256: string }[];
 }
 export interface UslBackendDialectEvidence { schemaVersion: 1; status: 'CONFIRMED'; dialectId: string; backendEngineVersion: string; supportedOperationIds: string[]; reviewedBy: string; reviewedAt: string; }
 export type UslSimulationResult =
@@ -98,8 +101,11 @@ export function validateUslLiveExecutionRequest(
   if (!dialect || dialect.schemaVersion !== 1 || dialect.status !== 'CONFIRMED' || !dialect.dialectId || dialect.dialectId !== grant?.dialectId ||
       !dialect.backendEngineVersion || !Array.isArray(dialect.supportedOperationIds) || requiredOperationIds.some(id => !dialect.supportedOperationIds.includes(id)) ||
       !dialect.reviewedBy || Number.isNaN(Date.parse(dialect.reviewedAt)) || dialectHash !== grant?.dialectEvidenceSha256) return 'BACKEND_DIALECT_EVIDENCE_INVALID';
+  const integrity = uslPlanSqlIntegrityIssue(plan);
+  if (integrity) return integrity;
+  if (lintUslLifecyclePlan(plan).status === 'FAIL') return 'DDL_LINT_FAILED';
   const expectedOperations = plan.operations.flatMap(operation => operation.sqlSha256 ? [operation.sqlSha256] : []);
-  if (!grant || grant.schemaVersion !== 1 || grant.scope !== 'LIVE_USL_PUBLICATION' || typeof grant.grantId !== 'string' || !grant.grantId ||
+  if (!grant || grant.schemaVersion !== 1 || grant.scope !== 'LIVE_USL_PUBLICATION' || JSON.stringify(grant.operationBindings) !== JSON.stringify(uslOperationBindings(plan)) || typeof grant.grantId !== 'string' || !grant.grantId ||
       grant.planFingerprint !== plan.fingerprint || grant.targetRef !== targetRef(plan) || grant.sourceBindingSha256 !== bindingCheck.sha256 ||
       grant.sourceBindingFingerprint !== plan.inputFingerprints.binding || !Array.isArray(grant.operationSqlSha256s) || JSON.stringify(grant.operationSqlSha256s) !== JSON.stringify(expectedOperations) ||
       typeof grant.approvedBy !== 'string' || !grant.approvedBy.trim() || Number.isNaN(Date.parse(grant.approvedAt)) || Date.parse(grant.approvedAt) > now ||
@@ -143,16 +149,24 @@ async function verifyExisting(plan: UslLifecyclePlan, adapter: UslLifecycleExecu
   const rows = await adapter.readObservedRows(plan);
   return verifyObservedRelationRows(plan, rows).status === 'PASS';
 }
-async function verifyPriorVersion(events: readonly PublicationJournalEvent[], versionRef: string, adapter: UslLifecycleExecutionAdapter, logRead?: ReadOperationLogger): Promise<{ plan: UslLifecyclePlan; contentFingerprint: string } | undefined> {
+/** Exported for tests. A journal failure while logging a read is never reported as an unverifiable prior version (N70). */
+export async function verifyPriorVersion(events: readonly PublicationJournalEvent[], versionRef: string, adapter: UslLifecycleExecutionAdapter, logRead?: ReadOperationLogger): Promise<{ plan: UslLifecyclePlan; contentFingerprint: string } | undefined> {
   const receipt = events.filter(event => event.state === 'verified' && event.versionId === versionRef && event.targetKey === versionRef && event.adapterId === adapter.adapterId).at(-1);
   if (!receipt?.contentFingerprint || !receipt.lifecyclePlanSnapshot) return undefined;
   const plan = receipt.lifecyclePlanSnapshot as unknown as UslLifecyclePlan;
   if (!isUslLifecyclePlanFingerprintValid(plan) || plan.fingerprint !== receipt.fingerprint || targetRef(plan) !== versionRef) return undefined;
+  // The read log is a journal write: its failure must surface (as JournalWriteError), not look like an unverifiable prior version.
+  const journaledRead: ReadOperationLogger | undefined = logRead && ((operation, outcome, readPlan) => {
+    try { logRead(operation, outcome, readPlan); } catch (error) { throw error instanceof JournalWriteError ? error : new JournalWriteError(failure(error).code); }
+  });
   try {
-    if (!await verifyExisting(plan, adapter, logRead)) return undefined;
-  } catch { return undefined; }
+    if (!await verifyExisting(plan, adapter, journaledRead)) return undefined;
+  } catch (error) { if (error instanceof JournalWriteError) throw error; return undefined; }
   return { plan, contentFingerprint: receipt.contentFingerprint };
 }
+
+/** A journal append that failed; the code is the sanitized one from `failure`. Thrown by the post-SQL append wrapper and never swallowed by the inner catches. */
+class JournalWriteError extends Error { constructor(readonly code: string) { super(`JOURNAL_WRITE_FAILED:${code}`); this.name = 'JournalWriteError'; } }
 
 /** Runs the lifecycle state machine only against an injected LOCAL+SYNTHETIC adapter. It never constructs a network client. */
 async function executeUslLifecycleCore(
@@ -197,11 +211,11 @@ async function executeUslLifecycleCore(
       });
     };
     let snapshot: UslSimulationSnapshot;
-    try { snapshot = await readSnapshot(); } catch { return rejected('SIMULATED_TARGET_PREFLIGHT_FAILED'); }
+    try { snapshot = await readSnapshot(); } catch (error) { return rejected(`SIMULATED_TARGET_PREFLIGHT_FAILED:${failure(error).code}`); }
     if (!snapshot || !fingerprint(snapshot.targetStateFingerprint) || !Array.isArray(snapshot.versions)) return rejected('SIMULATED_TARGET_STATE_STALE');
     if (adapter.recheckInputs) {
       try { const check = await recheckInputs(); if (check.status !== 'CURRENT') return rejected(`STALE_SOURCE_INPUTS:${(check.staleInputs ?? []).join(',')}`); }
-      catch { return rejected('SOURCE_RECHECK_FAILED'); }
+      catch (error) { return rejected(`SOURCE_RECHECK_FAILED:${failure(error).code}`); }
     }
     const events = readLifecycleEvents(), own = events.filter(event => event.fingerprint === plan.fingerprint);
     if (own.some(event => event.adapterId !== adapter.adapterId || event.targetKey !== targetRef(plan) || event.universeId !== plan.universeId)) return rejected('SIMULATION_JOURNAL_IDENTITY_COLLISION');
@@ -209,9 +223,12 @@ async function executeUslLifecycleCore(
     const previousRef = snapshot.localClientPointer;
     const expectedContentFingerprint = simulationContentFingerprint(plan);
     const versionRef = targetRef(plan);
-    const append = (state: PublicationJournalEvent['state'], extra: Partial<PublicationJournalEvent> = {}) => journalEvent(locked, plan, adapter, runId, state, { targetStateFingerprint: snapshot.targetStateFingerprint, ...(state === 'planned' ? {} : { versionId: versionRef, contentFingerprint: expectedContentFingerprint, previousVersionId: previousRef }), ...extra });
+    let sqlStarted = false, pointerMoved = false;
+    const append = (state: PublicationJournalEvent['state'], extra: Partial<PublicationJournalEvent> = {}) => { try { return appendRaw(state, extra); } catch (error) { throw new JournalWriteError(failure(error).code); } };
+    const appendRaw = (state: PublicationJournalEvent['state'], extra: Partial<PublicationJournalEvent> = {}) => journalEvent(locked, plan, adapter, runId, state, { targetStateFingerprint: snapshot.targetStateFingerprint, ...(state === 'planned' ? {} : { versionId: versionRef, contentFingerprint: expectedContentFingerprint, previousVersionId: previousRef }), ...extra });
     const logRead: ReadOperationLogger = (operation, outcome, manifestPlan) => append('read', { versionId: `${manifestPlan.target.namespace}.${manifestPlan.target.model}`, operationId: operation.operationId, operationSha256: operation.sqlSha256 ?? undefined, requestId: outcome.requestId, queryId: outcome.queryId, operationStatus: outcome.status, lifecyclePlanSnapshot: manifestPlan });
 
+    try {
     const ownTransitions = own.filter(event => event.state !== 'read');
     if (ownTransitions.at(-1)?.state === 'verified') {
       const verified = ownTransitions.at(-1)!;
@@ -222,6 +239,8 @@ async function executeUslLifecycleCore(
       return { status: 'REUSED', passed: true, fingerprint: plan.fingerprint, versionRef, liveSqlExecuted };
     }
     if (mode === 'REUSE') return rejected('NO_VERIFIED_PLAN_TO_REUSE');
+    // A prepared (or applied) journal with no terminal event means a prior run died after it may have sent SQL: never replay blindly.
+    if (['prepared', 'applied'].includes(ownTransitions.at(-1)?.state ?? '')) return rejected('INTERRUPTED_PRIOR_RUN');
     if (snapshot.targetStateFingerprint !== expectedTargetFingerprint) return rejected('SIMULATED_TARGET_STATE_STALE');
     if (snapshot.namespaceState === 'FOREIGN') return rejected('TARGET_NAMESPACE_FOREIGN_OR_UNOWNED');
     if (snapshot.namespaceState === 'OWNED') {
@@ -239,14 +258,14 @@ async function executeUslLifecycleCore(
       const immediate = await readSnapshot();
       if (!immediate || immediate.targetStateFingerprint !== snapshot.targetStateFingerprint || immediate.namespaceState !== snapshot.namespaceState || immediate.namespaceOwnerFingerprint !== snapshot.namespaceOwnerFingerprint) return rejected('SIMULATED_TARGET_CHANGED_BEFORE_MUTATION');
       if (adapter.recheckInputs) { const check = await recheckInputs(); if (check.status !== 'CURRENT') return rejected(`STALE_SOURCE_INPUTS:${(check.staleInputs ?? []).join(',')}`); }
-    } catch { return rejected('PRE_MUTATION_RECHECK_FAILED'); }
+    } catch (error) { return rejected(`PRE_MUTATION_RECHECK_FAILED:${failure(error).code}`); }
     append('prepared', { versionId: versionRef, contentFingerprint: expectedContentFingerprint, previousVersionId: previousRef, baselineVersions: baseline(snapshot), baselineVersionsFingerprint: baselineFingerprint(baseline(snapshot)), lifecyclePlanSnapshot: plan });
     let failureReason: string | null = null, operationFailureJournaled = false;
     for (const operation of plan.operations) {
       if (operation.role === 'PREFLIGHT') continue; // readSnapshot above is the injected preflight boundary
       if (!operation.sql) { failureReason = 'LIFECYCLE_OPERATION_SQL_MISSING'; break; }
       let outcome: UslSimulationOperationResult;
-      try { if (adapter.executionMode === 'LIVE') liveSqlExecuted = true; outcome = await adapter.runOperation(operation, plan); }
+      try { sqlStarted = true; if (adapter.executionMode === 'LIVE') liveSqlExecuted = true; outcome = await adapter.runOperation(operation, plan); }
       catch { outcome = { status: 'UNKNOWN', requestId: 'UNKNOWN', queryId: 'UNKNOWN', diagnostic: 'ADAPTER_THROW' }; }
       const operationEvent = { versionId: versionRef, contentFingerprint: expectedContentFingerprint, operationId: operation.operationId, operationSha256: operation.sqlSha256 ?? undefined, requestId: outcome.requestId, queryId: outcome.queryId, operationStatus: outcome.status, lifecyclePlanSnapshot: plan };
       if (outcome.status === 'OK') append(operation.role === 'VERIFY' || operation.role === 'READ' ? 'read' : 'applied', operationEvent);
@@ -267,6 +286,7 @@ async function executeUslLifecycleCore(
         if (final.activeVersionRef !== versionRef || !final.versions.some(version => version.versionId === versionRef && version.planFingerprint === plan.fingerprint && version.contentFingerprint === expectedContentFingerprint && version.servable)) failureReason = 'NEW_VERSION_NOT_SERVABLE';
         else if (!await adapter.setLocalClientPointer(previousRef, versionRef)) failureReason = 'LOCAL_POINTER_COMPARE_AND_SET_FAILED';
         else {
+          pointerMoved = true;
           const published = await readSnapshot();
           if (published.activeVersionRef !== versionRef || published.localClientPointer !== versionRef || !published.versions.some(version => version.versionId === versionRef && version.servable)) failureReason = 'LOCAL_POINTER_POSTSTATE_UNVERIFIED';
           else {
@@ -275,9 +295,12 @@ async function executeUslLifecycleCore(
             return { status: 'VERIFIED', passed: true, fingerprint: plan.fingerprint, versionRef, liveSqlExecuted };
           }
         }
-      } catch { failureReason = 'FINAL_SIMULATION_STATE_READ_FAILED'; }
+      } catch (error) { if (error instanceof JournalWriteError) throw error; failureReason = 'FINAL_SIMULATION_STATE_READ_FAILED'; }
     }
     if (!operationFailureJournaled) append('failed', { reason: failureReason });
+    // Half-way pointer: the local client pointer was moved to the new version but the publication did not verify. Every outcome of undoing it is journaled.
+    let pointerRollback: 'NOT_NEEDED' | 'RESTORED' | 'INCOMPLETE' = pointerMoved ? 'INCOMPLETE' : 'NOT_NEEDED';
+    const incompleteSuffix = () => pointerRollback === 'INCOMPLETE' ? ';LOCAL_POINTER_ROLLBACK_INCOMPLETE' : '';
     if (active && previousRef) {
       try {
         const current = await readSnapshot();
@@ -285,13 +308,21 @@ async function executeUslLifecycleCore(
         if (previousVerified && current.versions.some(version => version.versionId === previousRef && version.planFingerprint === previousVerified.plan.fingerprint && version.contentFingerprint === previousVerified.contentFingerprint && version.servable) && await adapter.setLocalClientPointer(current.localClientPointer, previousRef)) {
           const recovered = await readSnapshot();
           if (recovered.localClientPointer === previousRef && recovered.versions.some(version => version.versionId === previousRef && version.servable)) {
+            pointerRollback = 'RESTORED';
             append('recovered', { versionId: previousRef, previousVersionId: previousRef, reason: 'LOCAL_CLIENT_POINTER_RESTORED; backend may still expose the new version' });
             return { status: 'RECOVERED', passed: false, fingerprint: plan.fingerprint, versionRef: previousRef, reason: `PUBLICATION_FAILED:${failureReason}; local client pointer restored; backend may still expose the new version`, liveSqlExecuted };
           }
         }
-      } catch { /* failure remains recorded below */ }
+      } catch (error) { if (error instanceof JournalWriteError) throw error; /* failure remains recorded below */ }
     }
-    return { status: 'FAILED', passed: false, fingerprint: plan.fingerprint, reason: failureReason ?? 'SIMULATION_FAILED_NO_SERVABLE_PREVIOUS_VERSION', liveSqlExecuted };
+    if (pointerRollback === 'INCOMPLETE') append('failed', { versionId: versionRef, reason: `LOCAL_POINTER_ROLLBACK_INCOMPLETE:pointer left on ${versionRef}; previous ${previousRef ?? 'none'} not restored` });
+    return { status: 'FAILED', passed: false, fingerprint: plan.fingerprint, reason: (failureReason ?? 'SIMULATION_FAILED_NO_SERVABLE_PREVIOUS_VERSION') + incompleteSuffix(), liveSqlExecuted };
+    } catch (error) {
+      if (!(error instanceof JournalWriteError)) throw error;
+      // The journal could not record a step. After SQL was sent the outcome is unknown and must be reconciled by hand; before it, nothing was sent.
+      if (sqlStarted) return { status: 'FAILED', passed: false, fingerprint: plan.fingerprint, reason: `JOURNAL_WRITE_FAILED_AFTER_SQL:${error.code}`, liveSqlExecuted };
+      return rejected(`JOURNAL_WRITE_FAILED_BEFORE_SQL:${error.code}`);
+    }
   }));
 }
 

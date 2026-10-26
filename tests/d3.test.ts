@@ -43,17 +43,18 @@ test('USL live verification selects configured tables and fails closed if missin
   assert.throws(()=>verificationTable('U3',[]),{code:'USL_UNIVERSE_NOT_AUTHORIZED'});
 });
 
+const stubClient=(fn:any)=>({runSql:fn,runLegacyMutationSql:fn}) as any; // explicit legacy method on the simulated client: demo.ts has no runSql fallback
 test('existing U1 USL verifies the configured zones view without compiling or activating',async(t)=>{
   const fixture=readJson<any>('output_examples/sample-fixture/U1.json'),plan=buildCompleteUsl('U1',fixture.relations);
   const relationsPath=path.join(ROOT,'out/U1/relaciones.json'),previous=fs.existsSync(relationsPath)?fs.readFileSync(relationsPath):null;
   fs.mkdirSync(path.dirname(relationsPath),{recursive:true});fs.writeFileSync(relationsPath,JSON.stringify({relations:fixture.relations}));
   t.after(()=>{if(previous!==null)fs.writeFileSync(relationsPath,previous);else fs.rmSync(relationsPath,{force:true});});
   const sent:string[]=[],response=(sql:string,rows:any[][])=>({sql,rows,utc:'2026-01-01',requestId:'synthetic',queryId:'synthetic',durationMs:1});
-  const reused=await demoUsl('U1',{runSql:async(sql:string)=>{
+  const reused=await demoUsl('U1',stubClient(async(sql:string)=>{
     sent.push(sql);
     const rows=sql.startsWith('LOAD')?[[JSON.stringify({tables:plan.plans.map(p=>({name:p.name}))})]]:[['synthetic']];
     return response(sql,rows);
-  }});
+  }));
   assert.equal(reused.status,'REUSED_EXISTING');assert.equal(reused.verifiedNow,'zones');assert.equal(reused.modelDetails.tables.length,plan.plans.length);
   assert.match(sent[1],/FROM lightning\.metastore\.concordia_u1\.u1_usl\.zones LIMIT 3/);assert.ok(sent.every(sql=>!/COMPILE|UPDATE|ACTIVATE/.test(sql)));
 });
@@ -68,13 +69,13 @@ test('existing USL is reused; absent models alone authorize deployment; network/
   t.after(()=>{if(previous!==null)fs.writeFileSync(relationsPath,previous);else fs.rmSync(relationsPath,{force:true});});
   const plan=buildCompleteUsl('U2',relations),sent:string[]=[];
   const response=(sql:string,rows:any[][])=>({sql,rows,utc:'2026-01-01',requestId:'synthetic',queryId:'synthetic',durationMs:1});
-  const existing=await demoUsl('U2',{runSql:async(sql:string)=>{sent.push(sql);return response(sql,sql.startsWith('LOAD')?[[JSON.stringify({tables:plan.plans.map(p=>({name:p.name}))})]]:[['synthetic']]);}});
+  const existing=await demoUsl('U2',stubClient(async(sql:string)=>{sent.push(sql);return response(sql,sql.startsWith('LOAD')?[[JSON.stringify({tables:plan.plans.map(p=>({name:p.name}))})]]:[['synthetic']]);}));
   assert.equal(existing.status,'REUSED_EXISTING');assert.equal(existing.modelDetails.tables.length,plan.plans.length);assert.equal(sent.length,2);assert.ok(sent.every(sql=>!/COMPILE|UPDATE|ACTIVATE/.test(sql)));
   sent.length=0;
-  const fresh=await demoUsl('U2',{runSql:async(sql:string)=>{sent.push(sql);if(sql.startsWith('LOAD'))throw new SafeError('ZETARIS_APPLICATION_ERROR',undefined,'USL model does not exist');return response(sql,[['synthetic']]);}});
+  const fresh=await demoUsl('U2',stubClient(async(sql:string)=>{sent.push(sql);if(sql.startsWith('LOAD'))throw new SafeError('ZETARIS_APPLICATION_ERROR',undefined,'USL model does not exist');return response(sql,[['synthetic']]);}));
   assert.equal(fresh.status,'NEW_MODEL');assert.equal(sent.filter(sql=>sql.startsWith('COMPILE')).length,1);assert.equal(sent.filter(sql=>sql.startsWith('ACTIVATE')).length,3);assert.ok(!sent.some(sql=>sql.startsWith('UPDATE')));
   for(const error of [new SafeError('NETWORK_ERROR'),new SafeError('HTTP_ERROR',404,'endpoint not found')]){
-    sent.length=0;await assert.rejects(demoUsl('U2',{runSql:async(sql:string)=>{sent.push(sql);throw error;}}));assert.equal(sent.length,1);
+    sent.length=0;await assert.rejects(demoUsl('U2',stubClient(async(sql:string)=>{sent.push(sql);throw error;})));assert.equal(sent.length,1);
   }
 });
 test('HTML escapes SQL, source labels and model text; no external resources',()=>{

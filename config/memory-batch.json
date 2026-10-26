@@ -1,0 +1,5 @@
+{
+  "minRejected": 3,
+  "maxRejectedShare": 0.1,
+  "description": "E1-02: the memory batch is unhealthy (nothing written, run FAILED with MEMORY_BATCH_UNHEALTHY) when rejected claims >= minRejected AND rejected/total > maxRejectedShare. Below that, the valid claims are written and the rejected go to quarantine."
+}

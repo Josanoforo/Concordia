@@ -88,7 +88,7 @@ test('the CLI picks the guarded client only for universes that declare a live bi
 test('two passes with memory: SOSTENIDA writes the claim, the second pass is REUSED in the LOCAL-SYNTHETIC store and the report shows it', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gtfsagent-memory-'));
   try {
-    const run = (id: string) => runAgent('GTFSAGENT', id, { client: fixtureClient(universeConfig('GTFSAGENT'), fixture().tables) as any, chooser: new Script(), executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', persist: false, critic: false, memory: { dir } }) as Promise<any>;
+    const run = (id: string) => runAgent('GTFSAGENT', id, { client: fixtureClient(universeConfig('GTFSAGENT'), fixture().tables) as any, chooser: new Script(), executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', persist: false, critic: false, memory: { dir: path.join(dir, 'LOCAL-SYNTHETIC') } }) as Promise<any>;
     const first = await run('agent-gtfsagent-mem-1'), second = await run('agent-gtfsagent-mem-2');
     assert.equal(first.decisions[0].verdict, 'SOSTENIDA'); assert.deepEqual(first.decisions[0].reasonCodes, ['bounded_sample_key_membership']);
     assert.equal(first.memory.status, 'RECORDED'); assert.ok(first.memory.claims.some((claim: any) => claim.relationId === 'gtfsagent_trip_route' && claim.firstRunId === 'agent-gtfsagent-mem-1'));

@@ -1,0 +1,427 @@
+{
+  "schemaVersion": 1,
+  "kind": "F04_REVIEW_EVALUATION_LABELS",
+  "universe": "TPCDS",
+  "labelling": "evaluación humana (F-04, project-owner): etiquetas para medir al revisor por modelo fuera de línea; nunca una entrada de runtime",
+  "evaluationOnly": true,
+  "approval": {
+    "approver": "project-owner",
+    "approvedAt": "2026-10-25",
+    "quote": "Paraphrase of the recorded approval: approved the consolidated marks: YES for the 25 without M12, DEFER #16/#26/#28, with the conditions (negative control, honest labelling, identifierSpace per entity).",
+    "session": "project-owner review session"
+  },
+  "sources": {
+    "yesAndDeferred": "universes/reviews/TPCDS.review.json (relations, deferred)",
+    "decoys": "tests/fixtures/agent-runs/agent-tpcds-negative-control/negative-control.json"
+  },
+  "counts": {
+    "YES": 25,
+    "DEFERRED": 3,
+    "DECOY": 3
+  },
+  "labels": [
+    {
+      "relationId": "catalog_returns.cr_reason_sk__reason.r_reason_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_returns",
+        "column": "cr_reason_sk"
+      },
+      "to": {
+        "table": "reason",
+        "column": "r_reason_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "store_returns.sr_reason_sk__reason.r_reason_sk",
+      "label": "YES",
+      "from": {
+        "table": "store_returns",
+        "column": "sr_reason_sk"
+      },
+      "to": {
+        "table": "reason",
+        "column": "r_reason_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "web_returns.wr_reason_sk__reason.r_reason_sk",
+      "label": "YES",
+      "from": {
+        "table": "web_returns",
+        "column": "wr_reason_sk"
+      },
+      "to": {
+        "table": "reason",
+        "column": "r_reason_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "store_sales.ss_store_sk__store.s_store_sk",
+      "label": "YES",
+      "from": {
+        "table": "store_sales",
+        "column": "ss_store_sk"
+      },
+      "to": {
+        "table": "store",
+        "column": "s_store_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "catalog_returns.cr_warehouse_sk__warehouse.w_warehouse_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_returns",
+        "column": "cr_warehouse_sk"
+      },
+      "to": {
+        "table": "warehouse",
+        "column": "w_warehouse_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "catalog_sales.cs_warehouse_sk__warehouse.w_warehouse_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_sales",
+        "column": "cs_warehouse_sk"
+      },
+      "to": {
+        "table": "warehouse",
+        "column": "w_warehouse_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "web_sales.ws_warehouse_sk__warehouse.w_warehouse_sk",
+      "label": "YES",
+      "from": {
+        "table": "web_sales",
+        "column": "ws_warehouse_sk"
+      },
+      "to": {
+        "table": "warehouse",
+        "column": "w_warehouse_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "store_returns.sr_customer_sk__customer.c_customer_sk",
+      "label": "YES",
+      "from": {
+        "table": "store_returns",
+        "column": "sr_customer_sk"
+      },
+      "to": {
+        "table": "customer",
+        "column": "c_customer_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "store_sales.ss_customer_sk__customer.c_customer_sk",
+      "label": "YES",
+      "from": {
+        "table": "store_sales",
+        "column": "ss_customer_sk"
+      },
+      "to": {
+        "table": "customer",
+        "column": "c_customer_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "catalog_returns.cr_call_center_sk__call_center.cc_call_center_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_returns",
+        "column": "cr_call_center_sk"
+      },
+      "to": {
+        "table": "call_center",
+        "column": "cc_call_center_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "catalog_sales.cs_call_center_sk__call_center.cc_call_center_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_sales",
+        "column": "cs_call_center_sk"
+      },
+      "to": {
+        "table": "call_center",
+        "column": "cc_call_center_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "household_demographics.hd_income_band_sk__income_band.ib_income_band_sk",
+      "label": "YES",
+      "from": {
+        "table": "household_demographics",
+        "column": "hd_income_band_sk"
+      },
+      "to": {
+        "table": "income_band",
+        "column": "ib_income_band_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "web_sales.ws_web_site_sk__web_site.web_site_sk",
+      "label": "YES",
+      "from": {
+        "table": "web_sales",
+        "column": "ws_web_site_sk"
+      },
+      "to": {
+        "table": "web_site",
+        "column": "web_site_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "catalog_returns.cr_ship_mode_sk__ship_mode.sm_ship_mode_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_returns",
+        "column": "cr_ship_mode_sk"
+      },
+      "to": {
+        "table": "ship_mode",
+        "column": "sm_ship_mode_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "catalog_sales.cs_ship_mode_sk__ship_mode.sm_ship_mode_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_sales",
+        "column": "cs_ship_mode_sk"
+      },
+      "to": {
+        "table": "ship_mode",
+        "column": "sm_ship_mode_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "web_sales.ws_ship_mode_sk__ship_mode.sm_ship_mode_sk",
+      "label": "YES",
+      "from": {
+        "table": "web_sales",
+        "column": "ws_ship_mode_sk"
+      },
+      "to": {
+        "table": "ship_mode",
+        "column": "sm_ship_mode_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "web_returns.wr_web_page_sk__web_page.wp_web_page_sk",
+      "label": "YES",
+      "from": {
+        "table": "web_returns",
+        "column": "wr_web_page_sk"
+      },
+      "to": {
+        "table": "web_page",
+        "column": "wp_web_page_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "web_sales.ws_web_page_sk__web_page.wp_web_page_sk",
+      "label": "YES",
+      "from": {
+        "table": "web_sales",
+        "column": "ws_web_page_sk"
+      },
+      "to": {
+        "table": "web_page",
+        "column": "wp_web_page_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "catalog_sales.cs_promo_sk__promotion.p_promo_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_sales",
+        "column": "cs_promo_sk"
+      },
+      "to": {
+        "table": "promotion",
+        "column": "p_promo_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "store_returns.sr_store_sk__store.s_store_sk",
+      "label": "YES",
+      "from": {
+        "table": "store_returns",
+        "column": "sr_store_sk"
+      },
+      "to": {
+        "table": "store",
+        "column": "s_store_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "web_sales.ws_promo_sk__promotion.p_promo_sk",
+      "label": "YES",
+      "from": {
+        "table": "web_sales",
+        "column": "ws_promo_sk"
+      },
+      "to": {
+        "table": "promotion",
+        "column": "p_promo_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "catalog_returns.cr_item_sk__item.i_item_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_returns",
+        "column": "cr_item_sk"
+      },
+      "to": {
+        "table": "item",
+        "column": "i_item_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "catalog_sales.cs_item_sk__item.i_item_sk",
+      "label": "YES",
+      "from": {
+        "table": "catalog_sales",
+        "column": "cs_item_sk"
+      },
+      "to": {
+        "table": "item",
+        "column": "i_item_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "promotion.p_end_date_sk__date_dim.d_date_sk",
+      "label": "YES",
+      "from": {
+        "table": "promotion",
+        "column": "p_end_date_sk"
+      },
+      "to": {
+        "table": "date_dim",
+        "column": "d_date_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "inventory.inv_item_sk__item.i_item_sk",
+      "label": "YES",
+      "from": {
+        "table": "inventory",
+        "column": "inv_item_sk"
+      },
+      "to": {
+        "table": "item",
+        "column": "i_item_sk"
+      },
+      "basis": "F-04 human approval: SÍ a las 25 sin M12"
+    },
+    {
+      "relationId": "inventory.inv_warehouse_sk__warehouse.w_warehouse_sk",
+      "label": "DEFERRED",
+      "from": {
+        "table": "inventory",
+        "column": "inv_warehouse_sk"
+      },
+      "to": {
+        "table": "warehouse",
+        "column": "w_warehouse_sk"
+      },
+      "basis": "F-04 human deferral: M12"
+    },
+    {
+      "relationId": "inventory.inv_date_sk__date_dim.d_date_sk",
+      "label": "DEFERRED",
+      "from": {
+        "table": "inventory",
+        "column": "inv_date_sk"
+      },
+      "to": {
+        "table": "date_dim",
+        "column": "d_date_sk"
+      },
+      "basis": "F-04 human deferral: M12"
+    },
+    {
+      "relationId": "catalog_page.cp_end_date_sk__date_dim.d_date_sk",
+      "label": "DEFERRED",
+      "from": {
+        "table": "catalog_page",
+        "column": "cp_end_date_sk"
+      },
+      "to": {
+        "table": "date_dim",
+        "column": "d_date_sk"
+      },
+      "basis": "F-04 human deferral: M12; catalog_page duplicates"
+    },
+    {
+      "relationId": "store_sales.ss_store_sk__web_site.web_site_sk",
+      "label": "DECOY",
+      "from": {
+        "table": "store_sales",
+        "column": "ss_store_sk"
+      },
+      "to": {
+        "table": "web_site",
+        "column": "web_site_sk"
+      },
+      "basis": "F-04 negative control (condition a): decoy that must come out rejected; never in the overlay"
+    },
+    {
+      "relationId": "inventory.inv_warehouse_sk__ship_mode.sm_ship_mode_sk",
+      "label": "DECOY",
+      "from": {
+        "table": "inventory",
+        "column": "inv_warehouse_sk"
+      },
+      "to": {
+        "table": "ship_mode",
+        "column": "sm_ship_mode_sk"
+      },
+      "basis": "F-04 negative control (condition a): decoy that must come out rejected; never in the overlay"
+    },
+    {
+      "relationId": "store_sales.ss_promo_sk__reason.r_reason_sk",
+      "label": "DECOY",
+      "from": {
+        "table": "store_sales",
+        "column": "ss_promo_sk"
+      },
+      "to": {
+        "table": "reason",
+        "column": "r_reason_sk"
+      },
+      "basis": "F-04 negative control (condition a): decoy that must come out rejected; never in the overlay"
+    }
+  ]
+}

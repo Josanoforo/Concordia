@@ -47,9 +47,9 @@ test('the full offline agent loop runs on U1 with its fixture: read-only, budget
   assert.deepEqual(report.phases.exploration.actions.map((item: any) => item.action), ['READ_TAXI_ZONE_LOOKUP', 'READ_ZONES_REFERENCE', 'STOP_EXPLORATION']);
   assert.ok(report.phases.exploration.actions.every((item: any) => ['PASS', 'NOT_REQUIRED'].includes(item.execution)));
   assert.equal(report.probeSelection.mode, 'ALL_AFFORDABLE');
-  assert.deepEqual(report.phases.probes.selected, EXPECTED_RELATIONS, 'every configured relation is affordable inside the U1 bound');
+  assert.deepEqual([...report.phases.probes.selected].sort(), [...EXPECTED_RELATIONS].sort(), 'every configured relation is affordable inside the U1 bound (the order follows the exploration hints, P6)');
   assert.deepEqual(report.phases.probes.skipped, []);
-  assert.deepEqual(report.decisions.map((item: any) => item.relationId), EXPECTED_RELATIONS);
+  assert.deepEqual(report.decisions.map((item: any) => item.relationId).sort(), [...EXPECTED_RELATIONS].sort());
   const reviewed = ['yellow_pu_taxi_zones', 'yellow_do_taxi_zones', 'hvv_pu_taxi_zones', 'trips_pickup_zones'];
   for (const item of report.decisions) if (!reviewed.includes(item.relationId)) assert.notEqual(item.verdict, 'SOSTENIDA', `${item.relationId} is not human-reviewed, so it never reaches SOSTENIDA`);
   // F-04: reviewed relations may reach SOSTENIDA, but only on untruncated evidence (the live run stays INDETERMINADA, see u1-review-governance.test.ts).
@@ -75,4 +75,16 @@ test('eval-agent counts U1 among the enrolled universes and evaluates its fixtur
   assert.equal(metric('agent-loop').denominator.nonapprovable, 1);
   assert.equal(metric('agent-loop').counts.falseAccept, 0);
   assert.deepEqual(metric('probes-only').counts, metric('agent-loop').counts, 'exploration never changes the deterministic verdicts');
+});
+
+test('M8: U1 declares probeMode distinct-keys; the registry validates it and the offline probes read distinct keys without changing the fixture verdicts', async () => {
+  const manifest = resolveUniverseManifest('U1')!, cfg = universeConfig('U1');
+  assert.equal(cfg.probeMode, 'distinct-keys');
+  assert.deepEqual(validateUniverseConfig(manifest, cfg), []);
+  const log: string[] = [];
+  const chooser = new ScriptChooser([...fixture.chooserScript]);
+  const report: any = await runAgent('U1', 'agent-u1-distinct-keys-test', { client: fixtureClient(cfg, fixture.tables, log) as any, chooser, executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', persist: false, critic: false, now: () => '2026-10-24T00:00:00Z' });
+  assert.ok(log.filter(sql => /DISTINCT/i.test(sql)).length >= EXPECTED_RELATIONS.length, 'each relation probe reads its endpoint as distinct keys');
+  const verdicts = Object.fromEntries(report.decisions.map((item: any) => [item.relationId, item.verdict]));
+  assert.deepEqual(verdicts, { yellow_pu_taxi_zones: 'SOSTENIDA', yellow_do_taxi_zones: 'SOSTENIDA', green_pu_taxi_zones: 'INDETERMINADA', hvv_pu_taxi_zones: 'SOSTENIDA', trips_pickup_zones: 'SOSTENIDA', taxi_zones_zones_trap: 'INDETERMINADA' }, 'on the small fixture the verdicts equal the default mode; the live effect is measured separately');
 });

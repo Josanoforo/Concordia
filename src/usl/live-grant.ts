@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { PublicationManifest, PublicationPlanInput } from './publication-plan.ts';
-import type { PublicationSourceBinding, UslLifecyclePlan } from './lifecycle-plan.ts';
+import { uslOperationBindings, type PublicationSourceBinding, type UslLifecyclePlan } from './lifecycle-plan.ts';
 import { validateUslLiveExecutionRequest, type UslLiveExecutionGrant } from './lifecycle-simulator.ts';
 
 /** A live grant lives minutes, not hours: long enough for one apply plus its reuse check. */
@@ -30,7 +30,7 @@ export function buildLiveUslGrant(options: BuildLiveGrantOptions): UslLiveExecut
     targetRef: `${plan.target.namespace}.${plan.target.model}`, sourceBindingSha256: plan.sourceBinding.bindingSha256, sourceBindingFingerprint: plan.inputFingerprints.binding,
     operationSqlSha256s: plan.operations.flatMap(operation => operation.sqlSha256 ? [operation.sqlSha256] : []), approvedBy: approvedBy.trim(),
     approvedAt: new Date(now - 1000).toISOString(), expiresAt: new Date(now + ttl * 60_000).toISOString(),
-    dialectId: dialect.dialectId, dialectEvidenceSha256: createHash('sha256').update(options.dialectBytes).digest('hex') };
+    dialectId: dialect.dialectId, dialectEvidenceSha256: createHash('sha256').update(options.dialectBytes).digest('hex'), operationBindings: uslOperationBindings(plan) };
   const issue = validateUslLiveExecutionRequest(plan, options.manifest, options.input, options.binding, options.rawBindingBytes, grant, options.dialectBytes, now);
   if (issue) throw new Error(`LIVE_GRANT_REJECTED_${issue}`);
   return grant;

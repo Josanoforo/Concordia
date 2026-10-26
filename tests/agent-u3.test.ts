@@ -83,3 +83,19 @@ test('eval-agent enrolls and evaluates U3 with the counts derived from the regis
   assert.deepEqual(evaluation.registry.skipped, []);
   assert.ok(evaluation.runs.some(run => run.alias === 'U3' && run.method === 'agent-loop' && run.status === 'COMPLETED'));
 });
+
+test('N16 U3 declares blind post-COMA: the scripted homologous columns are probed, true homologs come out HIGH, the unrelated pair does not, and there is still no verdict', async () => {
+  const { offlineAgentDeps } = await import('../src/agent/offline-deps.ts');
+  const f = agentFixtures().find(item => item.alias === 'U3')!, report: any = await runAgent('U3', 'agent-u3-blind-1', { ...offlineAgentDeps('U3', f, new Script([...f.chooserScript])), persist: false, critic: true });
+  assert.equal(report.status, 'COMPLETED'); assert.deepEqual(report.decisions, []); assert.equal(report.phases.coma.status, 'RAN');
+  const byId = Object.fromEntries(report.postComa.proposals.map((item: any) => [item.proposalId, item]));
+  const level = (id: string) => byId[id]?.coverageProbe?.diagnostic?.coverage.level;
+  assert.equal(report.postComa.counts.proposals, 5); assert.ok(report.postComa.counts.executed >= 4);
+  for (const id of ['dbpedia.nation__forbes.region', 'dbpedia.sector__forbes.business_segment', 'dbpedia.org_name__forbes.company']) assert.equal(level(id), 'HIGH', id);
+  assert.notEqual(level('dbpedia.established__forbes.sales_figure'), 'HIGH', 'the unrelated pair is not a homolog');
+  const excluded: string[] = Object.values<string[]>(universeConfig('U3').privacyExcluded).flat();
+  for (const item of report.postComa.proposals) assert.ok(!excluded.some(column => JSON.stringify(item).includes(column)), 'no privacy-excluded column is ever probed');
+  assert.ok(report.budget.used.queries <= 25 && report.budget.used.totalSourceQueries >= report.budget.used.queries);
+  const evaluation = await evaluateAgentLoop();
+  assert.equal(evaluation.criteria.byUniverse.U3.reason, 'BLIND_POST_COMA_EXECUTED_WITH_STANDIN', 'S5 now passes for a real reason, not for "COMA not configured"');
+});

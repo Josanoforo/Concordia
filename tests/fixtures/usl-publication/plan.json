@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "rendererVersion": "concordia-usl-lifecycle/1",
+  "status": "PREPARED",
+  "executable": false,
+  "executionStatus": "NOT_RUN",
+  "publicationManifestRef": "publication:292d994d1e8f6ad4d3b831a0",
+  "publicationManifestFingerprint": "292d994d1e8f6ad4d3b831a0343e8d0421f7573d29afaaa89a4a35842486d032",
+  "universeId": "concordia.universe.gtfs-publication-demo",
+  "target": {
+    "namespace": "lightning.metastore.concordia_l4_agentpub_20261025",
+    "model": "concordia_l4_agent_gtfs_route_v1",
+    "table": "ObservedRelation"
+  },
+  "columnDefinitions": [
+    {
+      "name": "source_key_1",
+      "type": "varchar(512)"
+    },
+    {
+      "name": "target_key_1",
+      "type": "varchar(512)"
+    }
+  ],
+  "relationRef": "gtfs-publication-trip-route-v1",
+  "contractVersion": "1.1",
+  "decisionRef": "decision:[\"gtfs-publication-trip-route-v1\",\"1.1\",[\"evidence:D-gtfs-source-preparation-20261023-03:gtfs-publication-trip-route-v1\"]]",
+  "policyVersion": "1.1",
+  "evidenceRefs": [
+    "evidence:D-gtfs-source-preparation-20261023-03:gtfs-publication-trip-route-v1"
+  ],
+  "publicationBasis": "ObservedRelation",
+  "executionMode": "LIVE",
+  "dataOrigin": "SYNTHETIC",
+  "sourceBinding": {
+    "bindingId": "concordia.json2.bounded-key-snapshot.20261023",
+    "bindingVersion": "1.0.0",
+    "bindingSha256": "7bf285a4c0e1f791447db8e509631c7d14a6f54da4000f73775513dc2be9fcd9",
+    "uslAllowed": false,
+    "sha256Status": "CLAIMED_UNVERIFIED",
+    "mappingRefs": [
+      "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:routes:CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_routes",
+      "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips:CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_trips"
+    ]
+  },
+  "inputFingerprints": {
+    "publication": "292d994d1e8f6ad4d3b831a0343e8d0421f7573d29afaaa89a4a35842486d032",
+    "contract": "9358e0d2148dcaf73f83aa4b4f220541ba97a785bed286abaabed21030bbbe66",
+    "evidence": "93bea5d578cea496d43cdce224617817162f671100b111995ae6e2c100ea2b9f",
+    "decision": "205b286f90f4f49a937466b09648cd5e26aeb0d6d0c67fb9f84f1c0ec7970848",
+    "targetState": "4ce96ee40cb6992d33fb8b2e371a08e697843320e2664dbd2f7793a84be36114",
+    "binding": "7e4597c4746f7bd4346baaca1cb320ab6e6ee8dbf3d5570d248b5790ffad764f",
+    "renderer": "12c45b37849947d077c90936e98f3f92d17e4d9215dd24ca05fe94b8a9fcc2a2"
+  },
+  "operations": [
+    {
+      "sequence": 1,
+      "operationId": "recheck_contract_decision_evidence_policy_freshness_and_target",
+      "role": "PREFLIGHT",
+      "objectRef": "lightning.metastore.concordia_l4_agentpub_20261025.concordia_l4_agent_gtfs_route_v1",
+      "sql": null,
+      "sqlSha256": null,
+      "condition": "Recompute the common publication plan and confirm the exact target snapshot immediately before the first mutation.",
+      "persistentEffect": false
+    },
+    {
+      "sequence": 2,
+      "operationId": "inspect_namespace_ownership",
+      "role": "PREFLIGHT",
+      "objectRef": "lightning.metastore.concordia_l4_agentpub_20261025",
+      "sql": null,
+      "sqlSha256": null,
+      "condition": "Proceed only if absent or if ownership and loaded manifest/content exactly match this plan; never adopt an unowned namespace.",
+      "persistentEffect": false
+    },
+    {
+      "sequence": 3,
+      "operationId": "create_target_namespace",
+      "role": "DDL",
+      "objectRef": "lightning.metastore.concordia_l4_agentpub_20261025",
+      "sql": "CREATE NAMESPACE IF NOT EXISTS lightning.metastore.concordia_l4_agentpub_20261025",
+      "sqlSha256": "1f75172cbc4457f9d3ba75c14c343ba1044b7030165d3128e9c2b680e99aea52",
+      "condition": "Run only after the namespace preflight gate passes.",
+      "persistentEffect": true
+    },
+    {
+      "sequence": 4,
+      "operationId": "compile_versioned_model",
+      "role": "DDL",
+      "objectRef": "lightning.metastore.concordia_l4_agentpub_20261025.concordia_l4_agent_gtfs_route_v1",
+      "sql": "COMPILE USL concordia_l4_agent_gtfs_route_v1 DEPLOY NAMESPACE lightning.metastore.concordia_l4_agentpub_20261025 DDL\nCREATE TABLE ObservedRelation (\n  source_key_1 varchar(512),\n  target_key_1 varchar(512)\n);",
+      "sqlSha256": "3167468cd0daef4f5353d08928d165b8a8270e0c9a3034a2671c4ed84898595e",
+      "condition": "Run only after exact-plan authorization and confirmed dialect; append a new versioned model.",
+      "persistentEffect": true
+    },
+    {
+      "sequence": 5,
+      "operationId": "activate_observed_relation",
+      "role": "ACTIVATION",
+      "objectRef": "lightning.metastore.concordia_l4_agentpub_20261025.concordia_l4_agent_gtfs_route_v1.ObservedRelation",
+      "sql": "ACTIVATE USL TABLE lightning.metastore.concordia_l4_agentpub_20261025.concordia_l4_agent_gtfs_route_v1.ObservedRelation AS SELECT src.route_id AS source_key_1, tgt.route_id AS target_key_1 FROM CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2.gtfs_trips AS src INNER JOIN CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2.gtfs_routes AS tgt ON src.route_id = tgt.route_id",
+      "sqlSha256": "9c076eef1639b00ff99750b809298d564a000656f541a55acab7884c54bfd6c4",
+      "condition": "Run only after exact-plan authorization; textual INNER JOIN, preserving duplicate output rows.",
+      "persistentEffect": true
+    },
+    {
+      "sequence": 6,
+      "operationId": "load_model_for_definition_check",
+      "role": "VERIFY",
+      "objectRef": "lightning.metastore.concordia_l4_agentpub_20261025.concordia_l4_agent_gtfs_route_v1",
+      "sql": "LOAD USL concordia_l4_agent_gtfs_route_v1 NAMESPACE lightning.metastore.concordia_l4_agentpub_20261025",
+      "sqlSha256": "9fea614cbe8d89893f927aaa17a7085f6814a89b8a3e2eeeeb4f78a065874205",
+      "condition": "Require exact model/table/column/activation definition before accepting reuse or continuing.",
+      "persistentEffect": false
+    },
+    {
+      "sequence": 7,
+      "operationId": "verify_observed_relation_sample",
+      "role": "VERIFY",
+      "objectRef": "lightning.metastore.concordia_l4_agentpub_20261025.concordia_l4_agent_gtfs_route_v1.ObservedRelation",
+      "sql": "SELECT source_key_1, target_key_1 FROM lightning.metastore.concordia_l4_agentpub_20261025.concordia_l4_agent_gtfs_route_v1.ObservedRelation LIMIT 50",
+      "sqlSha256": "0bb7505275d55be9a1aa1f754b78fff057365af031d409da11ba7d560c7e8be6",
+      "condition": "Require a successful bounded read and text-shaped columns; no uniqueness or global coverage inference.",
+      "persistentEffect": false
+    }
+  ],
+  "expectedProjection": {
+    "rowCount": 11,
+    "fingerprint": "6e0af5350a69f74081756c3b719a37d80fc704692fd231d81fdfb9c5562c33d7"
+  },
+  "gates": [
+    {
+      "code": "backend_dialect_and_server_capability_unconfirmed",
+      "status": "PENDING"
+    },
+    {
+      "code": "explicit_plan_bound_authorization_required",
+      "status": "PENDING"
+    },
+    {
+      "code": "live_sql_execution_not_supported_in_this_cut",
+      "status": "PENDING"
+    },
+    {
+      "code": "source_binding_hash_confirmation_required",
+      "status": "PENDING"
+    }
+  ],
+  "reuse": {
+    "requiredChecks": [
+      "LOAD exact versioned model",
+      "compare column names/types and empty constraints",
+      "compare ACTIVATE query using documented whitespace normalization only",
+      "repeat bounded output SELECT and record row count without deduplication"
+    ],
+    "skipMutationsOnlyAfterAllChecks": true
+  },
+  "recovery": {
+    "previousVersionRef": "UNKNOWN",
+    "previousServableVersionRequired": true,
+    "backendDisableSupported": "UNKNOWN",
+    "localClientPointerOnly": true,
+    "otherClientsMayStillReachNewVersion": true,
+    "firstPublicationHasNoPreviousVersion": true
+  },
+  "fingerprint": "5052b6cda5f24ad1c11d9bac536b4e988d4b1e66b10364e8d1df9275aa8db3f8"
+}

@@ -1,3 +1,4 @@
+import { removeFile, removePath } from './helpers/safe-rm.ts';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -47,7 +48,7 @@ test('failed JSON2 preflight capture keeps profile contract versions and safe di
     const retry = await registerCapturedRun('preflight-failure-capture-01', { projectRoot: project, registryDir: registry });
     assert.equal(retry.status, 'REUSED');
     assert.equal(retry.record.sourceValidation?.failure?.http, 429);
-  } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
+  } finally { removePath(scratch); }
 });
 test('LIVE capture stores bounded source DTOs and retry reuses before env or source client construction', async () => {
   const { scratch, project } = makeProject();
@@ -84,7 +85,7 @@ test('LIVE capture stores bounded source DTOs and retry reuses before env or sou
     assert.equal(JSON.parse(retry.stdout).status, 'CAPTURE_REUSED');
     assert.equal(JSON.parse(retry.stdout).sourceExecutionMode, 'LIVE');
     assert.equal(JSON.parse(retry.stdout).explanation.explanationStatus, 'NOT_PRESENT_HISTORICAL_CAPTURE');
-  } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
+  } finally { removePath(scratch); }
 });
 test('run registry stores metadata only, retries append idempotently, and rejects identity collisions', async () => {
   const { scratch, project } = makeProject();
@@ -116,7 +117,7 @@ test('run registry stores metadata only, retries append idempotently, and reject
     await assert.rejects(() => captureLocalFixtureRun(altered, 'fixture-run-01', { projectRoot: project, registryDir }), /RUN_REGISTRY_IDENTITY_COLLISION/);
     assert.equal(fs.readFileSync(logPath, 'utf8').trim().split('\n').length, 1);
     await assert.rejects(() => captureLocalFixtureRun(evaluation, 'traversal', { projectRoot: project, registryDir: '.concordia/run-registry/../escape' }), /RUN_REGISTRY_PATH_INVALID/);
-  } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
+  } finally { removePath(scratch); }
 });
 
 test('run identity detects isolated manifest, config, dependency source, and policy drift', async () => {
@@ -152,7 +153,7 @@ test('run identity detects isolated manifest, config, dependency source, and pol
     assert.equal(overriddenEvaluation.results[0].decision.policyVersion, '9.4');
     assertCapturedRunInputsCurrent(overrideRun.record, project, '9.4');
     assert.throws(() => assertCapturedRunInputsCurrent(overrideRun.record, project), /RUN_REGISTRY_IDENTITY_COLLISION/);
-  } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
+  } finally { removePath(scratch); }
 });
 test('run-registry safety guards reject malformed records, foreign locks, escaping junctions, and false completeness', async context => {
   const { scratch, project } = makeProject();
@@ -191,7 +192,7 @@ test('run-registry safety guards reject malformed records, foreign locks, escapi
     fs.writeFileSync(lockPath, 'foreign-writer-token');
     await assert.rejects(() => registerCapturedRun('bad-log-null', { projectRoot: project, registryDir: localRegistryDir }), error => error instanceof Error && error.message === 'RUN_REGISTRY_WRITER_EXISTS');
     assert.equal(fs.readFileSync(lockPath, 'utf8'), 'foreign-writer-token');
-    fs.rmSync(lockPath);
+    removeFile(lockPath);
 
     const failed: any = structuredClone(evaluation);
     failed.results.forEach((result: any) => { result.probeStatus = 'ERROR'; });
@@ -203,7 +204,7 @@ test('run-registry safety guards reject malformed records, foreign locks, escapi
     ] };
     const mixedRecord = await captureLocalFixtureRun(mixed, 'mixed-status', { projectRoot: project, registryDir: localRegistryDir });
     assert.equal(mixedRecord.record.status, 'PARTIAL');
-  } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
+  } finally { removePath(scratch); }
 
   await context.test('junction to a sibling path is rejected before outside writes', async junctionContext => {
     const { scratch: linkScratch, project: linkProject } = makeProject();
@@ -217,7 +218,7 @@ test('run-registry safety guards reject malformed records, foreign locks, escapi
       const evaluation = await evaluateLocalFixtureUniverse('GTFS');
       await assert.rejects(() => captureLocalFixtureRun(evaluation, 'junction-reject', { projectRoot: linkProject }), /RUN_REGISTRY_DIRECTORY_UNSAFE/);
       assert.equal(fs.readdirSync(sibling).length, 0);
-    } finally { fs.rmSync(linkScratch, { recursive: true, force: true }); }
+    } finally { removePath(linkScratch); }
   });
 });
 test('offline CLI capture reuse and record-only retry preserve original execution metadata', () => {
@@ -260,7 +261,7 @@ test('offline CLI capture reuse and record-only retry preserve original executio
     assert.equal(wrongUniverse.status, 1);
 
     const logPath = path.join(project, ...dir.split('/'), 'runs.jsonl');
-    fs.rmSync(logPath);
+    removeFile(logPath);
     const retry = invoke(['universe', 'run-record', '--run-id', 'cli-fixture-01', '--run-registry-dir', dir]);
     assert.equal(retry.status, 0, retry.stderr);
     const retried = JSON.parse(retry.stdout.trim().split('\n').at(-1)!);
@@ -271,5 +272,5 @@ test('offline CLI capture reuse and record-only retry preserve original executio
     assert.equal(duplicate.status, 0, duplicate.stderr);
     assert.equal(JSON.parse(duplicate.stdout.trim().split('\n').at(-1)!).status, 'REUSED');
     assert.equal(fs.readFileSync(logPath, 'utf8').trim().split('\n').length, 1);
-  } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
+  } finally { removePath(scratch); }
 });

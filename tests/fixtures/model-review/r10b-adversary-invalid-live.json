@@ -1,0 +1,156 @@
+{
+ "label": "LIVE adversary tool-call arguments read as INVALID in R10b (verbatim responseText)",
+ "count": 25,
+ "items": [
+  {
+   "run": "r10b-01",
+   "relationId": "web_sales.ws_bill_customer_sk__customer.c_customer_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"web_sales.ws_bill_customer_sk__customer.c_customer_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"ws_ship_customer_sk is a role sibling of same dimension; tieBreak decisively favors THIS by name-vs-table, so no sibling beats it.\\\",\\\"evidenceRefs\\\":[\\\"tieBreak\\\",\\\"roles\\\",\\\"siblings[5]\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "store_returns.sr_cdemo_sk__customer_demographics.cd_demo_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"store_returns.sr_cdemo_sk__customer_demographics.cd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"sr_hdemo_sk is a role sibling sharing target, not a competing match; tieBreak decisively favors THIS by name vs table.\\\",\\\"evidenceRefs\\\":[\\\"siblings[2]\\\",\\\"tieBreak\\\",\\\"roles\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "catalog_returns.cr_returned_date_sk__date_dim.d_date_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"catalog_returns.cr_returned_date_sk__date_dim.d_date_sk\",\"attacks\":\"{\\\"attacks\\\":[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]}]}\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "store_returns.sr_returned_date_sk__date_dim.d_date_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"argument\":{\"relationId\":\"store_returns.sr_returned_date_sk__date_dim.d_date_sk\",\"attacks\":[{\"family\":\"HOMONYM\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"\",\"evidenceRefs\":[]},{\"family\":\"SIBLING\",\"severity\":\"blocking\",\"recommend\":\"defer\",\"argument\":\"tieBreak is decisive with winner OTHER (by cardinality distinct), meaning a sibling outranks this relation; siblings share same target with full/near-full coverage.\",\"evidenceRefs\":[\"tieBreak\",\"siblings[1]\",\"siblings[4]\"]}]}}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "web_returns.wr_returned_date_sk__date_dim.d_date_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"argument\":{\"relationId\":\"web_returns.wr_returned_date_sk__date_dim.d_date_sk\",\"attacks\":[{\"family\":\"HOMONYM\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"\",\"evidenceRefs\":[]},{\"family\":\"SIBLING\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"\",\"evidenceRefs\":[]}]}}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "catalog_returns.cr_refunded_addr_sk__customer_address.ca_address_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"catalog_returns.cr_refunded_addr_sk__customer_address.ca_address_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"Siblings either share target as roles/weaker coverage or are decisively ordered after THIS by name tie-break; none is a better match.\\\",\\\"evidenceRefs\\\":[\\\"tieBreak\\\",\\\"siblings[4]\\\",\\\"roles\\\"]}]}\\n\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "catalog_returns.cr_refunded_hdemo_sk__household_demographics.hd_demo_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"catalog_returns.cr_refunded_hdemo_sk__household_demographics.hd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"cr_returning_hdemo_sk is a role of same dimension with equal 20/20 coverage; tieBreak decisively favors THIS so not blocking.\\\",\\\"evidenceRefs\\\":[\\\"siblings[5]\\\",\\\"tieBreak\\\",\\\"roles\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "catalog_returns.cr_returning_hdemo_sk__household_demographics.hd_demo_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"argument\":{\"relationId\":\"catalog_returns.cr_returning_hdemo_sk__household_demographics.hd_demo_sk\",\"attacks\":[{\"family\":\"HOMONYM\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"\",\"evidenceRefs\":[]},{\"family\":\"SIBLING\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"\",\"evidenceRefs\":[]}]}}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "catalog_sales.cs_bill_hdemo_sk__household_demographics.hd_demo_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"catalog_sales.cs_bill_hdemo_sk__household_demographics.hd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"cs_ship_hdemo_sk is a role sibling not a competitor; tieBreak decisive winner THIS over other siblings.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "catalog_sales.cs_ship_addr_sk__customer_address.ca_address_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"catalog_sales.cs_ship_addr_sk__customer_address.ca_address_sk\",\"attacks\":\"{\\\"attacks\\\":[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"cs_bill_addr_sk is a role sibling of same dimension, not a competing target; tieBreak decisively favors THIS by name match.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "catalog_sales.cs_ship_cdemo_sk__customer_demographics.cd_demo_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"catalog_sales.cs_ship_cdemo_sk__customer_demographics.cd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"cs_bill_cdemo_sk is a role sharing target, not a competitor; tieBreak decisively favors THIS by name match, so sibling cannot override.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "web_returns.wr_refunded_addr_sk__customer_address.ca_address_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"web_returns.wr_refunded_addr_sk__customer_address.ca_address_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"wr_returning_addr_sk is a sibling role to same target per roles[], not a competing alt; tieBreak decisive THIS over call_center/store siblings.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\",\\\"siblings[2]\\\"]}]}\\n\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "web_returns.wr_refunded_hdemo_sk__household_demographics.hd_demo_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"web_returns.wr_refunded_hdemo_sk__household_demographics.hd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"wr_returning_hdemo_sk is a role of the same dimension per roles[], not a competing sibling; other siblings are weaker or mismatched entity.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\",\\\"siblings[2]\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "web_returns.wr_returning_cdemo_sk__customer_demographics.cd_demo_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"web_returns.wr_returning_cdemo_sk__customer_demographics.cd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"wr_refunded_cdemo_sk is a role of same target; tieBreak decisively picks THIS; store/catalog siblings are TARGET-share, not better matches.\\\",\\\"evidenceRefs\\\":[\\\"tieBreak\\\",\\\"roles\\\",\\\"siblings[4]\\\"]}]}\\n\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "web_sales.ws_bill_cdemo_sk__customer_demographics.cd_demo_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"web_sales.ws_bill_cdemo_sk__customer_demographics.cd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"ws_ship_cdemo_sk is a parallel role of same dimension per roles field, not a competing sibling; tieBreak decisively favors THIS by name.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "web_sales.ws_ship_cdemo_sk__customer_demographics.cd_demo_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"web_sales.ws_ship_cdemo_sk__customer_demographics.cd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"ws_bill_cdemo_sk is a role on same dimension, not a competing target; tieBreak decisively favors THIS, no sibling outcompetes.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\",\\\"siblings[1]\\\"]}]}\\n\"}"
+  },
+  {
+   "run": "r10b-01",
+   "relationId": "web_site.web_close_date_sk__date_dim.d_date_sk",
+   "code": "f5db4f0",
+   "responseText": "{\"relationId\":\"web_site.web_close_date_sk__date_dim.d_date_sk\",\"attacks\":\"{\\\"attacks\\\":[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]}]}\"}"
+  },
+  {
+   "run": "r10b-03",
+   "relationId": "store_sales.ss_cdemo_sk__customer_demographics.cd_demo_sk",
+   "code": "57f691f",
+   "responseText": "{\"relationId\":\"store_sales.ss_cdemo_sk__customer_demographics.cd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"ss_hdemo_sk is a role sharing target, not a competing homonym; tieBreak decisively favors THIS, so sibling cannot override.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\",\\\"siblings[3]\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-03",
+   "relationId": "web_returns.wr_returning_customer_sk__customer.c_customer_sk",
+   "code": "57f691f",
+   "responseText": "{\"relationId\":\"web_returns.wr_returning_customer_sk__customer.c_customer_sk\",\"argument\":{\"attacks\":[{\"family\":\"HOMONYM\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"\",\"evidenceRefs\":[]},{\"family\":\"SIBLING\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"\",\"evidenceRefs\":[]}]}}"
+  },
+  {
+   "run": "r10b-03",
+   "relationId": "catalog_sales.cs_ship_cdemo_sk__customer_demographics.cd_demo_sk",
+   "code": "57f691f",
+   "responseText": "{\"relationId\":\"catalog_sales.cs_ship_cdemo_sk__customer_demographics.cd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"cs_bill_cdemo_sk is a role of same dimension, not a competing entity; tieBreak decisively favors THIS by name-vs-table.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-03",
+   "relationId": "catalog_sales.cs_ship_hdemo_sk__household_demographics.hd_demo_sk",
+   "code": "57f691f",
+   "responseText": "{\"relationId\":\"catalog_sales.cs_ship_hdemo_sk__household_demographics.hd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"cs_bill_hdemo_sk is a role of same target per roles list, not a competing sibling; tieBreak decisively favors THIS over true siblings.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\",\\\"siblings[2]\\\"]}]}\\n\"}"
+  },
+  {
+   "run": "r10b-03",
+   "relationId": "customer.c_current_hdemo_sk__household_demographics.hd_demo_sk",
+   "code": "57f691f",
+   "responseText": "{\"relationId\":\"customer.c_current_hdemo_sk__household_demographics.hd_demo_sk\",\"argument\":{\"attacks\":[{\"family\":\"HOMONYM\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"\",\"evidenceRefs\":[]},{\"family\":\"SIBLING\",\"severity\":\"none\",\"recommend\":\"keep\",\"argument\":\"\",\"evidenceRefs\":[]}]}}"
+  },
+  {
+   "run": "r10b-03",
+   "relationId": "web_returns.wr_refunded_cdemo_sk__customer_demographics.cd_demo_sk",
+   "code": "57f691f",
+   "responseText": "{\"relationId\":\"web_returns.wr_refunded_cdemo_sk__customer_demographics.cd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"wr_returning_cdemo_sk is a parallel role on same target, not a competing sibling; tieBreak decisively favors THIS by name vs table.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\",\\\"siblings[0]\\\"]}]}\"}"
+  },
+  {
+   "run": "r10b-03",
+   "relationId": "web_sales.ws_bill_addr_sk__customer_address.ca_address_sk",
+   "code": "57f691f",
+   "responseText": "{\"relationId\":\"web_sales.ws_bill_addr_sk__customer_address.ca_address_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"ws_ship_addr_sk is a role of same dimension (roles.sourceColumns), not a competing sibling; tieBreak decisively favors THIS by name vs table.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\",\\\"siblings[0]\\\"]}]}\\n\"}"
+  },
+  {
+   "run": "r10b-03",
+   "relationId": "web_sales.ws_ship_cdemo_sk__customer_demographics.cd_demo_sk",
+   "code": "57f691f",
+   "responseText": "{\"relationId\":\"web_sales.ws_ship_cdemo_sk__customer_demographics.cd_demo_sk\",\"attacks\":\"[{\\\"family\\\":\\\"HOMONYM\\\",\\\"severity\\\":\\\"none\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"\\\",\\\"evidenceRefs\\\":[]},{\\\"family\\\":\\\"SIBLING\\\",\\\"severity\\\":\\\"minor\\\",\\\"recommend\\\":\\\"keep\\\",\\\"argument\\\":\\\"ws_bill_cdemo_sk is a role sibling of same dimension; tieBreak decisively favors THIS by name, so not a blocking alternative.\\\",\\\"evidenceRefs\\\":[\\\"roles\\\",\\\"tieBreak\\\"]}]}\"}"
+  }
+ ]
+}

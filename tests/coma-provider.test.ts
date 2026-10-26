@@ -34,8 +34,8 @@ test('COMA provider preserves diagnostic scores, projects configured pairs, abst
   assert.equal(result.errors.some(item => item.code === 'COMA_COLUMN_PAIR_OUT_OF_SCOPE'), true);
   assert.equal(result.candidates.length, 1);
   assert.equal(result.reviewQueue.length, 1);
-  assert.equal(result.outOfScopeProposals?.length, 2, 'out-of-scope matches remain separate; candidate deduplication must not discard them');
-  assert.deepEqual(result.outOfScopeProposals?.map(item => item.rawScore), [0.88, 0.87]);
+  assert.equal(result.outOfScopeProposals?.length, 1, 'an out-of-scope pair repeated by COMA is one proposal (G1: higher rawScore, then id); it is never merged into a candidate');
+  assert.deepEqual(result.outOfScopeProposals?.map(item => item.rawScore), [0.88]);
   assert.deepEqual(result.outOfScopeProposals?.[0], {
     providerId: 'valentine.coma', providerVersion: '1.1.0', method: 'COMA',
     from: { db: 'fixture', table: 'source', column: 'other' }, to: { db: 'fixture', table: 'target', column: 'id' },

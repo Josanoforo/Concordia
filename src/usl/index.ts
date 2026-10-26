@@ -33,7 +33,7 @@ export async function usl() {
       console.log('USL', statement.stage);
       const limit = statement.stage.startsWith('verify') ? 3 : 1;
       evidence.failedStatement = statement;
-      const result = await z.runSql(statement.sql, limit);
+      const result = statement.stage.startsWith('verify') ? await z.runSql(statement.sql, limit) : await z.runLegacyMutationSql(statement.sql, limit, { caller: 'usl-index' });
       evidence.steps.push({ stage: statement.stage, ...result });
       delete evidence.failedStatement;
       if (statement.stage.startsWith('verify') && !result.rows.length) throw new SafeError('USL_EMPTY_VERIFICATION');

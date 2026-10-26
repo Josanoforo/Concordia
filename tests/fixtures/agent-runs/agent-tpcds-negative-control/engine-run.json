@@ -1,0 +1,75 @@
+{
+  "runId": "agent-tpcds-negative-control",
+  "universeId": "TPCDS",
+  "executionMode": "LIVE",
+  "dataOrigin": "PUBLIC",
+  "status": "COMPLETED",
+  "modelParticipation": "USED",
+  "phases": {
+    "exploration": {
+      "calls": [
+        {
+          "decisionStatus": "VALID"
+        }
+      ]
+    }
+  },
+  "decisions": [],
+  "reviewOverlay": {
+    "origin": "HUMAN_REVIEW",
+    "sha256": "7188fbb5bd002bac2567954cb8836828cf36e7f7c8fb53a8332242bae58fb0d3",
+    "file": "universes/reviews/TPCDS.review.json",
+    "approval": {
+      "approver": "project-owner",
+      "approvedAt": "2026-10-25",
+      "quote": "Paraphrase of the recorded approval: approved the consolidated marks: YES for the 25 without M12, DEFER #16/#26/#28, with the conditions (negative control, honest labelling, identifierSpace per entity).",
+      "session": "project-owner review session",
+      "package": "unpublished review records: F04_TPCDS_REVIEW_PACKAGE_20261025.md",
+      "sourceRun": "agent-tpcds-live-04"
+    },
+    "relations": [
+      "catalog_returns.cr_reason_sk__reason.r_reason_sk",
+      "store_returns.sr_reason_sk__reason.r_reason_sk",
+      "web_returns.wr_reason_sk__reason.r_reason_sk",
+      "store_sales.ss_store_sk__store.s_store_sk",
+      "catalog_returns.cr_warehouse_sk__warehouse.w_warehouse_sk",
+      "catalog_sales.cs_warehouse_sk__warehouse.w_warehouse_sk",
+      "web_sales.ws_warehouse_sk__warehouse.w_warehouse_sk",
+      "store_returns.sr_customer_sk__customer.c_customer_sk",
+      "store_sales.ss_customer_sk__customer.c_customer_sk",
+      "catalog_returns.cr_call_center_sk__call_center.cc_call_center_sk",
+      "catalog_sales.cs_call_center_sk__call_center.cc_call_center_sk",
+      "household_demographics.hd_income_band_sk__income_band.ib_income_band_sk",
+      "web_sales.ws_web_site_sk__web_site.web_site_sk",
+      "catalog_returns.cr_ship_mode_sk__ship_mode.sm_ship_mode_sk",
+      "catalog_sales.cs_ship_mode_sk__ship_mode.sm_ship_mode_sk",
+      "web_sales.ws_ship_mode_sk__ship_mode.sm_ship_mode_sk",
+      "web_returns.wr_web_page_sk__web_page.wp_web_page_sk",
+      "web_sales.ws_web_page_sk__web_page.wp_web_page_sk",
+      "catalog_sales.cs_promo_sk__promotion.p_promo_sk",
+      "store_returns.sr_store_sk__store.s_store_sk",
+      "web_sales.ws_promo_sk__promotion.p_promo_sk",
+      "catalog_returns.cr_item_sk__item.i_item_sk",
+      "catalog_sales.cs_item_sk__item.i_item_sk",
+      "promotion.p_end_date_sk__date_dim.d_date_sk",
+      "inventory.inv_item_sk__item.i_item_sk"
+    ],
+    "deferred": [
+      {
+        "id": "inventory.inv_warehouse_sk__warehouse.w_warehouse_sk",
+        "reason": "M12"
+      },
+      {
+        "id": "inventory.inv_date_sk__date_dim.d_date_sk",
+        "reason": "M12"
+      },
+      {
+        "id": "catalog_page.cp_end_date_sk__date_dim.d_date_sk",
+        "reason": "M12; catalog_page duplicates"
+      }
+    ],
+    "negativeControl": {
+      "artifact": "negative-control.json"
+    }
+  }
+}

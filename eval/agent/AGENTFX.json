@@ -3,7 +3,8 @@
   "basis": "SYNTHETIC_FIXTURE: truth is declared by construction of the rows below",
   "chooserScript": [
     "READ_CUSTOMER_PROFILE",
-    "READ_REGION_REFERENCE"
+    "READ_REGION_REFERENCE",
+    "READ_ORDERS_BY_REGION"
   ],
   "tables": {
     "orders": {

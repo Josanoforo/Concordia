@@ -5,17 +5,19 @@ import path from 'node:path';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { ROOT } from '../src/runtime.ts';
+import { ROOT, SafeError } from '../src/runtime.ts';
 import type { Decision, EvidenceBundle, RelationContract } from '../src/contracts/types.ts';
 import { compilePublicationPlan } from '../src/usl/publication-plan.ts';
 import { Zetaris } from '../src/clients/zetaris.ts';
 import { decodeLoadedUslModelRows, FileUslClientPointerStore, parseNamespaceCatalogRows, sourceKeyProjectionMatches, ZetarisUslLifecycleAdapter } from '../src/usl/zetaris-lifecycle-adapter.ts';
 import { canonicalJson2SchemaSha256, canonicalJson2TypedMultisetSha256 } from '../src/relations/adapters/zetaris-json2.ts';
-import { executeAuthorizedUslLifecycle, recoverAuthorizedUslLifecycle } from '../src/usl/lifecycle-simulator.ts';
+import { proposeUslRollbackPlan, isUslRollbackProposalValid } from '../src/usl/rollback-plan.ts';
+import { lintUslLifecyclePlan, assertUslDdlLint, postApplyVerificationSteps, UslDdlLintError } from '../src/usl/ddl-lint.ts';
+import { executeAuthorizedUslLifecycle, executeUslLifecycleSimulation, FileUslLifecycleSimulationAdapter, recoverAuthorizedUslLifecycle, validateUslLiveExecutionRequest } from '../src/usl/lifecycle-simulator.ts';
 import { FilePublicationJournal, readNamespacePublicationEvents, readPublicationJournalHistory } from '../src/usl/publication-executor.ts';
 import { retargetPublicationInput } from '../src/usl/retarget.ts';
 import { buildLiveUslGrant } from '../src/usl/live-grant.ts';
-import { isApprovedL4Namespace, assessUslLifecycleApplyGate, checkUslLifecyclePlan, compileUslLifecyclePlan, verifyLoadedUslModel, verifyObservedRelationRows, verifyPublicationSourceBindingBytes, type PublicationSourceBinding } from '../src/usl/lifecycle-plan.ts';
+import { uslOperationBindings, uslPlanSqlIntegrityIssue, isApprovedL4Namespace, assessUslLifecycleApplyGate, checkUslLifecyclePlan, compileUslLifecyclePlan, verifyLoadedUslModel, verifyObservedRelationRows, verifyPublicationSourceBindingBytes, type PublicationSourceBinding } from '../src/usl/lifecycle-plan.ts';
 function fixture() {
   const known = <T extends string | boolean>(value: T) => ({ state: 'KNOWN' as const, value });
   const contract: RelationContract = {
@@ -293,7 +295,7 @@ test('default Zetaris adapter completes apply, cross-run reuse, and cross-versio
       const grant: any = { schemaVersion: 1, grantId: `grant-${plan.fingerprint.slice(0, 12)}`, scope: 'LIVE_USL_PUBLICATION', planFingerprint: plan.fingerprint,
         targetRef: `${plan.target.namespace}.${plan.target.model}`, sourceBindingSha256: binding.bindingSha256, sourceBindingFingerprint: plan.inputFingerprints.binding,
         operationSqlSha256s: plan.operations.flatMap(operation => operation.sqlSha256 ? [operation.sqlSha256] : []), approvedBy: 'synthetic-test',
-        approvedAt: '2026-10-23T12:00:00Z', expiresAt: '2027-10-23T12:00:00Z', dialectId: dialect.dialectId, dialectEvidenceSha256: createHash('sha256').update(dialectBytes).digest('hex') };
+        approvedAt: '2026-10-23T12:00:00Z', expiresAt: '2027-10-23T12:00:00Z', dialectId: dialect.dialectId, dialectEvidenceSha256: createHash('sha256').update(dialectBytes).digest('hex'), operationBindings: uslOperationBindings(plan) };
       return { grant, dialectBytes };
     };
     const client = new Zetaris({ base: 'http://localhost', key: 'synthetic', org: '1' });
@@ -302,11 +304,36 @@ test('default Zetaris adapter completes apply, cross-run reuse, and cross-versio
     const firstAuth = makeGrant(first.plan, first.manifest, initialInput), firstAdapter = makeAdapter(first.plan, firstAuth.grant, `${runId}-apply`, initialInput);
     const applied = await executeAuthorizedUslLifecycle(first.plan, first.manifest, initialInput, binding, rawBindingBytes, firstAuth.dialectBytes, firstAuth.grant, firstAdapter, journal(`${runId}-apply`), `${runId}-apply`);
     assert.equal(applied.status, 'VERIFIED', JSON.stringify(applied));
+    {
+      // R6-Z1: the same valid request is accepted, and each way of detaching the approval from the exact SQL is rejected.
+      const request = (grant: any, plan: any = first.plan) => validateUslLiveExecutionRequest(plan, first.manifest, initialInput, binding, rawBindingBytes, grant, firstAuth.dialectBytes);
+      assert.equal(request(firstAuth.grant), null);
+      const bound = uslOperationBindings(first.plan);
+      assert.equal(request({ ...firstAuth.grant, operationBindings: bound.map((item, index) => ({ ...item, sqlSha256: bound[(index + 1) % bound.length].sqlSha256 })) }), 'EXACT_LIVE_PUBLICATION_GRANT_REQUIRED');
+      assert.equal(request({ ...firstAuth.grant, operationBindings: undefined }), 'EXACT_LIVE_PUBLICATION_GRANT_REQUIRED');
+      assert.equal(request({ ...firstAuth.grant, planFingerprint: 'f'.repeat(64) }), 'EXACT_LIVE_PUBLICATION_GRANT_REQUIRED');
+      const edited = { ...first.plan, operations: first.plan.operations.map(item => item.operationId === 'create_target_namespace' ? { ...item, sql: `${item.sql} ` } : item) };
+      assert.equal(request(firstAuth.grant, edited), 'PREPARED_LIFECYCLE_PLAN_REQUIRED');
+    }
     assert.ok(readNamespacePublicationEvents(first.plan.target.namespace, projectRoot).some(event => event.state === 'verified' && event.fingerprint === first.plan.fingerprint));
     const reuseAuth = makeGrant(first.plan, first.manifest, initialInput), reuseAdapter = makeAdapter(first.plan, reuseAuth.grant, `${runId}-reuse`, initialInput);
     const reused = await executeAuthorizedUslLifecycle(first.plan, first.manifest, initialInput, binding, rawBindingBytes, reuseAuth.dialectBytes, reuseAuth.grant, reuseAdapter, journal(`${runId}-reuse`), `${runId}-reuse`, Date.now(), 'REUSE');
     assert.equal(reused.status, 'REUSED', JSON.stringify(reused));
     const current = await reuseAdapter.readSnapshot(); reuseAdapter.drainAuditReads();
+    {
+      // N60 / G1 on the LIVE path: the SQL really ran (fake transport), then the journal failed on the 'applied' event.
+      const inputV3 = { ...f.input, target: { ...f.input.target, model: 'concordia_l4_observed_v3' }, targetState: { fingerprint: current.targetStateFingerprint, observedAt: new Date().toISOString() } };
+      const third = makePlan(inputV3); plans.set(third.plan.target.model, third.plan);
+      const thirdAuth = makeGrant(third.plan, third.manifest, inputV3);
+      const faulty = (id: string) => new FaultyJournal(journal(id), (event: any) => event.state === 'applied') as any;
+      const broken = await executeAuthorizedUslLifecycle(third.plan, third.manifest, inputV3, binding, rawBindingBytes, thirdAuth.dialectBytes, thirdAuth.grant, makeAdapter(third.plan, thirdAuth.grant, `${runId}-v3a`, inputV3), faulty(`${runId}-v3a`), `${runId}-v3a`);
+      assert.equal(broken.status, 'FAILED', JSON.stringify(broken)); assert.equal(broken.passed, false);
+      assert.equal(broken.liveSqlExecuted, true, 'a LIVE run whose journal failed after SQL must say that live SQL ran');
+      assert.match(String((broken as any).reason), /^JOURNAL_WRITE_FAILED_AFTER_SQL:/);
+      const retry = await executeAuthorizedUslLifecycle(third.plan, third.manifest, inputV3, binding, rawBindingBytes, thirdAuth.dialectBytes, thirdAuth.grant, makeAdapter(third.plan, thirdAuth.grant, `${runId}-v3b`, inputV3), journal(`${runId}-v3b`), `${runId}-v3b`);
+      assert.equal(retry.status, 'REJECTED'); assert.equal((retry as any).reason, 'INTERRUPTED_PRIOR_RUN'); assert.equal(retry.liveSqlExecuted, false);
+          activatedModels.delete(third.plan.target.model); // out-of-band cleanup of the half-applied v3 object so the v2 scenario below starts from the same catalog
+    }
     const inputV2 = { ...f.input, target: { ...f.input.target, model: 'concordia_l4_observed_v2' }, targetState: { fingerprint: current.targetStateFingerprint, observedAt: new Date().toISOString() } };
     const second = makePlan(inputV2); plans.set(second.plan.target.model, second.plan);
     const secondAuth = makeGrant(second.plan, second.manifest, inputV2); failLoadModel = second.plan.target.model;
@@ -596,4 +623,153 @@ test('B5: retargeting keeps contract, evidence and decision, drops the old targe
   assert.throws(() => retargetPublicationInput(f.input, { ...target, namespace: 'lightning.metastore.concordia_u1' }), /RETARGET_NAMESPACE_NOT_APPROVED/);
   assert.throws(() => retargetPublicationInput(f.input, { ...target, model: 'bad model' }), /RETARGET_MODEL_INVALID/);
   assert.throws(() => retargetPublicationInput(f.input, f.input.target), /RETARGET_SAME_TARGET/);
+});
+
+test('R6-Z1: approval is bound to plan fingerprint, operationId and SQL hash; any changed SQL is rejected', () => {
+  const f = fixture(), plan = compileUslLifecyclePlan(f.manifest, f.input, f.binding);
+  if (plan.status !== 'PREPARED') throw new Error('SYNTHETIC_PLAN_NOT_PREPARED');
+  assert.equal(uslPlanSqlIntegrityIssue(plan), null);
+  const bindings = uslOperationBindings(plan);
+  assert.deepEqual(bindings.map(item => item.operationId), plan.operations.filter(item => item.sql).map(item => item.operationId));
+  const tampered = { ...plan, operations: plan.operations.map(item => item.operationId === 'activate_observed_relation' ? { ...item, sql: `${item.sql} -- changed` } : item) };
+  assert.equal(uslPlanSqlIntegrityIssue(tampered), 'PLAN_SQL_HASH_MISMATCH');
+  // Swapping hashes between operations keeps the multiset of hashes but breaks the operationId binding.
+  const [a, b] = bindings;
+  assert.notDeepEqual(bindings, [{ ...a, sqlSha256: b.sqlSha256 }, { ...b, sqlSha256: a.sqlSha256 }, ...bindings.slice(2)]);
+});
+
+test('R6-Z2/Z3: DDL lint passes the compiled plan and returns typed findings for every rejected shape, before any source is reached', () => {
+  const f = fixture(), plan = compileUslLifecyclePlan(f.manifest, f.input, f.binding);
+  if (plan.status !== 'PREPARED') throw new Error('SYNTHETIC_PLAN_NOT_PREPARED');
+  const clean = lintUslLifecyclePlan(plan);
+  assert.deepEqual(clean.findings, []); assert.equal(clean.status, 'PASS');
+  assert.deepEqual(clean.checkedOperations, plan.operations.filter(item => item.sql).map(item => item.operationId));
+  const mutate = (operationId: string, change: (sql: string) => string) => lintUslLifecyclePlan({ ...plan, operations: plan.operations.map(item => item.operationId === operationId ? { ...item, sql: change(item.sql!) } : item) });
+  const codes = (result: ReturnType<typeof lintUslLifecyclePlan>) => result.findings.map(item => item.code);
+  // The shape that returned HTTP 400 in the D3 probe: inline COMMENT on a column, COMPILE without DEPLOY.
+  const comment = mutate('compile_versioned_model', sql => sql.replace('varchar(512),', "varchar(512) COMMENT 'Concordia confidence=0.85',"));
+  assert.ok(codes(comment).includes('COMMENT_FORM_REJECTED_BY_BACKEND')); assert.equal(comment.status, 'FAIL');
+  assert.ok(codes(mutate('compile_versioned_model', sql => sql.replace(' DEPLOY NAMESPACE', ' NAMESPACE'))).includes('COMPILE_WITHOUT_DEPLOY'));
+  assert.ok(codes(mutate('compile_versioned_model', sql => sql.replace('varchar(512),', 'varchar(512) NOT NULL PRIMARY KEY,'))).includes('CONSTRAINT_NOT_ALLOWED'));
+  assert.ok(codes(mutate('compile_versioned_model', sql => `${sql}\nCREATE TABLE other (a varchar(512));`)).includes('MULTIPLE_STATEMENTS'));
+  assert.ok(codes(mutate('create_target_namespace', sql => `${sql}; DROP NAMESPACE lightning.metastore.other`)).includes('FORBIDDEN_KEYWORD'));
+  assert.ok(codes(mutate('create_target_namespace', () => 'CREATE NAMESPACE IF NOT EXISTS lightning.metastore.concordia_u1')).includes('NAMESPACE_STATEMENT_SHAPE'));
+  assert.ok(codes(mutate('activate_observed_relation', sql => sql.replace('INNER JOIN', 'LEFT JOIN'))).includes('ACTIVATION_NEEDS_INNER_JOIN'));
+  assert.ok(codes(mutate('activate_observed_relation', sql => `${sql} LIMIT 5`)).includes('ACTIVATION_FORBIDDEN_CLAUSE'));
+  assert.ok(codes(mutate('compile_versioned_model', sql => sql.replace('varchar(512)', 'varchar(512)é'))).includes('SQL_NOT_PRINTABLE_ASCII'));
+  // Z3: the verification read is bounded (<= 50), plain, and aimed at the published table.
+  assert.ok(codes(mutate('verify_observed_relation_sample', sql => sql.replace('LIMIT 50', 'LIMIT 500'))).includes('VERIFY_LIMIT_INVALID'));
+  assert.ok(codes(mutate('verify_observed_relation_sample', sql => sql.replace(/ LIMIT 50$/, ''))).includes('VERIFY_STATEMENT_SHAPE'));
+  assert.ok(codes(mutate('verify_observed_relation_sample', sql => sql.replace('ObservedRelation', 'Other'))).includes('VERIFY_TARGET_MISMATCH'));
+  assert.ok(codes(lintUslLifecyclePlan({ ...plan, operations: plan.operations.filter(item => item.operationId !== 'verify_observed_relation_sample') })).includes('VERIFY_STEP_MISSING'));
+  const steps = postApplyVerificationSteps(plan);
+  assert.deepEqual(steps.map(item => item.operationId), ['load_model_for_definition_check', 'verify_observed_relation_sample']);
+  assert.equal(steps.find(item => item.operationId === 'verify_observed_relation_sample')!.limit, 50);
+  assert.ok(steps.every(item => item.kind === 'READ' && /^[a-f0-9]{64}$/.test(item.sqlSha256)));
+  assert.throws(() => assertUslDdlLint({ ...plan, operations: comment.findings.length ? plan.operations.map(item => item.operationId === 'compile_versioned_model' ? { ...item, sql: item.sql!.replace('varchar(512),', 'varchar(512) COMMENT \'x\',') } : item) : plan.operations }), (error: any) => error instanceof UslDdlLintError && error.code === 'DDL_LINT_FAILED' && error.findings.length > 0);
+  assert.equal(lintUslLifecyclePlan({ ...plan, status: 'BLOCKED' } as any).findings[0].code, 'PLAN_NOT_PREPARED');
+});
+
+test('R6-Z4: the rollback proposal is hashed, bound to the plan, never executable, and the live path cannot run it', async () => {
+  const f = fixture(), plan = compileUslLifecyclePlan(f.manifest, f.input, f.binding);
+  if (plan.status !== 'PREPARED') throw new Error('SYNTHETIC_PLAN_NOT_PREPARED');
+  const proposal = proposeUslRollbackPlan(plan);
+  assert.equal(proposal.status, 'NOT_EXECUTABLE_WITHOUT_NEW_GRANT'); assert.equal(proposal.executable, false); assert.equal(proposal.executionStatus, 'NOT_RUN');
+  assert.equal(proposal.planFingerprint, plan.fingerprint); assert.equal(isUslRollbackProposalValid(proposal), true);
+  assert.ok(proposal.operations.every(operation => /^[a-f0-9]{64}$/.test(operation.sqlSha256)));
+  assert.deepEqual(proposal.operations.filter(operation => operation.persistentEffect).map(operation => operation.sql), [`DROP NAMESPACE IF EXISTS ${plan.target.namespace}`]);
+  assert.ok(proposal.blockedBy.includes('new_exact_rollback_grant_required'));
+  assert.equal(isUslRollbackProposalValid({ ...proposal, operations: proposal.operations.map((operation, index) => index === 1 ? { ...operation, sql: 'DROP NAMESPACE IF EXISTS lightning.metastore' } : operation) }), false);
+  assert.equal(isUslRollbackProposalValid({ ...proposal, executable: true }), false);
+  assert.equal(proposeUslRollbackPlan(plan).fingerprint, proposal.fingerprint);
+  assert.throws(() => proposeUslRollbackPlan({ ...plan, status: 'BLOCKED' } as any), /ROLLBACK_PROPOSAL_REQUIRES_PREPARED_PLAN/);
+  // The live client only runs the three plan operation ids: the rollback statement is refused even with a grant that lists its hash.
+  const drop = proposal.operations.find(operation => operation.role === 'ROLLBACK')!;
+  const grant = { schemaVersion: 1 as const, grantId: 'g', scope: 'LIVE_USL_PUBLICATION' as const, planFingerprint: plan.fingerprint, targetRef: `${plan.target.namespace}.${plan.target.model}`, sourceBindingSha256: plan.sourceBinding.bindingSha256,
+    operationSqlSha256s: [...plan.operations.flatMap(item => item.sqlSha256 ? [item.sqlSha256] : []), drop.sqlSha256], approvedBy: 'h', approvedAt: new Date(Date.now() - 60_000).toISOString(), expiresAt: new Date(Date.now() + 60_000).toISOString() };
+  const client = new Zetaris({ base: 'http://localhost', key: 'synthetic', org: '1' });
+  const priorFetch = globalThis.fetch; let calls = 0;
+  globalThis.fetch = async () => { calls++; return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { 'content-type': 'application/json' } }); };
+  try {
+    await assert.rejects(client.runAuthorizedPublicationSql({ operationId: drop.operationId, objectRef: drop.objectRef, sql: drop.sql, sqlSha256: drop.sqlSha256 }, grant, plan), /EXACT_LIVE_PUBLICATION_GRANT_REQUIRED/);
+    assert.equal(calls, 0);
+  } finally { globalThis.fetch = priorFetch; }
+  // A rollback statement smuggled into a plan is also a lint finding.
+  const smuggled = lintUslLifecyclePlan({ ...plan, operations: plan.operations.map(item => item.operationId === 'create_target_namespace' ? { ...item, sql: drop.sql } : item) });
+  assert.ok(smuggled.findings.some(item => item.code === 'FORBIDDEN_KEYWORD'));
+});
+
+// G1: journal and pointer failures in the lifecycle coordinator (LOCAL+SYNTHETIC adapter; the LIVE flag path shares the same wrapper).
+class FaultyJournal {
+  constructor(private inner: FilePublicationJournal, private failOn: (event: any) => boolean) {}
+  get projectRoot(): string { return (this.inner as any).projectRoot; }
+  withTargetLock<T>(target: string, work: () => Promise<T>): Promise<T> { return this.inner.withTargetLock(target, work); }
+  withExclusiveLock<T>(work: (locked: any) => Promise<T>): Promise<T> {
+    return this.inner.withExclusiveLock(locked => work({ readEvents: () => locked.readEvents(), append: (event: any) => { if (this.failOn(event)) throw new Error('synthetic disk full at ' + event.state); locked.append(event); } }));
+  }
+}
+async function g1Harness<T>(body: (h: any) => Promise<T>): Promise<T> {
+  const slug = `g1-${randomUUID().replaceAll('-', '')}`, projectRoot = path.join(ROOT, '.concordia', `${slug}-project`), plans = path.join(projectRoot, '.concordia', 'publication-plans');
+  fs.mkdirSync(plans, { recursive: true });
+  const f = fixture(), plan = compileUslLifecyclePlan(f.manifest, f.input, f.binding), statePath = path.join(plans, `${slug}.simulation.json`);
+  fs.writeFileSync(statePath, JSON.stringify({ schemaVersion: 1, adapterId: 'local-synthetic-usl-fixture', executionMode: 'LOCAL', dataOrigin: 'SYNTHETIC', targetStateFingerprint: f.input.targetState!.fingerprint,
+    observedAt: f.input.targetState!.observedAt, namespaceState: 'ABSENT', namespaceOwnerFingerprint: null, activeVersionRef: null, localClientPointer: null, versions: [], loadedModelsByVersion: {},
+    observedRowsByPlanFingerprint: { [plan.fingerprint]: [['01', '01', 'a', 'a'], ['1', '1', 'b', 'b']] } }));
+  const grant = { schemaVersion: 1 as const, grantId: `grant-${plan.fingerprint.slice(0, 12)}`, scope: 'LOCAL_SYNTHETIC_SIMULATION' as const, planFingerprint: plan.fingerprint, targetRef: `${plan.target.namespace}.${plan.target.model}`,
+    sourceBindingSha256: f.binding.bindingSha256, sourceBindingFingerprint: plan.inputFingerprints.binding, operationSqlSha256s: plan.operations.flatMap(operation => operation.sqlSha256 ? [operation.sqlSha256] : []),
+    approvedBy: 'synthetic-test', approvedAt: '2026-10-22T00:00:00.000Z', expiresAt: '2027-10-22T00:00:00.000Z' };
+  const journal = (id: string, failOn?: (event: any) => boolean) => { const real = new FilePublicationJournal(path.join(projectRoot, '.concordia', 'publication-runs', id, 'journal.jsonl'), projectRoot); return (failOn ? new FaultyJournal(real, failOn) : real) as any; };
+  const run = (adapter: any, j: any, id: string) => executeUslLifecycleSimulation(plan, f.manifest, f.input, f.binding, grant, adapter, j, id);
+  const adapter = () => new FileUslLifecycleSimulationAdapter(statePath, projectRoot);
+  try { return await body({ f, plan, statePath, journal, run, adapter, projectRoot, readState: () => JSON.parse(fs.readFileSync(statePath, 'utf8')) }); }
+  finally { fs.rmSync(projectRoot, { recursive: true, force: true }); }
+}
+test('G1: a journal that fails after SQL is JOURNAL_WRITE_FAILED_AFTER_SQL, and the dangling prepared run is then rejected as INTERRUPTED_PRIOR_RUN', async () => {
+  await g1Harness(async h => {
+    const first = await h.run(h.adapter(), h.journal('r1', (event: any) => event.state === 'applied'), 'r1');
+    assert.equal(first.status, 'FAILED'); assert.equal(first.passed, false); assert.match((first as any).reason, /^JOURNAL_WRITE_FAILED_AFTER_SQL:UNEXPECTED_ERROR$/);
+    assert.equal(h.readState().namespaceState, 'OWNED', 'the first statement ran before the journal failed');
+    const second = await h.run(h.adapter(), h.journal('r2'), 'r2');
+    assert.equal(second.status, 'REJECTED'); assert.equal((second as any).reason, 'INTERRUPTED_PRIOR_RUN');
+  });
+});
+test('G1: a journal that fails before any SQL rejects without touching the target', async () => {
+  await g1Harness(async h => {
+    const result = await h.run(h.adapter(), h.journal('r1', (event: any) => event.state === 'prepared'), 'r1');
+    assert.equal(result.status, 'REJECTED'); assert.match((result as any).reason, /^JOURNAL_WRITE_FAILED_BEFORE_SQL:/); assert.equal(h.readState().versions.length, 0);
+  });
+});
+test('G1: a pointer that moved but could not be verified or restored leaves a LOCAL_POINTER_ROLLBACK_INCOMPLETE event', async () => {
+  await g1Harness(async h => {
+    const adapter = h.adapter(); const real = adapter.setLocalClientPointer.bind(adapter);
+    adapter.setLocalClientPointer = async (expected: string | null, next: string | null) => { await real(expected, next); return true; };
+    adapter.readSnapshot = (async function (this: any) { const snapshot = await FileUslLifecycleSimulationAdapter.prototype.readSnapshot.call(this); return h.pointerLie ? { ...snapshot, localClientPointer: null } : snapshot; }).bind(adapter);
+    const originalRun = adapter.runOperation.bind(adapter);
+    adapter.runOperation = async (operation: any, plan: any) => { const outcome = await originalRun(operation, plan); if (operation.operationId === 'verify_observed_relation_sample') h.pointerLie = true; return outcome; };
+    const result = await h.run(adapter, h.journal('r1'), 'r1');
+    assert.equal(result.status, 'FAILED'); assert.match((result as any).reason, /LOCAL_POINTER_POSTSTATE_UNVERIFIED.*LOCAL_POINTER_ROLLBACK_INCOMPLETE/);
+    const events = readPublicationJournalHistory(path.join(h.projectRoot, '.concordia', 'publication-runs', 'r1', 'journal.jsonl'), h.projectRoot);
+    assert.ok(events.some(event => event.state === 'failed' && /^LOCAL_POINTER_ROLLBACK_INCOMPLETE/.test(event.reason ?? '')));
+  });
+});
+test('G1: preflight and recheck failures keep the sanitized code, never the raw message', async () => {
+  await g1Harness(async h => {
+    const preflight = h.adapter(); preflight.readSnapshot = async () => { throw new SafeError('HTTP_ERROR', 503, 'secret-token-123 upstream detail'); };
+    const a = await h.run(preflight, h.journal('r1'), 'r1');
+    assert.equal((a as any).reason, 'SIMULATED_TARGET_PREFLIGHT_FAILED:HTTP_ERROR');
+    const recheck = h.adapter(); recheck.recheckInputs = async () => { throw new Error('raw message with secret'); };
+    const b = await h.run(recheck, h.journal('r2'), 'r2');
+    assert.equal((b as any).reason, 'SOURCE_RECHECK_FAILED:UNEXPECTED_ERROR'); assert.ok(!/secret/.test(JSON.stringify([a, b])));
+  });
+});
+test('N70: verifyPriorVersion surfaces a journal failure while logging a read, and still treats adapter errors as unverified', async () => {
+  const { verifyPriorVersion } = await import('../src/usl/lifecycle-simulator.ts');
+  await g1Harness(async h => {
+    const ref = `${h.plan.target.namespace}.${h.plan.target.model}`;
+    const events: any[] = [{ state: 'verified', versionId: ref, targetKey: ref, adapterId: 'a1', contentFingerprint: 'c'.repeat(64), lifecyclePlanSnapshot: h.plan, fingerprint: h.plan.fingerprint }];
+    const adapter: any = { adapterId: 'a1', runOperation: async () => ({ status: 'OK', requestId: 'r', queryId: 'q' }) };
+    await assert.rejects(verifyPriorVersion(events, ref, adapter, () => { throw new Error('synthetic disk full'); }), /JOURNAL_WRITE_FAILED:UNEXPECTED_ERROR/);
+    const broken: any = { adapterId: 'a1', runOperation: async () => { throw new Error('backend down'); }, readLoadedModel: async () => ({}) };
+    assert.equal(await verifyPriorVersion(events, ref, broken, () => {}), undefined, 'adapter failure stays an unverified prior version');
+  });
 });

@@ -558,7 +558,15 @@
         "column": "zone_id"
       },
       "normalization": "integer",
-      "reason": "Control: the two zone catalogs share key values but not zone names; equality alone must not be accepted"
+      "reason": "Control: the two zone catalogs share key values but not zone names; equality alone must not be accepted",
+      "noCommonSpace": true,
+      "reviewAuthorization": {
+        "approver": "project-owner",
+        "approvedAt": "2026-10-25",
+        "quote": "Aprobado",
+        "channel": "project-owner review (F-04 U1 review package, unpublished)",
+        "scope": "governance metadata: the two zone catalogs (TLC and operational) share key values but not an identifier space; the relation stays a control and carries no identifierSpace, kind or reviewState"
+      }
     }
   ],
   "sampleLimit": 20,
@@ -604,5 +612,6 @@
         "description": "Bounded zones rows for observed trip pickup zone ids"
       }
     ]
-  }
+  },
+  "probeMode": "distinct-keys"
 }

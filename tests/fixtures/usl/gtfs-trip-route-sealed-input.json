@@ -1,0 +1,391 @@
+{
+  "publicationInput": {
+    "universeId": "concordia.universe.gtfs-publication-demo",
+    "target": {
+      "namespace": "lightning.metastore.concordia_l4_json2_20261023",
+      "model": "concordia_l4_gtfs_route_v1"
+    },
+    "contract": {
+      "schemaVersion": 1,
+      "id": "gtfs-publication-trip-route-v1",
+      "contractVersion": "1.1",
+      "kind": "FOREIGN_KEY",
+      "universeRef": {
+        "universeId": "concordia.universe.gtfs-publication-demo",
+        "universeVersion": {
+          "state": "KNOWN",
+          "value": "1.1.0",
+          "provenance": "gtfs-publication-contract-review-20261023-02"
+        },
+        "namespace": {
+          "state": "KNOWN",
+          "value": "gtfs.sample-feed-1.3c9e7b9.svp1",
+          "provenance": "gtfs-publication-contract-review-20261023-02"
+        },
+        "configFingerprint": {
+          "state": "KNOWN",
+          "value": "c1dc36a52f524ac218c473c0733d7ef2e50670590d24613340c91899cec78044",
+          "provenance": "gtfs-publication-contract-review-20261023-02"
+        }
+      },
+      "from": {
+        "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips",
+        "namespace": {
+          "state": "KNOWN",
+          "value": "gtfs.sample-feed-1.3c9e7b9.svp1",
+          "provenance": "gtfs-publication-contract-review-20261023-02"
+        },
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_trips",
+        "orderedColumns": [
+          "route_id"
+        ]
+      },
+      "to": {
+        "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:routes",
+        "namespace": {
+          "state": "KNOWN",
+          "value": "gtfs.sample-feed-1.3c9e7b9.svp1",
+          "provenance": "gtfs-publication-contract-review-20261023-02"
+        },
+        "objectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_routes",
+        "orderedColumns": [
+          "route_id"
+        ]
+      },
+      "identifierSpace": {
+        "state": "KNOWN",
+        "value": "gtfs.sample-feed-1.3c9e7b9.route_id",
+        "provenance": "gtfs-publication-contract-review-20261023-02"
+      },
+      "normalization": [
+        {
+          "componentIndex": 0,
+          "operation": {
+            "state": "KNOWN",
+            "value": "text",
+            "provenance": "gtfs-publication-contract-review-20261023-02"
+          },
+          "version": {
+            "state": "KNOWN",
+            "value": "1",
+            "provenance": "gtfs-publication-contract-review-20261023-02"
+          },
+          "lossless": {
+            "state": "KNOWN",
+            "value": true
+          },
+          "adapterCapability": {
+            "state": "KNOWN",
+            "value": "exact-text",
+            "provenance": "gtfs-publication-contract-review-20261023-02"
+          }
+        }
+      ],
+      "semanticContext": {
+        "grain": {
+          "state": "KNOWN",
+          "value": "trips -> routes"
+        },
+        "unit": {
+          "state": "NOT_APPLICABLE",
+          "reason": "identifier relation"
+        },
+        "scale": {
+          "state": "NOT_APPLICABLE",
+          "reason": "identifier relation"
+        },
+        "period": {
+          "state": "NOT_APPLICABLE",
+          "reason": "identifier relation"
+        },
+        "timezone": {
+          "state": "NOT_APPLICABLE",
+          "reason": "identifier relation"
+        }
+      },
+      "assertions": [
+        {
+          "assertionId": "gtfs-publication-contract-review-20261023-02",
+          "claim": "Bounded observed key-membership only; no global coverage/uniqueness/identity claim.",
+          "actor": {
+            "state": "KNOWN",
+            "value": "Concordia root supervisor",
+            "provenance": "gtfs-publication-contract-review-20261023-02"
+          },
+          "sourceRef": {
+            "state": "KNOWN",
+            "value": "https://github.com/google/transit/blob/3c9e7b904b5035349622f03e11851e25c16d1d99/gtfs/spec/en/reference.md#tripstxt",
+            "provenance": "gtfs-publication-contract-review-20261023-02"
+          },
+          "assertedAt": {
+            "state": "KNOWN",
+            "value": "2026-10-24T02:24:51.786529+00:00",
+            "provenance": "gtfs-publication-contract-review-20261023-02"
+          },
+          "scope": {
+            "state": "KNOWN",
+            "value": "sealed bounded key projection of sample-feed-1; exact source identity and typed multiset required by existing JSON2 reader before consumption; full primary GTFS metadata is not proof of this particular dataset",
+            "provenance": "gtfs-publication-contract-review-20261023-02"
+          }
+        }
+      ],
+      "evidencePolicy": {
+        "requiredObservationTypes": [
+          "KEY_MEMBERSHIP"
+        ],
+        "minimumCompleteness": "COMPLETE_FOR_SCOPE",
+        "nulls": "REQUIRE_MEASUREMENT",
+        "cardinality": "REQUIRE_MEASUREMENT",
+        "declarationsAdmissible": true,
+        "minimumDistinctKeys": 2
+      },
+      "reviewState": "REVIEWED"
+    },
+    "evidence": [
+      {
+        "schemaVersion": 1,
+        "evidenceBundleId": "evidence:D-gtfs-source-preparation-20261023-03:gtfs-publication-trip-route-v1",
+        "relationRef": "gtfs-publication-trip-route-v1",
+        "contractVersion": "1.1",
+        "sourceRefs": [
+          "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:routes",
+          "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips"
+        ],
+        "runRef": {
+          "runId": "D-gtfs-source-preparation-20261023-03",
+          "startedAt": {
+            "state": "UNKNOWN"
+          },
+          "executionMode": "LIVE",
+          "dataOrigin": "SYNTHETIC",
+          "configFingerprint": {
+            "state": "UNKNOWN"
+          }
+        },
+        "observations": [
+          {
+            "observationId": "D-gtfs-source-preparation-20261023-03:0:gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips:CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_trips",
+            "type": "KEY_MEMBERSHIP",
+            "sourceRef": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips",
+            "adapterId": "zetaris-json2-live",
+            "requestId": {
+              "state": "KNOWN",
+              "value": "request_fixture_001"
+            },
+            "observedAt": {
+              "state": "UNKNOWN"
+            },
+            "checkedAt": "2026-10-24T03:14:11.438Z",
+            "nativeVersion": {
+              "state": "UNKNOWN"
+            },
+            "fingerprint": {
+              "state": "KNOWN",
+              "value": "c18ff0ebb06b97c5663a5a5f8896fbb097a4d5f51d7fedce6f932d11b4ff4b26",
+              "provenance": "verified-json2-bounded-typed-multiset"
+            },
+            "projection": [
+              "route_id"
+            ],
+            "filters": [],
+            "limit": 50,
+            "measuredTuples": [
+              [
+                "AB"
+              ],
+              [
+                "AB"
+              ],
+              [
+                "STBA"
+              ],
+              [
+                "CITY"
+              ],
+              [
+                "CITY"
+              ],
+              [
+                "BFC"
+              ],
+              [
+                "BFC"
+              ],
+              [
+                "AAMV"
+              ],
+              [
+                "AAMV"
+              ],
+              [
+                "AAMV"
+              ],
+              [
+                "AAMV"
+              ]
+            ],
+            "nullCount": 0,
+            "duplicateCount": "UNKNOWN",
+            "truncated": false,
+            "transportStatus": "OK",
+            "protectedPayloadRef": {
+              "state": "UNKNOWN"
+            }
+          },
+          {
+            "observationId": "D-gtfs-source-preparation-20261023-03:1:gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:routes:CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_routes",
+            "type": "KEY_MEMBERSHIP",
+            "sourceRef": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:routes",
+            "adapterId": "zetaris-json2-live",
+            "requestId": {
+              "state": "KNOWN",
+              "value": "request_fixture_002"
+            },
+            "observedAt": {
+              "state": "UNKNOWN"
+            },
+            "checkedAt": "2026-10-24T03:14:11.438Z",
+            "nativeVersion": {
+              "state": "UNKNOWN"
+            },
+            "fingerprint": {
+              "state": "KNOWN",
+              "value": "7a3fca8f039544ab5dba3216e07a9a9f69f149ac16b3f322296f12f879690234",
+              "provenance": "verified-json2-bounded-typed-multiset"
+            },
+            "projection": [
+              "route_id"
+            ],
+            "filters": [],
+            "limit": 50,
+            "measuredTuples": [
+              [
+                "AB"
+              ],
+              [
+                "BFC"
+              ],
+              [
+                "STBA"
+              ],
+              [
+                "CITY"
+              ],
+              [
+                "AAMV"
+              ]
+            ],
+            "nullCount": 0,
+            "duplicateCount": "UNKNOWN",
+            "truncated": false,
+            "transportStatus": "OK",
+            "protectedPayloadRef": {
+              "state": "UNKNOWN"
+            }
+          }
+        ],
+        "scope": {
+          "state": "KNOWN",
+          "value": "two sealed synthetic GTFS key projections: trips11/routes5; bounded returned key-membership only, no global coverage or uniqueness"
+        },
+        "completeness": "COMPLETE_FOR_SCOPE",
+        "capturedAt": "2026-10-24T03:14:11.438Z"
+      }
+    ],
+    "decision": {
+      "schemaVersion": 1,
+      "decisionId": "decision:[\"gtfs-publication-trip-route-v1\",\"1.1\",[\"evidence:D-gtfs-source-preparation-20261023-03:gtfs-publication-trip-route-v1\"]]",
+      "relationRef": "gtfs-publication-trip-route-v1",
+      "contractVersion": "1.1",
+      "verdict": "SOSTENIDA",
+      "reasonCodes": [
+        "bounded_sample_key_membership"
+      ],
+      "requirementsMet": [
+        "all_observed_source_keys_present_in_referenced_sample",
+        "minimum_distinct_sample_met",
+        "namespace_compatible"
+      ],
+      "requirementsMissing": [
+        "global_coverage_not_established",
+        "global_uniqueness_not_established"
+      ],
+      "contradictions": [],
+      "scope": {
+        "state": "KNOWN",
+        "value": "bounded observed sample only; no global coverage or uniqueness claim"
+      },
+      "evidenceBundleRefs": [
+        "evidence:D-gtfs-source-preparation-20261023-03:gtfs-publication-trip-route-v1"
+      ],
+      "policyVersion": "1.1",
+      "evaluatedAt": {
+        "state": "UNKNOWN"
+      },
+      "requiresReview": true,
+      "status": "CURRENT"
+    },
+    "publicationBasis": "ObservedRelation",
+    "freshnessState": "CURRENT_FOR_CHECK",
+    "freshnessSnapshot": {
+      "schemaVersion": 1,
+      "universeId": "concordia.universe.gtfs-publication-demo",
+      "state": "CURRENT",
+      "dependencies": [
+        {
+          "relationId": "gtfs-publication-trip-route-v1",
+          "state": "CURRENT",
+          "semanticSourceVersion": "af7eaf0aa2166cb6d7d5379fa678181d7d5332dc0ccbed69a41a4514633c0e3b",
+          "contractVersion": "1.1",
+          "decisionRef": "decision:[\"gtfs-publication-trip-route-v1\",\"1.1\",[\"evidence:D-gtfs-source-preparation-20261023-03:gtfs-publication-trip-route-v1\"]]",
+          "policyVersion": "1.1",
+          "verdict": "SOSTENIDA",
+          "evidenceRefs": [
+            "evidence:D-gtfs-source-preparation-20261023-03:gtfs-publication-trip-route-v1"
+          ],
+          "attemptRef": "attempt:attempt_fixture_001",
+          "latestCompleteAttemptRef": "attempt:attempt_fixture_001",
+          "checkedAt": "2026-10-24T03:14:11.438Z"
+        }
+      ]
+    },
+    "targetState": {
+      "fingerprint": "732c190eaad4fbe1add71b34e395b2b99087cfe1758e69f7dcc9dd3507ce76f5",
+      "observedAt": "2026-10-24T03:14:12.440Z"
+    }
+  },
+  "sourceBinding": {
+    "bindingId": "concordia.json2.bounded-key-snapshot.20261023",
+    "bindingVersion": "1.0.0",
+    "bindingSha256": "7bf285a4c0e1f791447db8e509631c7d14a6f54da4000f73775513dc2be9fcd9",
+    "uslAllowed": false,
+    "mappings": [
+      {
+        "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:trips",
+        "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_trips",
+        "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+        "physicalTable": "gtfs_trips",
+        "keyColumns": [
+          {
+            "logicalColumn": "route_id",
+            "physicalColumn": "route_id",
+            "valueType": "TEXT"
+          }
+        ]
+      },
+      {
+        "sourceId": "gtfs:3c9e7b904b5035349622f03e11851e25c16d1d99:routes",
+        "logicalObjectId": "CONCORDIA_L2_SOURCES_20261023_SVP1.gtfs_routes",
+        "physicalDatabase": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+        "physicalTable": "gtfs_routes",
+        "keyColumns": [
+          {
+            "logicalColumn": "route_id",
+            "physicalColumn": "route_id",
+            "valueType": "TEXT"
+          }
+        ]
+      }
+    ]
+  }
+}

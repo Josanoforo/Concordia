@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "u1-u2-key-equality-control",
+  "universes": [
+    "U1",
+    "U2"
+  ],
+  "scope": "Control: integer keys of two unrelated sources may coincide numerically. Equality of keys across sources must not be accepted without a reviewed shared identifier space.",
+  "normalizationContract": {
+    "defaultMode": "integer",
+    "modes": {
+      "integer": {
+        "meaning": "Numeric identifiers; outer whitespace and a zero-only decimal suffix such as .0 are formatting. Leading zeroes are numeric padding only for these ID columns.",
+        "caseSensitive": true,
+        "suffixes": {
+          ".0": "insignificant"
+        }
+      }
+    },
+    "scope": "Applies to the declared cross key columns only; equal numbers do not imply the same entity."
+  },
+  "probeLimit": 50,
+  "relations": [
+    {
+      "id": "cross_u1_taxi_zones_u2_sic_reference_trap",
+      "from": {
+        "universe": "U1",
+        "table": "taxi_zones",
+        "column": "LocationID"
+      },
+      "to": {
+        "universe": "U2",
+        "table": "sic_reference",
+        "column": "sic_code"
+      },
+      "normalization": "integer",
+      "minDistinctKeys": 3,
+      "reason": "Control: NYC TLC LocationID and SEC SIC code are both small integers but name different things; declared without a shared space and without review",
+      "reviewState": "PENDING"
+    }
+  ]
+}

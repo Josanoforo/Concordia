@@ -47,7 +47,7 @@ export async function register(universeId:string) {
         const skipReason=registrationDecision(sql);
         if(skipReason){item.statements.push({index,status:'SKIPPED_POLICY',reason:skipReason,sql});continue;}
         try {
-          const response=await z.runSql(sql,1);
+          const response=await z.runLegacyMutationSql(sql,1,{caller:'register'});
           item.statements.push({index,status:'PASS',...response}); console.log('PASS register',source.id,index,sql.split('\n')[0]);
         } catch(error) {
           const detail=failure(error);

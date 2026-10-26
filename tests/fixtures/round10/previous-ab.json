@@ -1,0 +1,32 @@
+{
+  "schema": "concordia.round10.previous-ab.v1",
+  "label": "REPLAY of the previous Round 10 A/B report (HEAD 51260a9, installed COMA, SYNTHETIC fixture, scripted stand-in models). Evaluation-only: no runtime module may read this file. Re-measured identically at 732768e (no src change between the two commits).",
+  "source": {
+    "commit": "51260a9",
+    "report": "unpublished report: RONDA10_INTEGRACION_OFFLINE_AB_20261025.md (previous version)"
+  },
+  "numbers": {
+    "aApproved": 63,
+    "aApprovedTrue": 63,
+    "aYesApproved": 23,
+    "aReviewCalls": 754,
+    "aReviewTokens": 2998670,
+    "aSql": 1876,
+    "aStatus": "DEGRADED",
+    "bApproved": 73,
+    "bApprovedTrue": 70,
+    "bYesApproved": 24,
+    "bDeferredNotApproved": 1,
+    "bDecoysWithoutContract": 3,
+    "bReviewCalls": 698,
+    "bReviewTokens": 2800665,
+    "bSql": 1921,
+    "bStatus": "COMPLETED",
+    "bSkippedByCascade": 958,
+    "bTieGroupsInReview": 132,
+    "bReviewDecisive": 79,
+    "bReviewDecisiveGold": 71,
+    "bLiveVectorLosers": 117
+  },
+  "confirmedAt": "732768e"
+}

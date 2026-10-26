@@ -23,7 +23,7 @@ export async function resumeU1() {
   const save=()=>{writeJson(checkpoint,result);writeJson('out/U1/usl-continuation-03b.json',result);};
   const execute=async(stage:string,sql:string,limit:number,timeoutMs=60_000)=>{
     assertU1ContinuationSql(sql);result.lastAttempt={stage,sql,timeoutMs};save();
-    const response=await z.runSql(sql,limit,{timeoutMs});result.steps.push({stage,timeoutMs,...response});delete result.lastAttempt;save();return response;
+    const response=/^SELECT/.test(sql)?await z.runSql(sql,limit,{timeoutMs}):await z.runLegacyMutationSql(sql,limit,{timeoutMs,caller:'usl-resume'});result.steps.push({stage,timeoutMs,...response});delete result.lastAttempt;save();return response;
   };
   try {
     const live=await execute('load_existing_model','LOAD USL u1_usl NAMESPACE lightning.metastore.concordia_u1',1);

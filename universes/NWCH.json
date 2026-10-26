@@ -1,0 +1,212 @@
+{
+  "id": "NWCH",
+  "namespace": "nwch_db",
+  "database": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+  "scope": "Blind relation discovery over six key-only tables of two unrelated public schemas (Northwind and Chinook) in one Lightning database: integer key columns only; no relations are configured and no foreign key is named. The four gtfs_* tables of the same database are not allowlisted.",
+  "schemaStatus": "FROM_CATALOG_METADATA_20261025",
+  "normalizationContract": {
+    "defaultMode": "text",
+    "modes": {
+      "text": {
+        "meaning": "Exact text identifiers; case, whitespace, leading zeroes and punctuation remain significant.",
+        "caseSensitive": true,
+        "outerWhitespace": "significant",
+        "unicode": "exact"
+      },
+      "integer": {
+        "meaning": "Numeric surrogate keys; outer whitespace and a zero-only decimal suffix such as .0 are formatting.",
+        "caseSensitive": true,
+        "suffixes": {
+          ".0": "insignificant"
+        }
+      }
+    },
+    "scope": "Applies to the allowlisted key columns only; equal numbers do not imply the same entity."
+  },
+  "tables": {
+    "northwind_orders": {
+      "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "northwind_orders",
+      "columns": [
+        {
+          "name": "OrderID",
+          "type": "integer"
+        }
+      ],
+      "keyColumns": [
+        "OrderID"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "northwind_order_details": {
+      "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "northwind_order_details",
+      "columns": [
+        {
+          "name": "OrderID",
+          "type": "integer"
+        },
+        {
+          "name": "ProductID",
+          "type": "integer"
+        }
+      ],
+      "keyColumns": [
+        "OrderID",
+        "ProductID"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "northwind_products": {
+      "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "northwind_products",
+      "columns": [
+        {
+          "name": "ProductID",
+          "type": "integer"
+        }
+      ],
+      "keyColumns": [
+        "ProductID"
+      ],
+      "labels": [],
+      "role": "dimension"
+    },
+    "chinook_artist": {
+      "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "chinook_artist",
+      "columns": [
+        {
+          "name": "ArtistId",
+          "type": "integer"
+        }
+      ],
+      "keyColumns": [
+        "ArtistId"
+      ],
+      "labels": [],
+      "role": "dimension"
+    },
+    "chinook_album": {
+      "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "chinook_album",
+      "columns": [
+        {
+          "name": "AlbumId",
+          "type": "integer"
+        },
+        {
+          "name": "ArtistId",
+          "type": "integer"
+        }
+      ],
+      "keyColumns": [
+        "AlbumId",
+        "ArtistId"
+      ],
+      "labels": [],
+      "role": "fact"
+    },
+    "chinook_playlist_track": {
+      "db": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2",
+      "physicalTable": "chinook_playlist_track",
+      "columns": [
+        {
+          "name": "PlaylistId",
+          "type": "integer"
+        },
+        {
+          "name": "TrackId",
+          "type": "integer"
+        }
+      ],
+      "keyColumns": [
+        "PlaylistId",
+        "TrackId"
+      ],
+      "labels": [],
+      "role": "fact"
+    }
+  },
+  "relations": [],
+  "sampleLimit": 20,
+  "probeLimit": 50,
+  "relationPolicyVersion": "1.1",
+  "schemaSource": "CONCORDIA_L2_SOURCES_20261023_SVP1_JSON2: SHOW LIGHTNING TABLES plus DESCRIBE, metadata only. Key-only bounded samples prepared by Concordia (SVP1) from the public Northwind and Chinook schemas; every allowlisted column is a long integer (declared integer here).",
+  "publicBenchmark": {
+    "name": "Northwind and Chinook",
+    "note": "esquemas públicos conocidos (Northwind y Chinook); un modelo puede reconocerlos por los nombres"
+  },
+  "probeMode": "distinct-keys",
+  "explorationCatalog": {
+    "productLabel": "NWCH",
+    "plannerTask": "bounded key exploration over Northwind and Chinook key columns without relation hints",
+    "observations": {
+      "observedOrderKeys": {
+        "fromTable": "northwind_orders",
+        "column": "OrderID",
+        "pattern": "^[0-9]{1,18}$",
+        "max": 20
+      },
+      "observedArtistKeys": {
+        "fromTable": "chinook_artist",
+        "column": "ArtistId",
+        "pattern": "^[0-9]{1,18}$",
+        "max": 20
+      }
+    },
+    "actions": [
+      {
+        "id": "READ_ORDER_KEYS",
+        "kind": "KEYED_READ",
+        "table": "northwind_orders",
+        "filterColumn": "OrderID",
+        "observation": "observedOrderKeys",
+        "requiredColumns": [
+          "OrderID"
+        ],
+        "description": "Bounded order key rows for the order keys already observed (self-keyed; names no relation)"
+      },
+      {
+        "id": "READ_ARTIST_KEYS",
+        "kind": "KEYED_READ",
+        "table": "chinook_artist",
+        "filterColumn": "ArtistId",
+        "observation": "observedArtistKeys",
+        "requiredColumns": [
+          "ArtistId"
+        ],
+        "description": "Bounded artist key rows for the artist keys already observed (self-keyed; names no relation)"
+      },
+      {
+        "id": "PROFILE_NORTHWIND_ORDERS_ORDERID",
+        "kind": "BOUNDED_PROFILE",
+        "table": "northwind_orders",
+        "filterColumn": "OrderID",
+        "description": "Rows, distinct values and nulls of northwind_orders.OrderID over a bounded read"
+      },
+      {
+        "id": "PROFILE_NORTHWIND_ORDER_DETAILS_ORDERID",
+        "kind": "BOUNDED_PROFILE",
+        "table": "northwind_order_details",
+        "filterColumn": "OrderID",
+        "description": "Rows, distinct values and nulls of northwind_order_details.OrderID over a bounded read"
+      },
+      {
+        "id": "PROFILE_CHINOOK_ALBUM_ARTISTID",
+        "kind": "BOUNDED_PROFILE",
+        "table": "chinook_album",
+        "filterColumn": "ArtistId",
+        "description": "Rows, distinct values and nulls of chinook_album.ArtistId over a bounded read"
+      }
+    ],
+    "postComa": {
+      "blind": true,
+      "maxProbes": 40,
+      "coverAll": true,
+      "homonymGuard": true
+    }
+  }
+}

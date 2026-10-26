@@ -23,7 +23,7 @@ export interface ConsumerFreshnessSnapshot {
   state: ConsumerFreshnessState;
   dependencies: ConsumerFreshnessDependency[];
 }
-export interface ConsumerFreshnessOptions { now?: () => number; maxAgeMs?: number; mode?: 'RENDER' | 'REGENERATE'; }
+export interface ConsumerFreshnessOptions { now?: () => number; maxAgeMs?: number; mode?: 'RENDER' | 'REGENERATE'; /** Only attempts recorded in exactly this execution mode and data origin count: a REPLAY attempt is never current for LIVE. */ origin?: { executionMode: string; dataOrigin: string }; }
 export const DEFAULT_CONSUMER_FRESHNESS_TTL_MS = 24 * 60 * 60 * 1000;
 const precedence: Record<ConsumerFreshnessState, number> = { CURRENT: 0, UNKNOWN: 1, STALE: 2, PENDING: 3 };
 
@@ -47,7 +47,7 @@ export function consumerFreshnessSnapshot(universeInput: string, relationIds: re
   const now = options.now?.() ?? Date.now(), maxAgeMs = options.maxAgeMs ?? DEFAULT_CONSUMER_FRESHNESS_TTL_MS;
   const canonicalIds = [...new Set(relationIds.map(canonicalRelationId))].sort((a, b) => a.localeCompare(b, 'en'));
   const dependencies = canonicalIds.map(relationId => {
-    const latest = readFreshnessHistory(universeId, relationId).at(-1);
+    const latest = readFreshnessHistory(universeId, relationId).filter(attempt => !options.origin || (attempt.executionMode === options.origin.executionMode && attempt.dataOrigin === options.origin.dataOrigin)).at(-1);
     if (!latest) return { relationId, state: 'UNKNOWN' as const, semanticSourceVersion: null, contractVersion: null, decisionRef: null, policyVersion: null, verdict: null, evidenceRefs: [], attemptRef: null, latestCompleteAttemptRef: null, checkedAt: null };
     const isIncomplete = latest.kind === 'PREFLIGHT_FAILURE' || latest.validity.completeness !== 'COMPLETE';
     const expired = maxAgeMs >= 0 && now - Date.parse(latest.validity.checkedAt) > maxAgeMs;

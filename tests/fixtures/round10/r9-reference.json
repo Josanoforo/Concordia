@@ -1,0 +1,26 @@
+{
+  "schema": "concordia.round10.r9-reference.v1",
+  "label": "REPLAY of a recorded Round 9 offline run (SYNTHETIC fixture, installed COMA, scripted stand-in models). Evaluation-only: no runtime module may read this file.",
+  "source": {
+    "report": "unpublished report: RONDA9_INTEGRACION_OFFLINE_20261025.md",
+    "commit": "0d0dec3"
+  },
+  "fixture": "TPCDS synthetic fixture (24 tables, 5-6 rows each)",
+  "numbers": {
+    "candidates": 1466,
+    "candidatesProbed": 1455,
+    "reviewed": 356,
+    "approved": 71,
+    "approvedTrue": 70,
+    "yesAccepted": 24,
+    "deferredNotAccepted": 1,
+    "decoysWithoutContract": 3,
+    "m12Reached": 3,
+    "reviewTokens": 1780000,
+    "sqlStatements": 1932
+  },
+  "notes": [
+    "The Round 9 review was this lane's harness path over 356 packets, not the engine's candidate review; only the invariants (YES, decoys, origin confusions, precision) are comparable with a Round 10 run.",
+    "reviewTokens and sqlStatements are rounded from the report (about 1.78M stand-in tokens, 1932 source statements)."
+  ]
+}

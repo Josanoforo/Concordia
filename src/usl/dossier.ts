@@ -4,7 +4,7 @@ import { ROOT, readJson, writeJson, SafeError } from '../runtime.ts';
 import { computeImpacts, impactMarkdown, persistImpacts } from '../impact.ts';
 import { assessConsumerInputVersions, consumerFreshnessSnapshot, type ConsumerFreshnessSnapshot } from '../reconcile/consumer-freshness.ts';
 
-export type RelationContract={relationId:string;from:any;to:any;normalization:string;verdict:string;reason:string;evidenceId:string;confidence:number|null;evidence:any;costExcluded:boolean;uslColumn?:string;operation?:string;impact?:any;reviewStatus?:string;critic?:any;eligibleForNewUsl:boolean};
+export type RelationContract={relationId:string;from:any;to:any;normalization:string;verdict:string;reason:string;evidenceId:string;confidence:number|null;evidence:any;costExcluded:boolean;uslColumn?:string;operation?:string;impact?:any;reviewStatus?:string;critic?:any;eligibleForNewUsl:boolean;maxRowsPerKey?:{from:number|null;to:number|null}};
 const endpoints=(r:any)=>JSON.stringify([r.from.db,r.from.table,r.from.column,r.to.db,r.to.table,r.to.column]);
 export function evidenceConfidence(r:any,cfg:any){
   if(r.evidence?.kind==='schema-correspondence')return null;
@@ -47,7 +47,7 @@ export function buildDossier(id:string,inventory:any,relations:any,model:any,cfg
     const r=contracts.find((r:RelationContract)=>r.relationId===m.relationId);
     if(!r)throw new SafeError('USL_FK_WITHOUT_RELATION_EVIDENCE');
     if(r.verdict!=='SOSTENIDA'&&r.critic?.status!=='DEGRADED')throw new SafeError('USL_FK_NO_LONGER_SUPPORTED_REQUIRES_REVIEW');
-    return {...r,uslColumn:m.uslColumn,reviewStatus:r.verdict==='SOSTENIDA'?'confirmed':'en revisión'};
+    return {...r,uslColumn:m.uslColumn,reviewStatus:r.verdict==='SOSTENIDA'?'confirmed':'en revisión',maxRowsPerKey:{from:r.evidence?.multiplicity?.from?.maxRowsPerKey??null,to:r.evidence?.multiplicity?.to?.maxRowsPerKey??null}};
   });
   const forbidden:RelationContract[]=contracts.filter((c:RelationContract)=>c.verdict==='ENGAÑOSA').map((c:RelationContract)=>({...c,operation:'literal-key-join',impact:impacts.find(i=>i.relationId===c.relationId)}));
   for(const c of contracts.filter((c:RelationContract)=>c.critic?.status==='DEGRADED'))forbidden.push({...c,operation:'excluded-pending-critic-review'});
@@ -70,7 +70,8 @@ export function buildDossier(id:string,inventory:any,relations:any,model:any,cfg
     `Origen físico: ${fk.from.db}.${fk.from.table}.${fk.from.column}. Veredicto: ${fk.verdict}. Estado: ${fk.reviewStatus}. Confianza: ${fk.confidence??'no calculable'}. Normalización declarada: ${fk.normalization}.`,
     `evidenceId: ${fk.evidenceId}; fecha: ${fk.evidence.utc}; requestIds: ${fk.evidence.requestIds.join(', ')}.`,
     `Multiplicidad observada en respuestas acotadas (no unicidad global): ${JSON.stringify(fk.evidence.multiplicity)}.`,
-    `Estado de coste: ${fk.costExcluded?'exclusión histórica D2/D3; lectura del USL hvv no confirmada entonces. Jonás revocó la exclusión de consultas útiles en D4a; la crítica indica qué se ejecutó ahora':'sin exclusión de coste histórica'}.`,
+    `Máximo de filas por clave en la muestra acotada (origen / destino): ${fk.maxRowsPerKey?.from ?? "n/d"} / ${fk.maxRowsPerKey?.to ?? "n/d"}. Un máximo mayor que 1 en el destino contradice una clave única observada; no es un conteo global.`,
+    `Estado de coste: ${fk.costExcluded?'exclusión histórica D2/D3; lectura del USL hvv no confirmada entonces. El responsable del proyecto revocó la exclusión de consultas útiles en D4a; la crítica indica qué se ejecutó ahora':'sin exclusión de coste histórica'}.`,
     `Elegible para un USL nuevo: ${fk.eligibleForNewUsl?'sí, según el veredicto acotado':'no; el modelo desplegado se conserva sin modificar'}.`,
     '', '```json',JSON.stringify({baselineUtc:fk.evidence.baselineUtc,overlap:fk.evidence.overlap,multiplicity:fk.evidence.multiplicity,labelAgreement:fk.evidence.labelAgreement,typeCompat:fk.evidence.typeCompat,critic:fk.critic},null,2),'```','');
   header.push('## Rechazadas (Negative USL)','',`Relaciones excluidas o prohibidas: ${forbidden.length}. excluded-pending-critic-review es una exclusión provisional, no una identidad alternativa ni un veredicto ENGAÑOSA. La prohibición de igualdad literal no prohíbe una arista normalizada con su propia evidencia.`,'');

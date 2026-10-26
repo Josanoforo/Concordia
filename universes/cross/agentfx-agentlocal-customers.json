@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "agentfx-agentlocal-customers",
+  "universes": [
+    "AGENTLOCAL",
+    "AGENTFX"
+  ],
+  "scope": "Synthetic pair: AGENTLOCAL orders reference AGENTFX customers by customer_id. Both fixtures are authored by the same team, so this proves the cross mechanism, not data accuracy.",
+  "normalizationContract": {
+    "defaultMode": "text",
+    "modes": {
+      "text": {
+        "meaning": "Exact text identifiers; case, whitespace, leading zeroes and punctuation remain significant.",
+        "caseSensitive": true,
+        "outerWhitespace": "significant",
+        "unicode": "exact"
+      }
+    },
+    "scope": "Applies to the declared cross key columns only; no global uniqueness claim."
+  },
+  "probeLimit": 50,
+  "relations": [
+    {
+      "id": "cross_agentlocal_orders_agentfx_customers",
+      "from": {
+        "universe": "AGENTLOCAL",
+        "table": "orders",
+        "column": "customer_id"
+      },
+      "to": {
+        "universe": "AGENTFX",
+        "table": "customers",
+        "column": "customer_id"
+      },
+      "normalization": "text",
+      "minDistinctKeys": 1,
+      "reason": "AGENTLOCAL orders carry the customer_id values of the AGENTFX customer catalog",
+      "reviewState": "PENDING",
+      "note": "No human review of a shared identifier space exists for this pair, so the shipped declaration stays PENDING and the policy answers INDETERMINADA."
+    }
+  ]
+}

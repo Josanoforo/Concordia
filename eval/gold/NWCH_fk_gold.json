@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 1,
+  "kind": "NWCH_FK_GOLD",
+  "direction": "from the referencing (child) column to the referenced (parent) column",
+  "edges": [
+    {
+      "id": "northwind_order_details.OrderID__northwind_orders.OrderID",
+      "from": {
+        "table": "northwind_order_details",
+        "column": "OrderID"
+      },
+      "to": {
+        "table": "northwind_orders",
+        "column": "OrderID"
+      }
+    },
+    {
+      "id": "northwind_order_details.ProductID__northwind_products.ProductID",
+      "from": {
+        "table": "northwind_order_details",
+        "column": "ProductID"
+      },
+      "to": {
+        "table": "northwind_products",
+        "column": "ProductID"
+      }
+    },
+    {
+      "id": "chinook_album.ArtistId__chinook_artist.ArtistId",
+      "from": {
+        "table": "chinook_album",
+        "column": "ArtistId"
+      },
+      "to": {
+        "table": "chinook_artist",
+        "column": "ArtistId"
+      }
+    }
+  ],
+  "compositeEdges": [],
+  "homonymTraps": [
+    {
+      "id": "northwind_orders.OrderID~chinook_artist.ArtistId",
+      "a": {
+        "table": "northwind_orders",
+        "column": "OrderID"
+      },
+      "b": {
+        "table": "chinook_artist",
+        "column": "ArtistId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_orders.OrderID~chinook_album.ArtistId",
+      "a": {
+        "table": "northwind_orders",
+        "column": "OrderID"
+      },
+      "b": {
+        "table": "chinook_album",
+        "column": "ArtistId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_orders.OrderID~chinook_album.AlbumId",
+      "a": {
+        "table": "northwind_orders",
+        "column": "OrderID"
+      },
+      "b": {
+        "table": "chinook_album",
+        "column": "AlbumId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_order_details.OrderID~chinook_artist.ArtistId",
+      "a": {
+        "table": "northwind_order_details",
+        "column": "OrderID"
+      },
+      "b": {
+        "table": "chinook_artist",
+        "column": "ArtistId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_order_details.OrderID~chinook_album.ArtistId",
+      "a": {
+        "table": "northwind_order_details",
+        "column": "OrderID"
+      },
+      "b": {
+        "table": "chinook_album",
+        "column": "ArtistId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_order_details.OrderID~chinook_album.AlbumId",
+      "a": {
+        "table": "northwind_order_details",
+        "column": "OrderID"
+      },
+      "b": {
+        "table": "chinook_album",
+        "column": "AlbumId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_order_details.ProductID~chinook_artist.ArtistId",
+      "a": {
+        "table": "northwind_order_details",
+        "column": "ProductID"
+      },
+      "b": {
+        "table": "chinook_artist",
+        "column": "ArtistId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_order_details.ProductID~chinook_album.ArtistId",
+      "a": {
+        "table": "northwind_order_details",
+        "column": "ProductID"
+      },
+      "b": {
+        "table": "chinook_album",
+        "column": "ArtistId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_order_details.ProductID~chinook_album.AlbumId",
+      "a": {
+        "table": "northwind_order_details",
+        "column": "ProductID"
+      },
+      "b": {
+        "table": "chinook_album",
+        "column": "AlbumId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_products.ProductID~chinook_artist.ArtistId",
+      "a": {
+        "table": "northwind_products",
+        "column": "ProductID"
+      },
+      "b": {
+        "table": "chinook_artist",
+        "column": "ArtistId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_products.ProductID~chinook_album.ArtistId",
+      "a": {
+        "table": "northwind_products",
+        "column": "ProductID"
+      },
+      "b": {
+        "table": "chinook_album",
+        "column": "ArtistId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    },
+    {
+      "id": "northwind_products.ProductID~chinook_album.AlbumId",
+      "a": {
+        "table": "northwind_products",
+        "column": "ProductID"
+      },
+      "b": {
+        "table": "chinook_album",
+        "column": "AlbumId"
+      },
+      "reason": "unrelated schemas: equal small integers are not the same entity (Northwind vs Chinook)"
+    }
+  ],
+  "orphans": [
+    {
+      "table": "chinook_playlist_track",
+      "column": "PlaylistId",
+      "reason": "the parent tables (chinook_playlist, chinook_track) are not in the database: any relation proposed for this column is invented"
+    },
+    {
+      "table": "chinook_playlist_track",
+      "column": "TrackId",
+      "reason": "the parent tables (chinook_playlist, chinook_track) are not in the database: any relation proposed for this column is invented"
+    }
+  ]
+}

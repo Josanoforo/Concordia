@@ -28,9 +28,11 @@ export function guardJson2Client(cfg: any, inner: Client, bindingOverride?: Json
   const binding: Json2LiveBindingDocument = { ...full, tables };
   const allowedTables = new Set(tables.map(table => `${table.physicalDatabase}.${table.physicalTable}`));
   const allowedWords = new Set<string>([...tables.flatMap(table => [table.physicalDatabase, table.physicalTable, ...table.columns.map(column => column.name)]).map(word => word.toLowerCase())]);
-  let preflight: Promise<unknown> | undefined, summary: unknown;
+  let preflight: Promise<unknown> | undefined, summary: unknown, preflightQueries = 0;
+  // Every statement the preflight sends to the source is counted here so the run budget can show it (it is not gated by the cap).
+  const counted: Client = { describe: ((...args: any[]) => { preflightQueries++; return (inner.describe as any)(...args); }) as any, runSql: ((...args: any[]) => { preflightQueries++; return (inner.runSql as any)(...args); }) as any };
   const verify = () => preflight ??= (async () => {
-    const adapter = new ZetarisJson2ProbeAdapter(binding, inner);
+    const adapter = new ZetarisJson2ProbeAdapter(binding, counted);
     await adapter.verifyAllTables();
     summary = adapter.getRunSummary();
     if ((summary as { status: string }).status !== 'COMPLETE') throw new SafeError('JSON2_GUARD_PREFLIGHT_INCOMPLETE', undefined, JSON.stringify({ status: (summary as { status: string }).status }));
@@ -45,7 +47,7 @@ export function guardJson2Client(cfg: any, inner: Client, bindingOverride?: Json
     const limits = [...bare.matchAll(/\bLIMIT\s+(\d+)/gi)].map(match => Number(match[1]));
     if (limits.length !== 1 || limits[0] < 1 || limits[0] > full.readLimit || (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > full.readLimit))) throw new SafeError('JSON2_GUARD_LIMIT_OUTSIDE_BINDING');
   };
-  const client: Client & { preflightSummary: () => unknown } = {
+  const client: Client & { preflightSummary: () => unknown; preflightQueryCount: () => number } = {
     async describe(db: string, table: string, ...rest: any[]) {
       if (!allowedTables.has(`${db}.${table}`)) throw new SafeError('JSON2_GUARD_TABLE_OUTSIDE_BINDING');
       await verify();
@@ -58,7 +60,8 @@ export function guardJson2Client(cfg: any, inner: Client, bindingOverride?: Json
       if (result.rows.length > full.maxRowsPerTable) throw new SafeError('JSON2_GUARD_ROWS_EXCEED_BINDING');
       return result;
     },
-    preflightSummary: () => summary
+    preflightSummary: () => summary,
+    preflightQueryCount: () => preflightQueries
   } as any;
   return client;
 }

@@ -102,12 +102,12 @@ export class Nightshift {
     this.route = options?.route ?? required('METERLESS_MODEL');
     if (!this.route.startsWith('meterless/') || /(?:^|[/.])(?:local|fusion)(?:$|[/.])/.test(this.route)) throw new SafeError('FORBIDDEN_METERLESS_ROUTE');
   }
-  private requestWithStatus(path: string, body?: unknown, app = 'concordia') {
+  private requestWithStatus(path: string, body?: unknown, app = 'concordia', timeoutMs = 180_000) {
     return jsonHttp(this.base + path, {
       method: body === undefined ? 'GET' : 'POST',
       headers: { Authorization: `Bearer ${this.token}`, 'Content-Type': 'application/json', 'meterless-app': app, 'meterless-scope': 'user', 'meterless-tier-split': 'off' },
       body: body === undefined ? undefined : JSON.stringify(body)
-    }, 180_000);
+    }, timeoutMs);
   }
   private async request(path: string, body?: unknown) { return (await this.requestWithStatus(path, body)).body; }
   async models(): Promise<string[]> {
@@ -115,6 +115,8 @@ export class Nightshift {
     if (!Array.isArray(result.data)) throw new SafeError('MODELS_RESPONSE_SHAPE');
     return result.data.map((r: any) => r.id).filter((id: unknown): id is string => typeof id === 'string');
   }
+  /** Reachability only: GET /models with a short timeout. No generation, no ledger entry. Throws the transport/HTTP failure. */
+  async ping(timeoutMs = 5000): Promise<void> { await this.requestWithStatus('/models', undefined, 'concordia', timeoutMs); }
   receipts(limit: 5 | 10 = 10) { return this.request('/meterless/receipts?limit=' + limit); }
   async routePreview(configuration: { mode?: string; model?: string; app?: string }) {
     const payload = { prompt: 'Reply only OK', app: 'concordia', width: 1, ...configuration };
@@ -129,9 +131,9 @@ export class Nightshift {
         bound_mode: null, routed_mode: null, mode_coerced: null, floor: null, raced: null, candidates: [] };
     }
   }
-  async chat(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], options: { maxTokens: number; route?: string; preserveTextOnFailure?: boolean }): Promise<{ text: string; receipt: Receipt; policyAlerts: string[] } & CompletionMetadata> {
+  async chat(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], options: { maxTokens: number; route?: string; preserveTextOnFailure?: boolean; responseFormat?: object; tools?: object[]; toolChoice?: object }): Promise<{ text: string; receipt: Receipt; policyAlerts: string[]; toolCall?: { name: string } } & CompletionMetadata> {
     const config = readJson('config/budget.json');
-    if (!Number.isInteger(options.maxTokens) || options.maxTokens < 1 || options.maxTokens > Math.min(2000, config.maxTokensPerGeneration)) throw new SafeError('INVALID_MAX_TOKENS');
+    if (!Number.isInteger(options.maxTokens) || options.maxTokens < 1 || options.maxTokens > Math.min(3000, config.maxTokensPerGeneration)) throw new SafeError('INVALID_MAX_TOKENS');
     const route = options.route ?? this.route;
     if (!route.startsWith('meterless/') || /(?:^|[/.])(?:local|fusion)(?:$|[/.])/.test(route)) throw new SafeError('FORBIDDEN_METERLESS_ROUTE');
     const policy = readJson<ModelPolicy>('config/model-policy.json');
@@ -142,9 +144,15 @@ export class Nightshift {
     let receivedText: string | undefined;
     let completion: CompletionMetadata = { truncated: false };
     try {
-      const response = await this.request('/chat/completions', { model: route, messages, max_tokens: options.maxTokens, stream: false });
+      // Optional structured-output fields are appended only when passed: without them the body is exactly what it always was.
+      const body = { model: route, messages, max_tokens: options.maxTokens, stream: false,
+        ...(options.responseFormat ? { response_format: options.responseFormat } : {}), ...(options.tools ? { tools: options.tools } : {}), ...(options.toolChoice ? { tool_choice: options.toolChoice } : {}) };
+      const response = await this.request('/chat/completions', body);
       completion = extractCompletionMetadata(response);
-      const text = response.choices?.[0]?.message?.content;
+      const message = response.choices?.[0]?.message;
+      const call = Array.isArray(message?.tool_calls) ? message.tool_calls[0]?.function : undefined;
+      const toolCall = call && typeof call.arguments === 'string' ? { name: String(call.name ?? '') } : undefined;
+      const text = toolCall ? call.arguments : message?.content;
       if (typeof text !== 'string' || !text.trim()) throw new SafeError('NO_GENERATED_TEXT');
       receivedText = text;
       const receiptId = response.meterless?.receipt_id;
@@ -158,7 +166,7 @@ export class Nightshift {
       attempt.status = policyAlerts.length ? 'PASS_WITH_POLICY_ALERT' : 'PASS';
       writeJson(`evidence/generation-${attempt.id}.json`, { utc: attempt.utc, attemptId: attempt.id, route, responsePresent: true, receiptObserved: true, receipt: receiptSummary(receipt), policyAlerts, status: attempt.status });
       finishAttempt(attempt); trace({ kind: 'nightshift', attemptId: attempt.id, status: attempt.status, route, ...receiptSummary(receipt), policyAlerts });
-      return { text, receipt, policyAlerts, ...completion };
+      return { text, receipt, policyAlerts, ...(toolCall ? { toolCall } : {}), ...completion };
     } catch (error) {
       attempt.status = 'FAIL'; attempt.error = failure(error); finishAttempt(attempt);
       if (receivedText) writeJson('evidence/generation-' + attempt.id + '.json', { utc: attempt.utc, attemptId: attempt.id, route,

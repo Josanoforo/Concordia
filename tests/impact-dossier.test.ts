@@ -70,4 +70,12 @@ test('B5 dossier and static report expose dependency freshness without recomputi
   assert.equal(dossier.freshness?.state,'PENDING');assert.equal(dossier.freshness?.dependencies[0].latestCompleteAttemptRef,'attempt-complete');
   const html=reportHtml('U1',{sampleMode:true,mode:'offline',runId:'synthetic'},{sourceUtc:'2026-01-01',artifacts:{discovery:inventory,relaciones:{relations:[relation]},dossier,fichas:{fichas:[],freshness},eval:{},'usl-demo':{}},ledger:[],receipts:[]});
   assert.ok(html.includes('Estado de frescura y dependencias'));assert.ok(html.includes('PENDING'));assert.ok(html.includes('attempt-complete'));
+});test('N40: the USL dossier states maxRowsPerKey (origin and target) per FK, and n/d when the evidence has none',()=>{
+  const accepted:any={...misleading(),relationId:'synthetic_supported',verdict:'SOSTENIDA'};
+  accepted.evidence={...accepted.evidence,multiplicity:{from:{rows:5,maxRowsPerKey:3},to:{rows:4,maxRowsPerKey:1}}};
+  const withIt=buildDossier('U1',inventory,{utc:'2026-01-01',relations:[accepted]},{fullModel:'synthetic.model',mappings:[{relationId:accepted.relationId,uslColumn:'id'}]},cfg,thresholds,[],null);
+  assert.deepEqual(withIt.foreignKeys[0].maxRowsPerKey,{from:3,to:1});assert.ok(withIt.markdown.includes('(origen / destino): 3 / 1'));
+  const bare:any={...misleading(),relationId:'synthetic_supported',verdict:'SOSTENIDA'};delete bare.evidence.multiplicity;
+  const without=buildDossier('U1',inventory,{utc:'2026-01-01',relations:[bare]},{fullModel:'synthetic.model',mappings:[{relationId:bare.relationId,uslColumn:'id'}]},cfg,thresholds,[],null);
+  assert.deepEqual(without.foreignKeys[0].maxRowsPerKey,{from:null,to:null});assert.ok(without.markdown.includes('(origen / destino): n/d / n/d'));
 });

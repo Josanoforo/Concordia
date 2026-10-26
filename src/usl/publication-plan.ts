@@ -5,6 +5,9 @@ import { invalidateDependencies, type DependencyRef } from '../reconcile/freshne
 import type { ConsumerFreshnessSnapshot } from '../reconcile/consumer-freshness.ts';
 import { resolveUniverseManifest } from '../registry/universes.ts';
 
+/** Exact-text normalization versions the renderer accepts: the sealed USL contracts say '1', agent-reviewed contracts (candidate-review defaults) say 'text-exact-v1'; both mean the same textual equality. */
+export const EXACT_TEXT_VERSIONS: readonly string[] = ['1', 'text-exact-v1'];
+
 export type PublicationEligibility = 'publishable' | 'review_required' | 'blocked' | 'not_in_scope';
 export type PublicationBasis = 'ObservedRelation' | 'DeclaredConstraint' | 'ValidatedConstraint';
 
@@ -210,7 +213,7 @@ export function compilePublicationPlan(input: PublicationPlanInput): Publication
   if (basis !== 'ObservedRelation') review('constraint_publication_basis_not_implemented');
   if (!known(contract.from.namespace) || !known(contract.to.namespace) || contract.from.namespace.value !== contract.to.namespace.value) block('compatible_known_namespaces_required');
   if (contract.from.orderedColumns.length !== contract.to.orderedColumns.length || contract.normalization.length !== contract.from.orderedColumns.length) block('ordered_key_arity_mismatch');
-  const normalizationIsExactTextV1 = contract.normalization.length === contract.from.orderedColumns.length && contract.normalization.every((component, index) => component.componentIndex === index && known(component.operation) && component.operation.value === 'text' && known(component.version) && component.version.value === '1' && known(component.adapterCapability) && component.adapterCapability.value === 'exact-text' && component.lossless.state === 'KNOWN' && component.lossless.value === true);
+  const normalizationIsExactTextV1 = contract.normalization.length === contract.from.orderedColumns.length && contract.normalization.every((component, index) => component.componentIndex === index && known(component.operation) && component.operation.value === 'text' && known(component.version) && EXACT_TEXT_VERSIONS.includes(component.version.value as string) && known(component.adapterCapability) && component.adapterCapability.value === 'exact-text' && component.lossless.state === 'KNOWN' && component.lossless.value === true);
   if (!normalizationIsExactTextV1) block('normalization_not_supported_by_renderer');
   if (![contract.from.objectId, contract.to.objectId].every(value => sqlPath(value) !== null)) review('sql_endpoint_identifier_unsupported');
   if (![...contract.from.orderedColumns, ...contract.to.orderedColumns].every(value => /^[A-Za-z_][A-Za-z0-9_]*$/.test(value))) review('sql_key_identifier_unsupported');

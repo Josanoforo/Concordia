@@ -20,9 +20,10 @@ export interface ObservationSpec {
  * - KEYED_READ: the table's allowlisted columns where filterColumn IN (observed values).
  * - COMPARE_KEYS: only filterColumn, DISTINCT, where it IN (observed values); the executor reports which observed keys are present and which are missing.
  * - AGGREGATE_COUNT: filterColumn and COUNT(*) per key, grouped, for the observed values.
- * All three carry a LIMIT; COMPARE_KEYS and AGGREGATE_COUNT never project anything but the key and the count.
+ * - BOUNDED_PROFILE: rows, distinct values and nulls of filterColumn over at most `limit` rows of the table; it takes no observed values (so no `observation`).
+ * All carry a LIMIT; COMPARE_KEYS, AGGREGATE_COUNT and BOUNDED_PROFILE never project anything but the key and aggregates over it.
  */
-export const ACTION_KINDS = ['KEYED_READ', 'COMPARE_KEYS', 'AGGREGATE_COUNT'] as const;
+export const ACTION_KINDS = ['KEYED_READ', 'COMPARE_KEYS', 'AGGREGATE_COUNT', 'BOUNDED_PROFILE'] as const;
 export type ActionKind = typeof ACTION_KINDS[number];
 export interface ActionSpec {
   id: string;
@@ -30,8 +31,8 @@ export interface ActionSpec {
   table: string;
   requiredColumns?: string[];
   filterColumn: string;
-  /** Name of the observation whose values fill the IN (...) list. */
-  observation: string;
+  /** Name of the observation whose values fill the IN (...) list. Required for every kind except BOUNDED_PROFILE, which must not declare one. */
+  observation?: string;
   description?: string;
 }
 export interface ExplorationCatalog {
@@ -42,13 +43,26 @@ export interface ExplorationCatalog {
   productLabel: string;
   plannerTask: string;
   /** Optional post-COMA policy: how many coverage probes the agent may run for out-of-scope COMA proposals (default 2; 0 disables execution). */
-  postComa?: { maxProbes: number };
+  postComa?: { maxProbes: number; /** Blind discovery: the universe configures no relations and every candidate comes from rules or COMA. Raises the probe ceiling from 5 to 40 and collapses a pair proposed in both directions. */ blind?: boolean; /** Probe every executable candidate; the stage reports BUDGET_REQUIRED (nothing probed) when the run budget cannot pay for all of them. maxProbes stays as the cap when this is absent. */ coverAll?: boolean; /** With coverAll: when the budget falls short, probe the best-ranked candidates the budget allows instead of stopping. Off by default: the cut is never silent. */ allowCut?: boolean; /** Blind only: when one source column is accepted against several targets, the one whose name matches better is kept and the others are flagged COMPETING_TARGET. Off by default. */ homonymGuard?: boolean };
   observations: Record<string, ObservationSpec>;
   actions: ActionSpec[];
 }
 export interface CatalogIssue { path: string; code: string }
 
-export const FORBIDDEN_COLUMN = /address|officer|contact|phone|email|street|city|state|zip|postal/i;
+const CONTENT_COLUMN = /address|officer|contact|phone|email|street|city|state|zip|postal/i;
+/** A surrogate or identifier key (`ca_address_sk`, `c_customer_id`): its values are keys, not personal content, so the content-word filter does not apply to it. */
+export const KEY_COLUMN = /_(sk|id)$/i;
+/**
+ * Privacy filter by column name. Content columns (street, email, phone, city, zip, address text ...) stay forbidden; key columns (`*_sk`, `*_id`, or a name the caller
+ * declares in `declaredKeys`) are exempt, because a key only ever carries its own values. Same `.test(name)` interface as the regular expression it replaces,
+ * so no call site changes. The exemption widens nothing else: reads still project only allowlisted columns and a key column is only read for its own values.
+ */
+export const FORBIDDEN_COLUMN = {
+  test(name: string, declaredKeys?: ReadonlySet<string>): boolean {
+    if (KEY_COLUMN.test(name) || declaredKeys?.has(name)) return false;
+    return CONTENT_COLUMN.test(name);
+  }
+};
 export const SAFE_LITERAL = /^[A-Za-z0-9._-]{1,64}$/;
 const safeId = (value: unknown): value is string => typeof value === 'string' && /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(value);
 const safeColumn = (value: unknown): value is string => typeof value === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(value);
@@ -65,7 +79,7 @@ export function validateExplorationCatalog(config: any, path: string): CatalogIs
   for (const [table, columns] of Object.entries<any>(catalog.safeOptionalColumns ?? {})) {
     if (!tables[table] || !Array.isArray(columns) || columns.some((column: unknown) => !safeColumn(column) || FORBIDDEN_COLUMN.test(column as string))) issues.push({ path: `${path}.safeOptionalColumns.${table}`, code: 'INVALID_SAFE_OPTIONAL_COLUMNS' });
   }
-  if (catalog.postComa !== undefined && (!catalog.postComa || typeof catalog.postComa !== 'object' || !Number.isInteger(catalog.postComa.maxProbes) || catalog.postComa.maxProbes < 0 || catalog.postComa.maxProbes > 5)) issues.push({ path: `${path}.postComa`, code: 'INVALID_POST_COMA_POLICY' });
+  if (catalog.postComa !== undefined && (!catalog.postComa || typeof catalog.postComa !== 'object' || !Number.isInteger(catalog.postComa.maxProbes) || catalog.postComa.maxProbes < 0 || catalog.postComa.maxProbes > (catalog.postComa.blind === true ? 40 : 5) || (catalog.postComa.blind !== undefined && typeof catalog.postComa.blind !== 'boolean') || (catalog.postComa.coverAll !== undefined && typeof catalog.postComa.coverAll !== 'boolean') || (catalog.postComa.homonymGuard !== undefined && (typeof catalog.postComa.homonymGuard !== 'boolean' || catalog.postComa.blind !== true)) || (catalog.postComa.allowCut !== undefined && (typeof catalog.postComa.allowCut !== 'boolean' || catalog.postComa.coverAll !== true)))) issues.push({ path: `${path}.postComa`, code: 'INVALID_POST_COMA_POLICY' });
   const observations = catalog.observations;
   if (!observations || typeof observations !== 'object' || Array.isArray(observations)) issues.push({ path: `${path}.observations`, code: 'EXPECTED_OBSERVATION_MAP' });
   const actions = Array.isArray(catalog.actions) ? catalog.actions : [];
@@ -89,7 +103,7 @@ export function validateExplorationCatalog(config: any, path: string): CatalogIs
     if (!table) { issues.push({ path: `${here}.table`, code: 'ACTION_OUTSIDE_ALLOWLIST' }); return; }
     const allowed = new Set<string>((table.columns ?? []).map((column: any) => column?.name));
     if (!allowed.has(action.filterColumn)) issues.push({ path: `${here}.filterColumn`, code: 'ACTION_OUTSIDE_ALLOWLIST' });
-    if (!observationEntries.some(([name]) => name === action.observation)) issues.push({ path: `${here}.observation`, code: 'UNKNOWN_OBSERVATION' });
+    if (action.kind === 'BOUNDED_PROFILE' ? action.observation !== undefined : !observationEntries.some(([name]) => name === action.observation)) issues.push({ path: `${here}.observation`, code: 'UNKNOWN_OBSERVATION' });
     if (action.kind !== 'KEYED_READ') {
       if (action.requiredColumns !== undefined || FORBIDDEN_COLUMN.test(String(action.filterColumn))) issues.push({ path: here, code: 'FORBIDDEN_OR_INVALID_COLUMN' });
       return;

@@ -190,6 +190,7 @@ export class ZetarisJson2ProbeAdapter implements ProbeAdapter {
     const table = this.tableByRef.get(request.sourceId + ':' + request.objectId);
     if (!table) throw new SafeError('JSON2_OBJECT_OUTSIDE_ALLOWLIST');
     if (request.filter) throw new SafeError('JSON2_FILTER_UNSUPPORTED_FOR_VERIFIED_SNAPSHOT');
+    if (request.readMode) throw new SafeError('JSON2_READ_MODE_UNSUPPORTED');
     if (!Number.isInteger(request.limit) || request.limit < 1 || request.limit > this.binding.readLimit) throw new SafeError('JSON2_LIMIT_OUTSIDE_BINDING');
     if (!request.columns.length || request.columns.some(column => !table.columns.some(allowed => allowed.name === column))) throw new SafeError('JSON2_COLUMN_OUTSIDE_ALLOWLIST');
     if (!request.keyColumns.length || request.keyColumns.some(column => !request.columns.includes(column))) throw new SafeError('JSON2_KEY_PROJECTION_MISSING');

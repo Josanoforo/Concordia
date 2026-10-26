@@ -225,6 +225,8 @@ export class ZetarisUslLifecycleAdapter implements UslLifecycleExecutionAdapter 
   async runOperation(operation: UslLifecycleOperation, plan: UslLifecyclePlan): Promise<UslSimulationOperationResult> {
     const req = (): PublicationSqlOperation => ({ operationId: operation.operationId, objectRef: operation.objectRef, sql: operation.sql!, sqlSha256: operation.sqlSha256! });
     if (!operation.sql || !operation.sqlSha256) return { status: 'ERROR', requestId: 'NOT_SENT', queryId: 'NOT_SENT', diagnostic: 'LIFECYCLE_SQL_MISSING' };
+    const bindings = (this.grant as { operationBindings?: { operationId: string; sqlSha256: string }[] }).operationBindings;
+    if ((operation.role === 'DDL' || operation.role === 'ACTIVATION') && Array.isArray(bindings) && !bindings.some(item => item.operationId === operation.operationId && item.sqlSha256 === operation.sqlSha256)) return { status: 'ERROR', requestId: 'NOT_SENT', queryId: 'NOT_SENT', diagnostic: 'GRANT_OPERATION_BINDING_MISMATCH' };
     try {
       const result = operation.role === 'DDL' || operation.role === 'ACTIVATION'
         ? await this.client.runAuthorizedPublicationSql(req(), this.grant, plan)
