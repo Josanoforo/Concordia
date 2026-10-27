@@ -26,6 +26,18 @@ Useful options: `--offline` replays the universe's synthetic fixture (no model, 
 
 Details, how to enroll a universe, and the offline regression evaluation (`npm run eval-agent`): [docs/AGENT.md](docs/AGENT.md).
 
+## Three sample inputs and their outputs
+
+Each input is a candidate relation over the public TPC-DS schema; each output is what the agent decided in the live full runs described in [docs/TPCDS_FULL_RUN_R10.md](docs/TPCDS_FULL_RUN_R10.md).
+
+| Input: candidate relation | Output |
+|---|---|
+| `catalog_page.cp_end_date_sk → date_dim.d_date_sk` | **Approved** in the integrated run (R10b): the model review accepted it and it became a `MODEL_REVIEWED` contract. The earlier run (R10) had rejected it on sample evidence; the decision follows the evidence each run measures. |
+| `inventory.inv_item_sk → item.i_item_sk` | **No contract.** Held back by the `RANGE_BIASED` guard after probing and never sent to review, in both runs. The project-owner had marked it YES; the agent still does not assert a relation its evidence does not support. |
+| `store_returns.sr_store_sk → store.s_store_sk` | **Deferred** by the model review in R10b, so no contract (R10 had approved it). It is a true foreign key, so the deferral costs recall, not precision. |
+
+Across the whole run: 92 approved contracts, all of them true foreign keys (92/92), recall 92/103, and 3/3 decoys left without a contract. Synthetic examples that run offline are in [input_examples/](input_examples/) and [output_examples/](output_examples/).
+
 ## Repository
 
 - src/: application and command-line implementation
